@@ -30,14 +30,10 @@ impl IndexRepo {
 
         let index_repo = IndexRepo { repo };
 
-        index_repo.fetch_and_reset()?;
-
         Ok(index_repo)
     }
 
     pub fn commit_and_push(&self, msg: &str, file: &Path) -> Result<(), Error> {
-        self.fetch_and_reset()?;
-
         // git add
         let mut index = self.repo.index()?;
         index.add_path(&file.strip_prefix(&CONFIG.index_path)?)?;
