@@ -84,7 +84,7 @@ pub struct Dependency {
 
 #[derive(Insertable)]
 #[table_name = "package_groups"]
-struct CreatePacakgeGroup<'a> {
+struct CreatePackageGroup<'a> {
     user_id: i32,
     package_group_name: &'a str,
     package_group_name_origin: &'a str,
@@ -92,7 +92,7 @@ struct CreatePacakgeGroup<'a> {
 
 #[derive(Insertable)]
 #[table_name = "packages"]
-struct CreatePacakge<'a> {
+struct CreatePackage<'a> {
     package_group_id: i32,
     package_name: &'a str,
     package_name_origin: &'a str,
@@ -256,7 +256,7 @@ impl Handler<PublishVersion> for Database {
                 )?.unwrap();
 
             diesel::insert_into(package_groups::table)
-                .values(CreatePacakgeGroup {
+                .values(CreatePackageGroup {
                     user_id: user.id,
                     package_group_name: &msg.package.name.group_normalized,
                     package_group_name_origin: &msg.package.name.group,
@@ -270,7 +270,7 @@ impl Handler<PublishVersion> for Database {
                 ).get_result::<PackageGroup>(&conn)?;
 
             let package = diesel::insert_into(packages::table)
-                .values(CreatePacakge {
+                .values(CreatePackage {
                     package_group_id: package_group.id,
                     package_name: &msg.package.name.name_normalized,
                     package_name_origin: &msg.package.name.name,
