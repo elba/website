@@ -4,7 +4,7 @@ use std::path::PathBuf;
 
 #[derive(Clone)]
 pub struct Config {
-    pub upload_limit: usize,
+    pub max_upload_size: usize,
     pub storage_path: PathBuf,
     pub storage_url: String,
     pub index_path: PathBuf,
@@ -16,9 +16,9 @@ pub struct Config {
 impl Config {
     pub fn from_env() -> Config {
         Config {
-            upload_limit: read_env("UPLOAD_LIMIT")
+            max_upload_size: read_env("MAX_UPLOAD_SIZE")
                 .parse()
-                .expect("UPLOAD_LIMIT is not a number!"),
+                .expect("MAX_UPLOAD_SIZE is not a number!"),
             storage_path: read_env_path("STORAGE_PATH"),
             storage_url: read_env("STORAGE_URL"),
             index_path: read_env_path("INDEX_PATH"),

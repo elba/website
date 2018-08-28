@@ -116,17 +116,6 @@ struct CreateDependency<'a> {
     version_req: &'a str,
 }
 
-// #[derive(Clone)]
-// pub struct PackageInfo {
-//     pub package: PackageVersion,
-//     pub token: String,
-// }
-
-// pub struct PublishMeta {
-//     pub description: Option<String>,
-//     pub dependencies: Vec<(DependencyReq)>,
-// }
-
 #[derive(Clone)]
 pub struct DependencyReq {
     pub name: PackageName,
@@ -229,8 +218,8 @@ impl Handler<PublishVersion> for Database {
                     .select(packages::columns::id)
                     .filter(
                         package_groups::columns::package_group_name
-                            .eq(&msg.package.name.group_normalized),
-                    ).filter(packages::columns::package_name.eq(&msg.package.name.name_normalized))
+                            .eq(&dep_req.name.group_normalized),
+                    ).filter(packages::columns::package_name.eq(&dep_req.name.name_normalized))
                     .get_result::<i32>(&conn)
                     .optional()?;
 
