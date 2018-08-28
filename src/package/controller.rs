@@ -39,7 +39,7 @@ pub fn publish(
         .flatten();
 
     let receive_body =
-        verify_spec.and_then(move |()| req.body().limit(CONFIG.upload_limit).from_err());
+        verify_spec.and_then(move |()| req.body().limit(CONFIG.max_upload_size).from_err());
 
     let publish_and_save = receive_body
         .and_then(move |bytes: Bytes| {
