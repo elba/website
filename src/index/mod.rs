@@ -55,6 +55,8 @@ impl Handler<SaveAndUpdate> for Index {
         let mut file = File::create(tar_path)?;
         file.write_all(&msg.bytes)?;
 
+        self.repo.fetch_and_reset()?;
+
         // create metadata file
         let mut metadata = Metadata::from(msg.package.clone());
         for dep in msg.dependencies {

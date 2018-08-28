@@ -175,7 +175,7 @@ impl Handler<VerifyVersion> for Database {
         if let Some(token_exist) = token_result.pop() {
             if token_exist != msg.token {
                 return Err(format_err!(
-                    "Package group `{}` has been taken.",
+                    "Package group `{}` has already been taken.",
                     &msg.package.name.group
                 ));
             }
