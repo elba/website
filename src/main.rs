@@ -11,17 +11,18 @@ extern crate base64;
 extern crate dotenv;
 extern crate elba;
 extern crate env_logger;
-// extern crate semver;
 extern crate tar;
 #[macro_use]
 extern crate failure;
 extern crate futures;
+extern crate git2;
 #[macro_use]
 extern crate lazy_static;
 extern crate num_cpus;
 extern crate tokio;
 #[macro_use]
 extern crate serde_derive;
+extern crate serde_json;
 
 mod index;
 mod package;
@@ -35,7 +36,7 @@ use std::env;
 use actix::prelude::*;
 use actix_web::{middleware, server, App};
 
-use crate::index::storage::FileStorage;
+use crate::index::Index;
 use crate::util::{
     database::{self, Database},
     Config,
@@ -48,12 +49,12 @@ lazy_static! {
 #[derive(Clone)]
 pub struct AppState {
     pub db: Addr<Database>,
-    pub storage: Addr<FileStorage>,
+    pub index: Addr<Index>,
 }
 
 fn main() {
     dotenv::dotenv().ok();
-    env::set_var("RUST_BACKTRACE", "1");
+    // env::set_var("RUST_BACKTRACE", "1");
     env::set_var("RUST_LOG", "actix_web=debug,info,warn");
     env_logger::init();
 
@@ -62,18 +63,21 @@ fn main() {
 
     let db = database::connect();
     let db_actor = SyncArbiter::start(num_cpus::get() * 4, move || db.clone());
-    let storage = SyncArbiter::start(num_cpus::get(), move || FileStorage);
+
+    // We would want only one actor operating on index repo
+    let index = SyncArbiter::start(1, move || Index::new());
+
     let app_state = AppState {
         db: db_actor,
-        storage,
+        index,
     };
 
     server::new(move || {
         let app = App::with_state(app_state.clone()).middleware(middleware::Logger::default());
         router::router(app)
     }).bind(&address)
-        .expect(&format!("Can't bind to {}", &address))
-        .start();
+    .expect(&format!("Can't bind to {}", &address))
+    .start();
 
     sys.run();
 }

@@ -10,8 +10,8 @@ use failure::Error;
 use futures::prelude::*;
 use tar::Archive;
 
-use super::{model::*, *};
-use crate::index::storage::SavePackage;
+use super::model::*;
+use crate::index::SaveAndUpdate;
 use crate::{AppState, CONFIG};
 
 #[derive(Deserialize, Clone)]
@@ -25,18 +25,17 @@ pub struct PublishReq {
 pub fn publish(
     (query, state, req): (Query<PublishReq>, State<AppState>, HttpRequest<AppState>),
 ) -> impl Responder {
-    let publish_spec = PublishSpec {
-        package: PackageVersion {
-            name: PackageName::new(&query.package_group_name, &query.package_name),
-            semver: query.semver.clone(),
-        },
-        token: query.token.clone(),
+    let package_version = PackageVersion {
+        name: PackageName::new(&query.package_group_name, &query.package_name),
+        semver: query.semver.clone(),
     };
 
     let verify_spec = state
         .db
-        .send(Verify(publish_spec.clone()))
-        .from_err::<Error>()
+        .send(VerifyVersion {
+            package: package_version.clone(),
+            token: query.token.clone(),
+        }).from_err::<Error>()
         .flatten();
 
     let receive_body =
@@ -47,31 +46,32 @@ pub fn publish(
             let manifest = read_manifest(&bytes)?;
             verify_manifest(&query, &manifest)?;
 
-            let publish_meta = PublishMeta {
-                description: None,
-                dependencies: deps_in_manifest(&manifest)?,
-            };
+            let deps = deps_in_manifest(&manifest)?;
 
             let publish = state
                 .db
-                .send(Publish(publish_spec.clone(), publish_meta))
-                .from_err::<Error>()
+                .send(PublishVersion {
+                    package: package_version.clone(),
+                    // TODO: read description from manifest
+                    description: None,
+                    dependencies: deps.clone(),
+                    token: query.token.clone(),
+                }).from_err::<Error>()
                 .flatten();
 
             let save_package = publish.and_then(move |()| {
                 state
-                    .storage
-                    .send(SavePackage {
-                        package: publish_spec.package,
+                    .index
+                    .send(SaveAndUpdate {
+                        package: package_version,
+                        dependencies: deps,
                         bytes,
-                    })
-                    .from_err::<Error>()
+                    }).from_err::<Error>()
                     .flatten()
             });
 
             Ok(save_package)
-        })
-        .flatten();
+        }).flatten();
 
     publish_and_save
         .map(|()| HttpResponse::Ok().finish())
@@ -86,8 +86,7 @@ fn read_manifest(bytes: &[u8]) -> Result<Manifest, Error> {
         .find(|entry| match entry.path() {
             Ok(ref path) if *path == Path::new("elba.toml") => true,
             _ => false,
-        })
-        .ok_or_else(|| format_err!("Manifest not found in archive."))?;
+        }).ok_or_else(|| format_err!("Manifest not found in archive."))?;
 
     let mut buffer = String::new();
     entry.read_to_string(&mut buffer)?;
@@ -105,7 +104,7 @@ fn verify_manifest(req: &PublishReq, manifest: &Manifest) -> Result<(), Error> {
         return Err(format_err!("Package name mismatched."));
     }
 
-    if manifest.package.version != req.package_name.parse()? {
+    if manifest.package.version != req.semver.parse()? {
         return Err(format_err!("Package version mismatched."));
     }
 

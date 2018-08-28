@@ -8,10 +8,38 @@ use diesel::{
 };
 use failure::Error;
 
-use super::*;
 use crate::schema::{dependencies, package_groups, packages, versions};
 use crate::user::model::LookupUser;
 use crate::util::Database;
+
+#[derive(Clone)]
+pub struct PackageName {
+    pub group: String,
+    pub name: String,
+    pub group_normalized: String,
+    pub name_normalized: String,
+}
+
+impl PackageName {
+    pub fn new(package_group_name: &str, package_name: &str) -> PackageName {
+        PackageName {
+            group: package_group_name.to_owned(),
+            name: package_name.to_owned(),
+            group_normalized: normalize(package_group_name),
+            name_normalized: normalize(package_name),
+        }
+    }
+}
+
+fn normalize(name: &str) -> String {
+    name.replace("_", "-")
+}
+
+#[derive(Clone)]
+pub struct PackageVersion {
+    pub name: PackageName,
+    pub semver: String,
+}
 
 #[allow(dead_code)]
 #[derive(Queryable)]
@@ -88,33 +116,42 @@ struct CreateDependency<'a> {
     version_req: &'a str,
 }
 
+// #[derive(Clone)]
+// pub struct PackageInfo {
+//     pub package: PackageVersion,
+//     pub token: String,
+// }
+
+// pub struct PublishMeta {
+//     pub description: Option<String>,
+//     pub dependencies: Vec<(DependencyReq)>,
+// }
+
 #[derive(Clone)]
-pub struct PublishSpec {
-    pub package: PackageVersion,
-    pub token: String,
-}
-
-pub struct PublishMeta {
-    pub description: Option<String>,
-    pub dependencies: Vec<(DependencyReq)>,
-}
-
 pub struct DependencyReq {
     pub name: PackageName,
     pub version_req: String,
 }
 
-pub struct Verify(pub PublishSpec);
+pub struct VerifyVersion {
+    pub package: PackageVersion,
+    pub token: String,
+}
 
-pub struct Publish(pub PublishSpec, pub PublishMeta);
+pub struct PublishVersion {
+    pub package: PackageVersion,
+    pub description: Option<String>,
+    pub dependencies: Vec<(DependencyReq)>,
+    pub token: String,
+}
 
 pub struct LookupVersion(pub PackageVersion);
 
-impl Message for Verify {
+impl Message for VerifyVersion {
     type Result = Result<(), Error>;
 }
 
-impl Message for Publish {
+impl Message for PublishVersion {
     type Result = Result<(), Error>;
 }
 
@@ -122,49 +159,47 @@ impl Message for LookupVersion {
     type Result = Result<Option<Version>, Error>;
 }
 
-impl Handler<Verify> for Database {
+impl Handler<VerifyVersion> for Database {
     type Result = Result<(), Error>;
 
-    fn handle(&mut self, msg: Verify, ctx: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, msg: VerifyVersion, ctx: &mut Self::Context) -> Self::Result {
         use schema::package_groups::dsl::*;
         use schema::users::dsl::*;
 
-        let spec = msg.0;
-
         let user = self.handle(
             LookupUser {
-                token: spec.token.clone(),
+                token: msg.token.clone(),
             },
             ctx,
         )?;
 
         if user.is_none() {
-            return Err(format_err!("User not found to token '{}'.", &spec.token));
+            return Err(format_err!("User not found to token '{}'.", &msg.token));
         }
 
         let mut token_result = package_groups
             .inner_join(users)
             .select(token)
-            .filter(package_group_name.eq(&spec.package.name.group_normalized))
+            .filter(package_group_name.eq(&msg.package.name.group_normalized))
             .load::<String>(&self.0.get()?)?;
 
         if let Some(token_exist) = token_result.pop() {
-            if token_exist != spec.token {
+            if token_exist != msg.token {
                 return Err(format_err!(
-                    "Package group '{}' has been taken.",
-                    &spec.package.name.group
+                    "Package group `{}` has been taken.",
+                    &msg.package.name.group
                 ));
             }
         }
 
-        let version = self.handle(LookupVersion(spec.package.clone()), ctx)?;
+        let version = self.handle(LookupVersion(msg.package.clone()), ctx)?;
 
         if version.is_some() {
             return Err(format_err!(
                 "Package {}/{} {} already exists.",
-                &spec.package.name.group,
-                &spec.package.name.name,
-                &spec.package.semver,
+                &msg.package.name.group,
+                &msg.package.name.name,
+                &msg.package.semver,
             ));
         }
 
@@ -172,26 +207,30 @@ impl Handler<Verify> for Database {
     }
 }
 
-impl Handler<Publish> for Database {
+impl Handler<PublishVersion> for Database {
     type Result = Result<(), Error>;
 
-    fn handle(&mut self, msg: Publish, ctx: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, msg: PublishVersion, ctx: &mut Self::Context) -> Self::Result {
         let conn = self.0.get()?;
-        let Publish(spec, info) = msg;
 
         conn.build_transaction().serializable().run(|| {
-            self.handle(Verify(spec.clone()), ctx)?;
+            self.handle(
+                VerifyVersion {
+                    token: msg.token.clone(),
+                    package: msg.package.clone(),
+                },
+                ctx,
+            )?;
 
             let mut deps_info = Vec::new();
-            for dep_req in info.dependencies {
+            for dep_req in msg.dependencies {
                 let dep_id = packages::table
                     .inner_join(package_groups::table)
                     .select(packages::columns::id)
                     .filter(
                         package_groups::columns::package_group_name
-                            .eq(&spec.package.name.group_normalized),
-                    )
-                    .filter(packages::columns::package_name.eq(&spec.package.name.name_normalized))
+                            .eq(&msg.package.name.group_normalized),
+                    ).filter(packages::columns::package_name.eq(&msg.package.name.name_normalized))
                     .get_result::<i32>(&conn)
                     .optional()?;
 
@@ -200,56 +239,56 @@ impl Handler<Publish> for Database {
                 } else {
                     return Err(format_err!(
                         "Dependency {}/{} not found in index.",
-                        &spec.package.name.group,
-                        &spec.package.name.name,
+                        &msg.package.name.group,
+                        &msg.package.name.name,
                     ));
                 }
             }
 
-            let description = info.description.as_ref().map(String::as_str);
+            let description = msg.description.as_ref().map(String::as_str);
 
             let user = self
                 .handle(
                     LookupUser {
-                        token: spec.token.clone(),
+                        token: msg.token.clone(),
                     },
                     ctx,
-                )?
-                .unwrap();
+                )?.unwrap();
 
-            let package_group = diesel::insert_into(package_groups::table)
+            diesel::insert_into(package_groups::table)
                 .values(CreatePacakgeGroup {
                     user_id: user.id,
-                    package_group_name: &spec.package.name.group_normalized,
-                    package_group_name_origin: &spec.package.name.group,
-                })
-                .on_conflict(package_groups::columns::package_group_name)
-                .do_nothing()
-                .get_result::<PackageGroup>(&conn)?;
+                    package_group_name: &msg.package.name.group_normalized,
+                    package_group_name_origin: &msg.package.name.group,
+                }).on_conflict_do_nothing()
+                .execute(&conn)?;
+
+            let package_group = package_groups::table
+                .filter(
+                    package_groups::columns::package_group_name
+                        .eq(&msg.package.name.group_normalized),
+                ).get_result::<PackageGroup>(&conn)?;
 
             let package = diesel::insert_into(packages::table)
                 .values(CreatePacakge {
                     package_group_id: package_group.id,
-                    package_name: &spec.package.name.name_normalized,
-                    package_name_origin: &spec.package.name.name,
+                    package_name: &msg.package.name.name_normalized,
+                    package_name_origin: &msg.package.name.name,
                     description,
                     updated_at: SystemTime::now(),
-                })
-                .on_conflict(on_constraint("unique_group_package"))
+                }).on_conflict(on_constraint("unique_group_package"))
                 .do_update()
                 .set((
                     packages::columns::description.eq(excluded(packages::columns::description)),
                     packages::columns::updated_at.eq(excluded(packages::columns::updated_at)),
-                ))
-                .get_result::<Package>(&conn)?;
+                )).get_result::<Package>(&conn)?;
 
             let version = diesel::insert_into(versions::table)
                 .values(CreateVersion {
                     package_id: package.id,
-                    semver: &spec.package.semver,
+                    semver: &msg.package.semver,
                     description,
-                })
-                .get_result::<Version>(&conn)?;
+                }).get_result::<Version>(&conn)?;
 
             let create_deps: Vec<CreateDependency> = deps_info
                 .iter()
@@ -257,8 +296,7 @@ impl Handler<Publish> for Database {
                     version_id: version.id,
                     package_id: dep_info.0,
                     version_req: dep_info.1.as_str(),
-                })
-                .collect();
+                }).collect();
 
             diesel::insert_into(dependencies::table)
                 .values(create_deps)

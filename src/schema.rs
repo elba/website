@@ -59,10 +59,4 @@ joinable!(package_groups -> users (user_id));
 joinable!(packages -> package_groups (package_group_id));
 joinable!(versions -> packages (package_id));
 
-allow_tables_to_appear_in_same_query!(
-    dependencies,
-    package_groups,
-    packages,
-    users,
-    versions,
-);
+allow_tables_to_appear_in_same_query!(dependencies, package_groups, packages, users, versions,);
