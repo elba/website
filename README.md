@@ -24,16 +24,23 @@ Response:
 3.
 Prepare a tar file with proper `elba.toml` in it, and then:
 ```
-$ curl -v -L --request POST --data-binary "@your_project.tar" "http://localhost:17000/api/v1/packages/publish?package_group_name=package_group_name&package_name=package_name&semver&token=your_token" 
+$ curl -v -L --request POST --data-binary "@your_project.tar" "http://localhost:17000/api/v1/packages/publish?package_group_name=package_group_name&package_name=package_name&semver=semver&token=your_token" 
 ```
 
-and no response currently.
+and then responses 200 OK currently.
 
 ## Roadmap
 - [x] Login
 - [x] Publish package
 - [x] Store tarballs
-- [ ] Update index
-- [ ] Dockerfile
+- [x] Fetch index
+- [x] Update index
+- [x] Push index
+- [ ] Setup local index for development usage
 - [ ] Error handling middleware (currently any error represents as 500 Internal Error)
+- [ ] Use actor's supervisor to recover from fatal
+- [ ] Rollback publish transcaton when fs error occured
+- [ ] Setup nginx as TLS front-end and static server (hosts static assets and tarballs).
+- [ ] Dockerfile
 - [ ] Basic search support
+- [ ] Yank support

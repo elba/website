@@ -1,22 +1,50 @@
 use std::env;
+use std::fs;
 use std::path::PathBuf;
 
 #[derive(Clone)]
 pub struct Config {
     pub upload_limit: usize,
-    pub tarball_path: PathBuf,
+    pub storage_path: PathBuf,
+    pub storage_url: String,
+    pub index_path: PathBuf,
+    pub remote_index_url: String,
+    pub remote_index_user: String,
+    pub remote_index_pwd: String,
 }
 
 impl Config {
     pub fn from_env() -> Config {
         Config {
-            upload_limit: env::var("UPLOAD_LIMIT")
-                .expect("UPLOAD_LIMIT not set!")
+            upload_limit: read_env("UPLOAD_LIMIT")
                 .parse()
                 .expect("UPLOAD_LIMIT is not a number!"),
-            tarball_path: env::var("TARBALL_PATH")
-                .expect("TARBALL_PATH not set!")
-                .into(),
+            storage_path: read_env_path("STORAGE_PATH"),
+            storage_url: read_env("STORAGE_URL"),
+            index_path: read_env_path("INDEX_PATH"),
+            remote_index_url: read_env("REMOTE_INDEX_URL"),
+            remote_index_user: read_env("REMOTE_INDEX_USER"),
+            remote_index_pwd: read_env("REMOTE_INDEX_PWD"),
         }
+    }
+}
+
+fn read_env(env_name: &str) -> String {
+    env::var(env_name).expect(&format!("Environment variable `{}` not set!", env_name))
+}
+
+fn read_env_path(env_name: &str) -> PathBuf {
+    let path = PathBuf::from(read_env(env_name));
+
+    fs::create_dir_all(&path).expect(&format!("Can not create dir `{:?}`.", &path));
+
+    if path.is_absolute() {
+        path
+    } else {
+        env::current_dir()
+            .unwrap()
+            .join(path)
+            .canonicalize()
+            .unwrap()
     }
 }

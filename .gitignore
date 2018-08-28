@@ -1,3 +1,4 @@
 /rls
 /target
+/tmp
 **/*.rs.bk

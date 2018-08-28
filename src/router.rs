@@ -5,5 +5,9 @@ use crate::{package, user, AppState};
 pub fn router(app: App<AppState>) -> App<AppState> {
     app.prefix("/api/v1")
         .route("/users/login", Method::GET, user::controller::login)
-        .route("/packages/new", Method::POST, package::controller::publish)
+        .route(
+            "/packages/publish",
+            Method::POST,
+            package::controller::publish,
+        )
 }

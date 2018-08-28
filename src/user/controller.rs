@@ -31,34 +31,36 @@ struct GithubRes {
 pub fn login((req, state): (Query<LoginReq>, State<AppState>)) -> impl Responder {
     let auth = base64::encode(&format!("{}:{}", req.gh_name, req.gh_access_token));
 
-    client::get("https://api.github.com/user")
+    let login_github = client::get("https://api.github.com/user")
         .header("Authorization", format!("Basic {}", auth).as_str())
         .finish()
         .unwrap()
         .send()
-        .from_err::<Error>()
+        .from_err::<Error>();
+
+    let pares_response = login_github
         .and_then(|res| {
-            if res.status() == StatusCode::OK {
-                Ok(res)
-            } else {
-                Err(format_err!("Bad username or access token to Github."))
+            if res.status() != StatusCode::OK {
+                return Err(format_err!("Bad username or access token to Github."));
             }
-        })
-        .and_then(|res| res.json().from_err())
-        .and_then(move |json: GithubRes| {
-            state
-                .db
-                .send(CreateUser {
-                    email: json.email,
-                    gh_id: json.id,
-                    gh_name: req.gh_name.clone(),
-                    gh_access_token: req.gh_access_token.clone(),
-                    gh_avatar: json.avatar_url,
-                    last_used_at: SystemTime::now(),
-                })
-                .from_err()
-        })
-        .flatten()
+
+            Ok(res.json().from_err())
+        }).flatten();
+
+    let create_user = pares_response.and_then(move |json: GithubRes| {
+        state
+            .db
+            .send(CreateUser {
+                email: json.email,
+                gh_id: json.id,
+                gh_name: req.gh_name.clone(),
+                gh_access_token: req.gh_access_token.clone(),
+                gh_avatar: json.avatar_url,
+                last_used_at: SystemTime::now(),
+            }).flatten()
+    });
+
+    create_user
         .map(|user: User| HttpResponse::Ok().json(LoginRes { token: user.token }))
         .responder()
 }
