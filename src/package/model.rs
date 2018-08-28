@@ -174,7 +174,7 @@ impl Handler<VerifyVersion> for Database {
         )?;
 
         if user.is_none() {
-            return Err(format_err!("User not found to token '{}'.", &msg.token));
+            return Err(format_err!("User not found to token `{}`.", &msg.token));
         }
 
         let mut token_result = package_groups
@@ -196,7 +196,7 @@ impl Handler<VerifyVersion> for Database {
 
         if version.is_some() {
             return Err(format_err!(
-                "Package {}/{} {} already exists.",
+                "Package `{}/{} {}` already exists.",
                 &msg.package.name.group,
                 &msg.package.name.name,
                 &msg.package.semver,
@@ -238,7 +238,7 @@ impl Handler<PublishVersion> for Database {
                     deps_info.push((dep_id, dep_req.version_req.clone()));
                 } else {
                     return Err(format_err!(
-                        "Dependency {}/{} not found in index.",
+                        "Dependency `{}/{}` not found in index.",
                         &msg.package.name.group,
                         &msg.package.name.name,
                     ));

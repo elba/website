@@ -1,7 +1,7 @@
 pub mod metadata;
 pub mod repo;
 
-use std::fs::{create_dir_all, File};
+use std::fs::{create_dir_all, File, OpenOptions};
 use std::io::Write;
 
 use actix::prelude::*;
@@ -47,7 +47,9 @@ impl Handler<SaveAndUpdate> for Index {
         // store tarball
         let tar_path = CONFIG.storage_path.join(format!(
             "{}_{}_{}.tar",
-            &msg.package.name.group, &msg.package.name.name, &msg.package.semver
+            &msg.package.name.group_normalized,
+            &msg.package.name.name_normalized,
+            &msg.package.semver
         ));
 
         let mut file = File::create(tar_path)?;
@@ -64,8 +66,12 @@ impl Handler<SaveAndUpdate> for Index {
 
         create_dir_all(&group_path)?;
 
-        let mut file = File::create(&meta_path)?;
-        let buf = serde_json::to_string(&metadata)?;
+        let mut file = OpenOptions::new()
+            .append(true)
+            .create(true)
+            .open(&meta_path)?;
+        let mut buf = serde_json::to_string(&metadata)?;
+        buf.push('\n');
         file.write_all(&buf.as_bytes())?;
 
         // git push
