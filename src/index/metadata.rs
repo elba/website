@@ -22,7 +22,10 @@ impl From<PackageVersion> for Metadata {
             name: format!("{}/{}", &package.name.group, &package.name.name),
             location: format!(
                 "tar+{}/{}_{}_{}.tar",
-                &CONFIG.storage_url, &package.name.group, &package.name.name, &package.semver
+                &CONFIG.storage_url,
+                &package.name.group_normalized,
+                &package.name.name_normalized,
+                &package.semver
             ),
             version: package.semver,
             dependencies: Vec::new(),

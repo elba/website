@@ -36,6 +36,8 @@ impl IndexRepo {
     }
 
     pub fn commit_and_push(&self, msg: &str, file: &Path) -> Result<(), Error> {
+        self.fetch_and_reset()?;
+
         // git add
         let mut index = self.repo.index()?;
         index.add_path(&file.strip_prefix(&CONFIG.index_path)?)?;
@@ -72,8 +74,6 @@ impl IndexRepo {
         if let Some(push_err_msg) = push_err_msg {
             return Err(format_err!("Failed to push ref `{}`.", &push_err_msg));
         }
-
-        self.fetch_and_reset()?;
 
         Ok(())
     }
