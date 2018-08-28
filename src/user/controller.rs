@@ -8,6 +8,7 @@ use failure::Error;
 use futures::prelude::*;
 
 use super::model::{CreateUser, User};
+use crate::util::response::report_error;
 use crate::AppState;
 
 #[derive(Deserialize)]
@@ -62,5 +63,6 @@ pub fn login((req, state): (Query<LoginReq>, State<AppState>)) -> impl Responder
 
     create_user
         .map(|user: User| HttpResponse::Ok().json(LoginRes { token: user.token }))
+        .or_else(report_error)
         .responder()
 }

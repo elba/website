@@ -21,7 +21,7 @@ pub struct Index {
 impl Index {
     pub fn new() -> Self {
         Index {
-            repo: IndexRepo::init().unwrap(),
+            repo: IndexRepo::init().expect("Failed to init index repo."),
         }
     }
 }

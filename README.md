@@ -37,7 +37,7 @@ and then responses 200 OK currently.
 - [x] Update index
 - [x] Push index
 - [ ] Setup local index for development usage
-- [ ] Error handling middleware (currently any error represents as 500 Internal Error)
+- [x] Error handling middleware (currently any error represents as 500 Internal Error)
 - [ ] Use actor's supervisor to recover from fatal
 - [ ] Rollback publish transcaton when fs error occured
 - [ ] Setup nginx as TLS front-end and static server (hosts static assets and tarballs).
