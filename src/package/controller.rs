@@ -2,7 +2,6 @@ use std::io::Read;
 use std::path::Path;
 use std::str::FromStr;
 
-// use actix::prelude::*;
 use actix_web::*;
 use bytes::Bytes;
 use elba::package::manifest::{DepReq, Manifest};
@@ -12,6 +11,7 @@ use tar::Archive;
 
 use super::model::*;
 use crate::index::SaveAndUpdate;
+use crate::util::response::report_error;
 use crate::{AppState, CONFIG};
 
 #[derive(Deserialize, Clone)]
@@ -75,6 +75,7 @@ pub fn publish(
 
     publish_and_save
         .map(|()| HttpResponse::Ok().finish())
+        .or_else(report_error)
         .responder()
 }
 
