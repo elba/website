@@ -5,7 +5,7 @@ use diesel::{self, prelude::*};
 use failure::Error;
 
 use crate::schema::users;
-use crate::util::Database;
+use crate::util::database::{Connection, Database};
 
 #[allow(dead_code)]
 #[derive(Queryable)]
@@ -63,11 +63,15 @@ impl Handler<LookupUser> for Database {
     type Result = Result<Option<User>, Error>;
 
     fn handle(&mut self, msg: LookupUser, _: &mut Self::Context) -> Self::Result {
-        use schema::users::dsl::*;
-        let user = users
-            .filter(token.eq(msg.token))
-            .get_result::<User>(&self.0.get()?)
-            .optional()?;
-        Ok(user)
+        lookup_user(msg, &self.get()?)
     }
+}
+
+pub fn lookup_user(msg: LookupUser, conn: &Connection) -> Result<Option<User>, Error> {
+    use schema::users::dsl::*;
+    let user = users
+        .filter(token.eq(msg.token))
+        .get_result::<User>(conn)
+        .optional()?;
+    Ok(user)
 }

@@ -2,13 +2,22 @@ use std::env;
 
 use actix::prelude::*;
 use diesel::pg::PgConnection;
-use diesel::r2d2::{ConnectionManager, Pool};
+use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
+use failure::Error;
+
+pub type Connection = PooledConnection<ConnectionManager<PgConnection>>;
 
 #[derive(Clone)]
 pub struct Database(pub Pool<ConnectionManager<PgConnection>>);
 
 impl Actor for Database {
     type Context = SyncContext<Self>;
+}
+
+impl Database {
+    pub fn get(&self) -> Result<Connection, Error> {
+        Ok(self.0.get()?)
+    }
 }
 
 pub fn connect() -> Database {
