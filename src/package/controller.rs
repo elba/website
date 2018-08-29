@@ -7,6 +7,7 @@ use bytes::Bytes;
 use elba::package::manifest::{DepReq, Manifest};
 use failure::Error;
 use futures::prelude::*;
+use semver;
 use tar::Archive;
 
 use super::model::*;
@@ -17,7 +18,7 @@ use crate::{AppState, CONFIG};
 pub struct PublishReq {
     pub package_group_name: String,
     pub package_name: String,
-    pub semver: String,
+    pub semver: semver::Version,
     pub token: String,
 }
 
@@ -26,7 +27,7 @@ pub fn publish(
 ) -> impl Responder {
     let package_version = PackageVersion {
         name: PackageName::new(&query.package_group_name, &query.package_name),
-        semver: query.semver.clone(),
+        semver: query.semver.to_string(),
     };
 
     let verify_spec = state
@@ -94,7 +95,7 @@ fn verify_manifest(req: &PublishReq, manifest: &Manifest) -> Result<(), Error> {
         return Err(format_err!("Package name mismatched."));
     }
 
-    if manifest.package.version != req.semver.parse()? {
+    if manifest.package.version != req.semver {
         return Err(format_err!("Package version mismatched."));
     }
 

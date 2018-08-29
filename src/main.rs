@@ -16,6 +16,7 @@ extern crate tar;
 extern crate failure;
 extern crate futures;
 extern crate git2;
+extern crate semver;
 #[macro_use]
 extern crate lazy_static;
 extern crate num_cpus;
