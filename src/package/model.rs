@@ -250,8 +250,8 @@ pub fn publish_version(
             } else {
                 return Err(format_err!(
                     "Dependency `{}/{}` not found in index.",
-                    &msg.package.name.group,
-                    &msg.package.name.name,
+                    &dep_req.name.group,
+                    &dep_req.name.name,
                 ));
             }
         }
