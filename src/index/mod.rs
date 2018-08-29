@@ -6,7 +6,7 @@ use std::io::Write;
 
 use actix::prelude::*;
 use bytes::Bytes;
-use failure::Error;
+use failure::{Error, ResultExt};
 use serde_json;
 
 use self::metadata::{DependencyMeta, Metadata};
@@ -21,7 +21,7 @@ pub struct Index {
 impl Index {
     pub fn new() -> Self {
         Index {
-            repo: IndexRepo::init().expect("Failed to init index repo."),
+            repo: IndexRepo::init().expect("Failed to init index repo"),
         }
     }
 }
@@ -52,8 +52,15 @@ impl Handler<SaveAndUpdate> for Index {
             &msg.package.semver
         ));
 
-        let mut file = File::create(tar_path)?;
+        info!("Saving tarball to `{:?}`", &tar_path);
+
+        let mut file = File::create(&tar_path)?;
         file.write_all(&msg.bytes)?;
+
+        info!(
+            "Updating index for `{}/{} {}`",
+            &msg.package.name.group, &msg.package.name.name, &msg.package.semver
+        );
 
         self.repo.fetch_and_reset()?;
 
@@ -77,13 +84,14 @@ impl Handler<SaveAndUpdate> for Index {
         file.write_all(&buf.as_bytes())?;
 
         // git push
-        self.repo.commit_and_push(
-            &format!(
-                "Updating package `{}/{}#{}`",
-                &msg.package.name.group, &msg.package.name.name, &msg.package.semver
-            ),
-            &meta_path,
-        )?;
+        self.repo
+            .commit_and_push(
+                &format!(
+                    "Updating package `{}/{}#{}`",
+                    &msg.package.name.group, &msg.package.name.name, &msg.package.semver
+                ),
+                &meta_path,
+            ).context("Failed to push index to remote repo")?;
 
         Ok(())
     }

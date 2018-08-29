@@ -7,7 +7,7 @@ use diesel::{
     pg::upsert::{excluded, on_constraint},
     prelude::*,
 };
-use failure::Error;
+use failure::{Error, ResultExt};
 use futures::Future;
 
 use crate::database::{Connection, Database};
@@ -188,7 +188,7 @@ pub fn verify_version(msg: VerifyVersion, conn: &Connection) -> Result<(), Error
     )?;
 
     if user.is_none() {
-        return Err(format_err!("User not found to token `{}`.", &msg.token));
+        return Err(human!("User not found to token `{}`", &msg.token));
     }
 
     let mut token_result = package_groups
@@ -199,8 +199,8 @@ pub fn verify_version(msg: VerifyVersion, conn: &Connection) -> Result<(), Error
 
     if let Some(token_exist) = token_result.pop() {
         if token_exist != msg.token {
-            return Err(format_err!(
-                "Package group `{}` has already been taken.",
+            return Err(human!(
+                "Package group `{}` has already been taken",
                 &msg.package.name.group
             ));
         }
@@ -209,8 +209,8 @@ pub fn verify_version(msg: VerifyVersion, conn: &Connection) -> Result<(), Error
     let version = lookup_version(LookupVersion(msg.package.clone()), conn)?;
 
     if version.is_some() {
-        return Err(format_err!(
-            "Package `{}/{} {}` already exists.",
+        return Err(human!(
+            "Package `{}/{} {}` already exists",
             &msg.package.name.group,
             &msg.package.name.name,
             &msg.package.semver,
@@ -248,8 +248,8 @@ pub fn publish_version(
             if let Some(dep_id) = dep_id {
                 deps_info.push((dep_id, dep_req.version_req.clone()));
             } else {
-                return Err(format_err!(
-                    "Dependency `{}/{}` not found in index.",
+                return Err(human!(
+                    "Dependency `{}/{}` not found in index",
                     &dep_req.name.group,
                     &dep_req.name.name,
                 ));
@@ -263,7 +263,7 @@ pub fn publish_version(
                 token: msg.token.clone(),
             },
             conn,
-        )?.expect("User should exist.");
+        )?.expect("User should exist");
 
         diesel::insert_into(package_groups::table)
             .values(CreatePackageGroup {
@@ -317,7 +317,8 @@ pub fn publish_version(
                 dependencies: msg.dependencies,
                 bytes: msg.bytes,
             }).from_err::<Error>()
-            .wait()??;
+            .wait()?
+            .context("Failed to update index")?;
 
         Ok(())
     })

@@ -8,7 +8,7 @@ use failure::Error;
 use futures::prelude::*;
 
 use super::model::{CreateUser, User};
-use crate::util::response::report_error;
+use crate::util::error::report_error;
 use crate::AppState;
 
 #[derive(Deserialize)]
@@ -42,7 +42,7 @@ pub fn login((req, state): (Query<LoginReq>, State<AppState>)) -> impl Responder
     let pares_response = login_github
         .and_then(|res| {
             if res.status() != StatusCode::OK {
-                return Err(format_err!("Bad username or access token to Github."));
+                return Err(human!("Bad username or access token to Github"));
             }
 
             Ok(res.json().from_err())

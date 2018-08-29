@@ -36,7 +36,7 @@ fn read_env(env_name: &str) -> String {
 fn read_env_path(env_name: &str) -> PathBuf {
     let path = PathBuf::from(read_env(env_name));
 
-    fs::create_dir_all(&path).expect(&format!("Can not create dir `{:?}`.", &path));
+    fs::create_dir_all(&path).expect(&format!("Can not create dir `{:?}`", &path));
 
     if path.is_absolute() {
         path

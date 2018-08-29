@@ -11,7 +11,7 @@ use semver;
 use tar::Archive;
 
 use super::model::*;
-use crate::util::response::report_error;
+use crate::util::error::report_error;
 use crate::{AppState, CONFIG};
 
 #[derive(Deserialize, Clone)]
@@ -38,8 +38,10 @@ pub fn publish(
         }).from_err::<Error>()
         .flatten();
 
-    let receive_body =
-        verify_spec.and_then(move |()| req.body().limit(CONFIG.max_upload_size).from_err());
+    let receive_body = verify_spec.and_then(move |()| {
+        info!("Receiving tarball");
+        req.body().limit(CONFIG.max_upload_size).from_err()
+    });
 
     let publish_and_save = receive_body
         .and_then(move |bytes: Bytes| {
@@ -77,7 +79,7 @@ fn read_manifest(bytes: &[u8]) -> Result<Manifest, Error> {
         .find(|entry| match entry.path() {
             Ok(ref path) if *path == Path::new("elba.toml") => true,
             _ => false,
-        }).ok_or_else(|| format_err!("Manifest not found in archive."))?;
+        }).ok_or_else(|| human!("Manifest not found in archive"))?;
 
     let mut buffer = String::new();
     entry.read_to_string(&mut buffer)?;
@@ -88,15 +90,15 @@ fn read_manifest(bytes: &[u8]) -> Result<Manifest, Error> {
 
 fn verify_manifest(req: &PublishReq, manifest: &Manifest) -> Result<(), Error> {
     if manifest.package.name.group() != req.package_group_name {
-        return Err(format_err!("Package group name mismatched."));
+        return Err(human!("Package group name mismatched"));
     }
 
     if manifest.package.name.name() != req.package_name {
-        return Err(format_err!("Package name mismatched."));
+        return Err(human!("Package name mismatched"));
     }
 
     if manifest.package.version != req.semver {
-        return Err(format_err!("Package version mismatched."));
+        return Err(human!("Package version mismatched"));
     }
 
     // TODO: check outer index reference
@@ -111,8 +113,8 @@ fn deps_in_manifest(manifest: &Manifest) -> Result<Vec<(DependencyReq)>, Error> 
         let version_req = match ver_req {
             DepReq::Registry(constrain) => constrain.to_string(),
             _ => {
-                return Err(format_err!(
-                    "Package contains non-index dependency {}/{}.",
+                return Err(human!(
+                    "Package contains non-index dependency {}/{}",
                     name.group(),
                     name.name()
                 ))
