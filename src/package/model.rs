@@ -1,6 +1,7 @@
 use std::time::SystemTime;
 
 use actix::prelude::*;
+use bytes::Bytes;
 use diesel::{
     self,
     pg::upsert::{excluded, on_constraint},
@@ -9,9 +10,10 @@ use diesel::{
 use failure::Error;
 use futures::Future;
 
+use crate::database::{Connection, Database};
+use crate::index::{Index, SaveAndUpdate};
 use crate::schema::{dependencies, package_groups, packages, versions};
 use crate::user::model::{lookup_user, LookupUser};
-use crate::util::database::{Connection, Database};
 
 #[derive(Clone)]
 pub struct PackageName {
@@ -133,6 +135,7 @@ pub struct PublishVersion {
     pub description: Option<String>,
     pub dependencies: Vec<(DependencyReq)>,
     pub token: String,
+    pub bytes: Bytes,
 }
 
 pub struct LookupVersion(pub PackageVersion);
@@ -152,16 +155,16 @@ impl Message for LookupVersion {
 impl Handler<VerifyVersion> for Database {
     type Result = Result<(), Error>;
 
-    fn handle(&mut self, msg: VerifyVersion, ctx: &mut Self::Context) -> Self::Result {
-        verify_version(msg, &self.get()?)
+    fn handle(&mut self, msg: VerifyVersion, _: &mut Self::Context) -> Self::Result {
+        verify_version(msg, &self.connection()?)
     }
 }
 
 impl Handler<PublishVersion> for Database {
     type Result = Result<(), Error>;
 
-    fn handle(&mut self, msg: PublishVersion, ctx: &mut Self::Context) -> Self::Result {
-        publish_version(msg, &self.get()?)
+    fn handle(&mut self, msg: PublishVersion, _: &mut Self::Context) -> Self::Result {
+        publish_version(msg, &self.connection()?, &self.index)
     }
 }
 
@@ -169,7 +172,7 @@ impl Handler<LookupVersion> for Database {
     type Result = Result<Option<Version>, Error>;
 
     fn handle(&mut self, msg: LookupVersion, _: &mut Self::Context) -> Self::Result {
-        lookup_version(msg, &self.get()?)
+        lookup_version(msg, &self.connection()?)
     }
 }
 
@@ -217,7 +220,11 @@ pub fn verify_version(msg: VerifyVersion, conn: &Connection) -> Result<(), Error
     Ok(())
 }
 
-pub fn publish_version(msg: PublishVersion, conn: &Connection) -> Result<(), Error> {
+pub fn publish_version(
+    msg: PublishVersion,
+    conn: &Connection,
+    index: &Addr<Index>,
+) -> Result<(), Error> {
     conn.build_transaction().serializable().run(|| {
         verify_version(
             VerifyVersion {
@@ -228,7 +235,7 @@ pub fn publish_version(msg: PublishVersion, conn: &Connection) -> Result<(), Err
         )?;
 
         let mut deps_info = Vec::new();
-        for dep_req in msg.dependencies {
+        for dep_req in msg.dependencies.iter() {
             let dep_id = packages::table
                 .inner_join(package_groups::table)
                 .select(packages::columns::id)
@@ -303,6 +310,14 @@ pub fn publish_version(msg: PublishVersion, conn: &Connection) -> Result<(), Err
         diesel::insert_into(dependencies::table)
             .values(create_deps)
             .execute(conn)?;
+
+        index
+            .send(SaveAndUpdate {
+                package: msg.package,
+                dependencies: msg.dependencies,
+                bytes: msg.bytes,
+            }).from_err::<Error>()
+            .wait()??;
 
         Ok(())
     })

@@ -4,8 +4,8 @@ use actix::prelude::*;
 use diesel::{self, prelude::*};
 use failure::Error;
 
+use crate::database::{Connection, Database};
 use crate::schema::users;
-use crate::util::database::{Connection, Database};
 
 #[allow(dead_code)]
 #[derive(Queryable)]
@@ -48,14 +48,7 @@ impl Handler<CreateUser> for Database {
     type Result = Result<User, Error>;
 
     fn handle(&mut self, msg: CreateUser, _: &mut Self::Context) -> Self::Result {
-        use schema::users::dsl::*;
-        let user = diesel::insert_into(users)
-            .values(&msg)
-            .on_conflict(gh_id)
-            .do_update()
-            .set(&msg)
-            .get_result::<User>(&self.0.get()?)?;
-        Ok(user)
+        create_user(msg, &self.connection()?)
     }
 }
 
@@ -63,8 +56,19 @@ impl Handler<LookupUser> for Database {
     type Result = Result<Option<User>, Error>;
 
     fn handle(&mut self, msg: LookupUser, _: &mut Self::Context) -> Self::Result {
-        lookup_user(msg, &self.get()?)
+        lookup_user(msg, &self.connection()?)
     }
+}
+
+pub fn create_user(msg: CreateUser, conn: &Connection) -> Result<User, Error> {
+    use schema::users::dsl::*;
+    let user = diesel::insert_into(users)
+        .values(&msg)
+        .on_conflict(gh_id)
+        .do_update()
+        .set(&msg)
+        .get_result::<User>(conn)?;
+    Ok(user)
 }
 
 pub fn lookup_user(msg: LookupUser, conn: &Connection) -> Result<Option<User>, Error> {
