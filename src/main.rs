@@ -24,6 +24,7 @@ extern crate tokio;
 extern crate serde_derive;
 extern crate serde_json;
 
+mod database;
 mod index;
 mod package;
 mod router;
@@ -36,11 +37,9 @@ use std::env;
 use actix::prelude::*;
 use actix_web::{middleware, server, App};
 
+use crate::database::Database;
 use crate::index::Index;
-use crate::util::{
-    database::{self, Database},
-    Config,
-};
+use crate::util::Config;
 
 lazy_static! {
     pub static ref CONFIG: Config = Config::from_env();
@@ -49,7 +48,6 @@ lazy_static! {
 #[derive(Clone)]
 pub struct AppState {
     pub db: Addr<Database>,
-    pub index: Addr<Index>,
 }
 
 fn main() {
@@ -61,16 +59,15 @@ fn main() {
     let address = env::var("BIND_TO").expect("BIND_TO not set!");
     let sys = System::new("elba-backaned");
 
-    let db = database::connect();
-    let db_actor = SyncArbiter::start(num_cpus::get() * 4, move || db.clone());
+    let db_pool = database::connect();
 
-    // We would want only one actor operating on index repo
+    // We would want only one actor to operate the index repo
     let index = SyncArbiter::start(1, move || Index::new());
 
-    let app_state = AppState {
-        db: db_actor,
-        index,
-    };
+    let db = Database::new(db_pool, index);
+    let db_actor = SyncArbiter::start(num_cpus::get() * 4, move || db.clone());
+
+    let app_state = AppState { db: db_actor };
 
     server::new(move || {
         let app = App::with_state(app_state.clone()).middleware(middleware::Logger::default());

@@ -39,7 +39,7 @@ and then responses 200 OK currently.
 - [ ] Setup local index for development usage
 - [x] Error handling middleware (currently any error represents as 500 Internal Error)
 - [ ] Use supervisor actor to recover from fatal
-- [ ] Rollback publish transcaton when fs error occured
+- [x] Rollback publish transcaton when fs error occured
 - [ ] Setup nginx as TLS front-end and static server (hosts static assets and tarballs).
 - [ ] Dockerfile
 - [ ] Basic search support

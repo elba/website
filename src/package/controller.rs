@@ -10,7 +10,6 @@ use futures::prelude::*;
 use tar::Archive;
 
 use super::model::*;
-use crate::index::SaveAndUpdate;
 use crate::util::response::report_error;
 use crate::{AppState, CONFIG};
 
@@ -56,21 +55,11 @@ pub fn publish(
                     description: None,
                     dependencies: deps.clone(),
                     token: query.token.clone(),
+                    bytes,
                 }).from_err::<Error>()
                 .flatten();
 
-            let save_package = publish.and_then(move |()| {
-                state
-                    .index
-                    .send(SaveAndUpdate {
-                        package: package_version,
-                        dependencies: deps,
-                        bytes,
-                    }).from_err::<Error>()
-                    .flatten()
-            });
-
-            Ok(save_package)
+            Ok(publish)
         }).flatten();
 
     publish_and_save
