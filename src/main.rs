@@ -4,34 +4,36 @@
 
 extern crate actix;
 extern crate actix_web;
-extern crate bytes;
-#[macro_use]
-extern crate diesel;
 extern crate base64;
+extern crate bytes;
 extern crate dotenv;
 extern crate elba;
 extern crate env_logger;
-extern crate tar;
-#[macro_use]
 extern crate failure;
 extern crate futures;
 extern crate git2;
-extern crate semver;
-#[macro_use]
-extern crate lazy_static;
 extern crate num_cpus;
+extern crate semver;
+extern crate serde_json;
+extern crate tar;
 extern crate tokio;
 #[macro_use]
+extern crate diesel;
+#[macro_use]
+extern crate lazy_static;
+#[macro_use]
 extern crate serde_derive;
-extern crate serde_json;
+#[macro_use]
+extern crate log;
 
+#[macro_use]
+mod util;
 mod database;
 mod index;
 mod package;
 mod router;
 mod schema;
 mod user;
-mod util;
 
 use std::env;
 
@@ -54,7 +56,8 @@ pub struct AppState {
 fn main() {
     dotenv::dotenv().ok();
     // env::set_var("RUST_BACKTRACE", "1");
-    env::set_var("RUST_LOG", "actix_web=debug,info,warn");
+    // env::set_var("RUST_LOG", "actix_web=debug,info,warn");
+    env::set_var("RUST_LOG", "info");
     env_logger::init();
 
     let address = env::var("BIND_TO").expect("BIND_TO not set!");

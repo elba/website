@@ -1,4 +1,5 @@
+#[macro_use]
+pub mod error;
 mod config;
-pub mod response;
 
 pub use self::config::Config;

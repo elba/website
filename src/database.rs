@@ -32,8 +32,8 @@ impl Database {
 }
 
 pub fn connect() -> Pool {
-    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL not set.");
+    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL not set");
     let manager = ConnectionManager::<PgConnection>::new(database_url);
-    let pool = Pool::new(manager).expect("Failed to connect to database.");
+    let pool = Pool::new(manager).expect("Failed to connect to database");
     pool
 }
