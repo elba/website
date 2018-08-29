@@ -7,10 +7,11 @@ use diesel::{
     prelude::*,
 };
 use failure::Error;
+use futures::Future;
 
 use crate::schema::{dependencies, package_groups, packages, versions};
-use crate::user::model::LookupUser;
-use crate::util::Database;
+use crate::user::model::{lookup_user, LookupUser};
+use crate::util::database::{Connection, Database};
 
 #[derive(Clone)]
 pub struct PackageName {
@@ -152,47 +153,7 @@ impl Handler<VerifyVersion> for Database {
     type Result = Result<(), Error>;
 
     fn handle(&mut self, msg: VerifyVersion, ctx: &mut Self::Context) -> Self::Result {
-        use schema::package_groups::dsl::*;
-        use schema::users::dsl::*;
-
-        let user = self.handle(
-            LookupUser {
-                token: msg.token.clone(),
-            },
-            ctx,
-        )?;
-
-        if user.is_none() {
-            return Err(format_err!("User not found to token `{}`.", &msg.token));
-        }
-
-        let mut token_result = package_groups
-            .inner_join(users)
-            .select(token)
-            .filter(package_group_name.eq(&msg.package.name.group_normalized))
-            .load::<String>(&self.0.get()?)?;
-
-        if let Some(token_exist) = token_result.pop() {
-            if token_exist != msg.token {
-                return Err(format_err!(
-                    "Package group `{}` has already been taken.",
-                    &msg.package.name.group
-                ));
-            }
-        }
-
-        let version = self.handle(LookupVersion(msg.package.clone()), ctx)?;
-
-        if version.is_some() {
-            return Err(format_err!(
-                "Package `{}/{} {}` already exists.",
-                &msg.package.name.group,
-                &msg.package.name.name,
-                &msg.package.semver,
-            ));
-        }
-
-        Ok(())
+        verify_version(msg, &self.get()?)
     }
 }
 
@@ -200,99 +161,7 @@ impl Handler<PublishVersion> for Database {
     type Result = Result<(), Error>;
 
     fn handle(&mut self, msg: PublishVersion, ctx: &mut Self::Context) -> Self::Result {
-        let conn = self.0.get()?;
-
-        conn.build_transaction().serializable().run(|| {
-            self.handle(
-                VerifyVersion {
-                    token: msg.token.clone(),
-                    package: msg.package.clone(),
-                },
-                ctx,
-            )?;
-
-            let mut deps_info = Vec::new();
-            for dep_req in msg.dependencies {
-                let dep_id = packages::table
-                    .inner_join(package_groups::table)
-                    .select(packages::columns::id)
-                    .filter(
-                        package_groups::columns::package_group_name
-                            .eq(&dep_req.name.group_normalized),
-                    ).filter(packages::columns::package_name.eq(&dep_req.name.name_normalized))
-                    .get_result::<i32>(&conn)
-                    .optional()?;
-
-                if let Some(dep_id) = dep_id {
-                    deps_info.push((dep_id, dep_req.version_req.clone()));
-                } else {
-                    return Err(format_err!(
-                        "Dependency `{}/{}` not found in index.",
-                        &msg.package.name.group,
-                        &msg.package.name.name,
-                    ));
-                }
-            }
-
-            let description = msg.description.as_ref().map(String::as_str);
-
-            let user = self
-                .handle(
-                    LookupUser {
-                        token: msg.token.clone(),
-                    },
-                    ctx,
-                )?.unwrap();
-
-            diesel::insert_into(package_groups::table)
-                .values(CreatePackageGroup {
-                    user_id: user.id,
-                    package_group_name: &msg.package.name.group_normalized,
-                    package_group_name_origin: &msg.package.name.group,
-                }).on_conflict_do_nothing()
-                .execute(&conn)?;
-
-            let package_group = package_groups::table
-                .filter(
-                    package_groups::columns::package_group_name
-                        .eq(&msg.package.name.group_normalized),
-                ).get_result::<PackageGroup>(&conn)?;
-
-            let package = diesel::insert_into(packages::table)
-                .values(CreatePackage {
-                    package_group_id: package_group.id,
-                    package_name: &msg.package.name.name_normalized,
-                    package_name_origin: &msg.package.name.name,
-                    description,
-                    updated_at: SystemTime::now(),
-                }).on_conflict(on_constraint("unique_group_package"))
-                .do_update()
-                .set((
-                    packages::columns::description.eq(excluded(packages::columns::description)),
-                    packages::columns::updated_at.eq(excluded(packages::columns::updated_at)),
-                )).get_result::<Package>(&conn)?;
-
-            let version = diesel::insert_into(versions::table)
-                .values(CreateVersion {
-                    package_id: package.id,
-                    semver: &msg.package.semver,
-                    description,
-                }).get_result::<Version>(&conn)?;
-
-            let create_deps: Vec<CreateDependency> = deps_info
-                .iter()
-                .map(|dep_info| CreateDependency {
-                    version_id: version.id,
-                    package_id: dep_info.0,
-                    version_req: dep_info.1.as_str(),
-                }).collect();
-
-            diesel::insert_into(dependencies::table)
-                .values(create_deps)
-                .execute(&conn)?;
-
-            Ok(())
-        })
+        publish_version(msg, &self.get()?)
     }
 }
 
@@ -300,17 +169,156 @@ impl Handler<LookupVersion> for Database {
     type Result = Result<Option<Version>, Error>;
 
     fn handle(&mut self, msg: LookupVersion, _: &mut Self::Context) -> Self::Result {
-        use schema::package_groups::dsl::*;
-        use schema::packages::dsl::*;
-        use schema::versions::dsl::*;
-        let version = versions
-            .inner_join(packages.inner_join(package_groups))
-            .filter(package_group_name.eq(&msg.0.name.group_normalized))
-            .filter(package_name.eq(&msg.0.name.name_normalized))
-            .filter(semver.eq(&msg.0.semver))
-            .select(versions::all_columns())
-            .get_result::<Version>(&self.0.get()?)
-            .optional()?;
-        Ok(version)
+        lookup_version(msg, &self.get()?)
     }
+}
+
+pub fn verify_version(msg: VerifyVersion, conn: &Connection) -> Result<(), Error> {
+    use schema::package_groups::dsl::*;
+    use schema::users::dsl::*;
+
+    let user = lookup_user(
+        LookupUser {
+            token: msg.token.clone(),
+        },
+        conn,
+    )?;
+
+    if user.is_none() {
+        return Err(format_err!("User not found to token `{}`.", &msg.token));
+    }
+
+    let mut token_result = package_groups
+        .inner_join(users)
+        .select(token)
+        .filter(package_group_name.eq(&msg.package.name.group_normalized))
+        .load::<String>(conn)?;
+
+    if let Some(token_exist) = token_result.pop() {
+        if token_exist != msg.token {
+            return Err(format_err!(
+                "Package group `{}` has already been taken.",
+                &msg.package.name.group
+            ));
+        }
+    }
+
+    let version = lookup_version(LookupVersion(msg.package.clone()), conn)?;
+
+    if version.is_some() {
+        return Err(format_err!(
+            "Package `{}/{} {}` already exists.",
+            &msg.package.name.group,
+            &msg.package.name.name,
+            &msg.package.semver,
+        ));
+    }
+
+    Ok(())
+}
+
+pub fn publish_version(msg: PublishVersion, conn: &Connection) -> Result<(), Error> {
+    conn.build_transaction().serializable().run(|| {
+        verify_version(
+            VerifyVersion {
+                token: msg.token.clone(),
+                package: msg.package.clone(),
+            },
+            conn,
+        )?;
+
+        let mut deps_info = Vec::new();
+        for dep_req in msg.dependencies {
+            let dep_id = packages::table
+                .inner_join(package_groups::table)
+                .select(packages::columns::id)
+                .filter(
+                    package_groups::columns::package_group_name.eq(&dep_req.name.group_normalized),
+                ).filter(packages::columns::package_name.eq(&dep_req.name.name_normalized))
+                .get_result::<i32>(conn)
+                .optional()?;
+
+            if let Some(dep_id) = dep_id {
+                deps_info.push((dep_id, dep_req.version_req.clone()));
+            } else {
+                return Err(format_err!(
+                    "Dependency `{}/{}` not found in index.",
+                    &msg.package.name.group,
+                    &msg.package.name.name,
+                ));
+            }
+        }
+
+        let description = msg.description.as_ref().map(String::as_str);
+
+        let user = lookup_user(
+            LookupUser {
+                token: msg.token.clone(),
+            },
+            conn,
+        )?.expect("User should exist.");
+
+        diesel::insert_into(package_groups::table)
+            .values(CreatePackageGroup {
+                user_id: user.id,
+                package_group_name: &msg.package.name.group_normalized,
+                package_group_name_origin: &msg.package.name.group,
+            }).on_conflict_do_nothing()
+            .execute(conn)?;
+
+        let package_group = package_groups::table
+            .filter(
+                package_groups::columns::package_group_name.eq(&msg.package.name.group_normalized),
+            ).get_result::<PackageGroup>(conn)?;
+
+        let package = diesel::insert_into(packages::table)
+            .values(CreatePackage {
+                package_group_id: package_group.id,
+                package_name: &msg.package.name.name_normalized,
+                package_name_origin: &msg.package.name.name,
+                description,
+                updated_at: SystemTime::now(),
+            }).on_conflict(on_constraint("unique_group_package"))
+            .do_update()
+            .set((
+                packages::columns::description.eq(excluded(packages::columns::description)),
+                packages::columns::updated_at.eq(excluded(packages::columns::updated_at)),
+            )).get_result::<Package>(conn)?;
+
+        let version = diesel::insert_into(versions::table)
+            .values(CreateVersion {
+                package_id: package.id,
+                semver: &msg.package.semver,
+                description,
+            }).get_result::<Version>(conn)?;
+
+        let create_deps: Vec<CreateDependency> = deps_info
+            .iter()
+            .map(|dep_info| CreateDependency {
+                version_id: version.id,
+                package_id: dep_info.0,
+                version_req: dep_info.1.as_str(),
+            }).collect();
+
+        diesel::insert_into(dependencies::table)
+            .values(create_deps)
+            .execute(conn)?;
+
+        Ok(())
+    })
+}
+
+pub fn lookup_version(msg: LookupVersion, conn: &Connection) -> Result<Option<Version>, Error> {
+    use schema::package_groups::dsl::*;
+    use schema::packages::dsl::*;
+    use schema::versions::dsl::*;
+    let version = versions
+        .inner_join(packages.inner_join(package_groups))
+        .filter(package_group_name.eq(&msg.0.name.group_normalized))
+        .filter(package_name.eq(&msg.0.name.name_normalized))
+        .filter(semver.eq(&msg.0.semver))
+        .select(versions::all_columns())
+        .get_result::<Version>(conn)
+        .optional()?;
+    Ok(version)
 }
