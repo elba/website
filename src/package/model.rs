@@ -7,12 +7,13 @@ use diesel::{
     pg::upsert::{excluded, on_constraint},
     prelude::*,
 };
+use elba::package::manifest::PackageInfo;
 use failure::{Error, ResultExt};
 use futures::Future;
 
 use crate::database::{Connection, Database};
 use crate::index::{Index, SaveAndUpdate};
-use crate::schema::{dependencies, package_groups, packages, versions};
+use crate::schema::{dependencies, package_groups, packages, version_authors, versions};
 use crate::user::model::{lookup_user, LookupUser};
 
 #[derive(Clone)]
@@ -62,6 +63,10 @@ pub struct Package {
     package_name: String,
     package_name_origin: String,
     description: Option<String>,
+    homepage: Option<String>,
+    repository: Option<String>,
+    readme_file: Option<String>,
+    license: Option<String>,
     updated_at: SystemTime,
     created_at: SystemTime,
 }
@@ -72,7 +77,6 @@ pub struct Version {
     id: i32,
     package_id: i32,
     semver: String,
-    description: Option<String>,
     created_at: SystemTime,
 }
 
@@ -100,6 +104,10 @@ struct CreatePackage<'a> {
     package_name: &'a str,
     package_name_origin: &'a str,
     description: Option<&'a str>,
+    homepage: Option<&'a str>,
+    repository: Option<&'a str>,
+    readme_file: Option<&'a str>,
+    license: Option<&'a str>,
     updated_at: SystemTime,
 }
 
@@ -108,7 +116,6 @@ struct CreatePackage<'a> {
 struct CreateVersion<'a> {
     package_id: i32,
     semver: &'a str,
-    description: Option<&'a str>,
 }
 
 #[derive(Insertable)]
@@ -117,6 +124,13 @@ struct CreateDependency<'a> {
     version_id: i32,
     package_id: i32,
     version_req: &'a str,
+}
+
+#[derive(Insertable)]
+#[table_name = "version_authors"]
+struct CreateAuthor<'a> {
+    version_id: i32,
+    name: &'a str,
 }
 
 #[derive(Clone)]
@@ -132,7 +146,8 @@ pub struct VerifyVersion {
 
 pub struct PublishVersion {
     pub package: PackageVersion,
-    pub description: Option<String>,
+    pub package_info: PackageInfo,
+    pub readme_file: Option<String>,
     pub dependencies: Vec<(DependencyReq)>,
     pub token: String,
     pub bytes: Bytes,
@@ -256,8 +271,6 @@ pub fn publish_version(
             }
         }
 
-        let description = msg.description.as_ref().map(String::as_str);
-
         let user = lookup_user(
             LookupUser {
                 token: msg.token.clone(),
@@ -273,42 +286,63 @@ pub fn publish_version(
             }).on_conflict_do_nothing()
             .execute(conn)?;
 
-        let package_group = package_groups::table
+        let package_group_id = package_groups::table
+            .select(package_groups::columns::id)
             .filter(
                 package_groups::columns::package_group_name.eq(&msg.package.name.group_normalized),
-            ).get_result::<PackageGroup>(conn)?;
+            ).get_result::<i32>(conn)?;
 
-        let package = diesel::insert_into(packages::table)
+        let package_id = diesel::insert_into(packages::table)
             .values(CreatePackage {
-                package_group_id: package_group.id,
+                package_group_id,
                 package_name: &msg.package.name.name_normalized,
                 package_name_origin: &msg.package.name.name,
-                description,
+                description: msg.package_info.description.as_ref().map(|s| s.as_str()),
+                homepage: msg.package_info.homepage.as_ref().map(|s| s.as_str()),
+                repository: msg.package_info.repository.as_ref().map(|s| s.as_str()),
+                readme_file: msg.readme_file.as_ref().map(|s| s.as_str()),
+                license: msg.package_info.license.as_ref().map(|s| s.as_str()),
                 updated_at: SystemTime::now(),
             }).on_conflict(on_constraint("unique_group_package"))
             .do_update()
             .set((
                 packages::columns::description.eq(excluded(packages::columns::description)),
+                packages::columns::homepage.eq(excluded(packages::columns::homepage)),
+                packages::columns::repository.eq(excluded(packages::columns::repository)),
+                packages::columns::readme_file.eq(excluded(packages::columns::readme_file)),
+                packages::columns::license.eq(excluded(packages::columns::license)),
                 packages::columns::updated_at.eq(excluded(packages::columns::updated_at)),
-            )).get_result::<Package>(conn)?;
+            )).returning(packages::columns::id)
+            .get_result::<i32>(conn)?;
 
-        let version = diesel::insert_into(versions::table)
+        let version_id = diesel::insert_into(versions::table)
             .values(CreateVersion {
-                package_id: package.id,
+                package_id,
                 semver: &msg.package.semver,
-                description,
-            }).get_result::<Version>(conn)?;
+            }).returning(versions::columns::id)
+            .get_result::<i32>(conn)?;
 
         let create_deps: Vec<CreateDependency> = deps_info
             .iter()
             .map(|dep_info| CreateDependency {
-                version_id: version.id,
+                version_id,
                 package_id: dep_info.0,
                 version_req: dep_info.1.as_str(),
             }).collect();
 
         diesel::insert_into(dependencies::table)
             .values(create_deps)
+            .execute(conn)?;
+
+        let create_authors: Vec<CreateAuthor> = msg
+            .package_info
+            .authors
+            .iter()
+            .map(|name| CreateAuthor { version_id, name })
+            .collect();
+
+        diesel::insert_into(version_authors::table)
+            .values(create_authors)
             .execute(conn)?;
 
         index
