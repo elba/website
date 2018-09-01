@@ -9,7 +9,6 @@ extern crate bytes;
 extern crate dotenv;
 extern crate elba;
 extern crate env_logger;
-extern crate failure;
 extern crate futures;
 extern crate git2;
 extern crate num_cpus;
@@ -19,6 +18,8 @@ extern crate tar;
 extern crate tokio;
 #[macro_use]
 extern crate diesel;
+#[macro_use]
+extern crate failure;
 #[macro_use]
 extern crate lazy_static;
 #[macro_use]

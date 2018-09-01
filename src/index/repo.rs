@@ -68,7 +68,7 @@ impl IndexRepo {
         )?;
 
         if let Some(push_err_msg) = push_err_msg {
-            return Err(human!("Failed to push ref `{}`", &push_err_msg));
+            return Err(format_err!("Failed to push ref `{}`", &push_err_msg));
         }
 
         Ok(())
