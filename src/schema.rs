@@ -24,6 +24,10 @@ table! {
         package_name -> Varchar,
         package_name_origin -> Varchar,
         description -> Nullable<Varchar>,
+        homepage -> Nullable<Varchar>,
+        repository -> Nullable<Varchar>,
+        readme_file -> Nullable<Varchar>,
+        license -> Nullable<Varchar>,
         updated_at -> Timestamp,
         created_at -> Timestamp,
     }
@@ -44,11 +48,18 @@ table! {
 }
 
 table! {
+    version_authors (id) {
+        id -> Int4,
+        version_id -> Int4,
+        name -> Varchar,
+    }
+}
+
+table! {
     versions (id) {
         id -> Int4,
         package_id -> Int4,
         semver -> Varchar,
-        description -> Nullable<Varchar>,
         created_at -> Timestamp,
     }
 }
@@ -57,6 +68,14 @@ joinable!(dependencies -> packages (package_id));
 joinable!(dependencies -> versions (version_id));
 joinable!(package_groups -> users (user_id));
 joinable!(packages -> package_groups (package_group_id));
+joinable!(version_authors -> versions (version_id));
 joinable!(versions -> packages (package_id));
 
-allow_tables_to_appear_in_same_query!(dependencies, package_groups, packages, users, versions,);
+allow_tables_to_appear_in_same_query!(
+    dependencies,
+    package_groups,
+    packages,
+    users,
+    version_authors,
+    versions,
+);

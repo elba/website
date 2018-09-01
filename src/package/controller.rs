@@ -49,13 +49,21 @@ pub fn publish(
             verify_manifest(&query, &manifest)?;
 
             let deps = deps_in_manifest(&manifest)?;
+            let readme_file = read_readme(
+                &bytes,
+                manifest
+                    .package
+                    .readme
+                    .as_ref()
+                    .map(|subpath| subpath.0.as_path()),
+            )?;
 
             let publish = state
                 .db
                 .send(PublishVersion {
                     package: package_version.clone(),
-                    // TODO: read description from manifest
-                    description: None,
+                    package_info: manifest.package.clone(),
+                    readme_file,
                     dependencies: deps.clone(),
                     token: query.token.clone(),
                     bytes,
@@ -86,6 +94,38 @@ fn read_manifest(bytes: &[u8]) -> Result<Manifest, Error> {
     let manifest = Manifest::from_str(&buffer)?;
 
     Ok(manifest)
+}
+
+fn read_readme(bytes: &[u8], subpath: Option<&Path>) -> Result<Option<String>, Error> {
+    let mut archive = Archive::new(bytes);
+    let entry = archive.entries()?.filter_map(Result::ok).find(|entry| {
+        if let Ok(path) = entry.path() {
+            if let Some(subpath) = subpath {
+                if path == subpath {
+                    return true;
+                }
+            }
+            if let Some(file_stem) = path.file_stem() {
+                return &file_stem.to_string_lossy().to_uppercase() == "README";
+            }
+            false
+        } else {
+            false
+        }
+    });
+
+    if let Some(mut entry) = entry {
+        if entry.header().entry_size()? > 2 * 1024 * 1024 {
+            return Ok(None);
+        }
+
+        let mut buffer = String::new();
+        entry.read_to_string(&mut buffer)?;
+
+        Ok(Some(buffer))
+    } else {
+        Ok(None)
+    }
 }
 
 fn verify_manifest(req: &PublishReq, manifest: &Manifest) -> Result<(), Error> {

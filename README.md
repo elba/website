@@ -53,3 +53,6 @@ and then responses 200 OK currently.
 - [x] Dockerfile
 - [ ] Basic search support
 - [ ] Yank support
+- [x] Add description/readme/homepage
+- [x] Add authors
+- [ ] Forced gzip compression
