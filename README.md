@@ -8,6 +8,15 @@ $ diesel setup
 $ cargo run
 ```
 
+## Deploy
+1. Clone this repo into your server.
+2. Edit `docker-compose.yml`: fill in `VIRTUAL_HOST`, `STORAGE_URL`, `REMOTE_INDEX_URL`, 
+`REMOTE_INDEX_USER` and `REMOTE_INDEX_PWD`.
+3. Place your ssl certs to `/var/lib/nginx/certs/cert.csr` and 
+`/var/lib/nginx/certs/cert.key`.
+4. Make sure you exposed port 80 and port 443 if you have a firewall.
+5. Run `docker-compose up`
+
 ## Usage
 1. Create a access token from [Github](https://github.com/settings/tokens), with `read:user` and `user:email` permissions. 
 
@@ -40,7 +49,7 @@ and then responses 200 OK currently.
 - [x] Error handling middleware (currently any error represents as 500 Internal Error)
 - [ ] Use supervisor actor to recover from fatal
 - [x] Rollback publish transcaton when fs error occured
-- [ ] Setup nginx as TLS front-end and static server (hosts static assets and tarballs).
-- [ ] Dockerfile
+- [x] Setup nginx as TLS front-end and static server (hosts static assets and tarballs).
+- [x] Dockerfile
 - [ ] Basic search support
 - [ ] Yank support
