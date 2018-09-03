@@ -52,7 +52,8 @@ and then responses 200 OK currently.
 - [x] Setup nginx as TLS front-end and static server (hosts static assets and tarballs).
 - [x] Dockerfile
 - [ ] Basic search support
-- [ ] Yank support
+- [x] Yank support
 - [x] Add description/readme/homepage
 - [x] Add authors
 - [ ] Forced gzip compression
+- [ ] Improve `PackageName` / `PackageVersion` consistency
