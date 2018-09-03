@@ -2,7 +2,7 @@ pub mod metadata;
 pub mod repo;
 
 use std::fs::{create_dir_all, File, OpenOptions};
-use std::io::Write;
+use std::io::{Read, Write};
 
 use actix::prelude::*;
 use bytes::Bytes;
@@ -36,7 +36,16 @@ pub struct SaveAndUpdate {
     pub bytes: Bytes,
 }
 
+pub struct YankAndUpdate {
+    pub package: PackageVersion,
+    pub yanked: bool,
+}
+
 impl Message for SaveAndUpdate {
+    type Result = Result<(), Error>;
+}
+
+impl Message for YankAndUpdate {
     type Result = Result<(), Error>;
 }
 
@@ -82,6 +91,59 @@ impl Handler<SaveAndUpdate> for Index {
         let mut buf = serde_json::to_string(&metadata)?;
         buf.push('\n');
         file.write_all(&buf.as_bytes())?;
+
+        // git push
+        self.repo
+            .commit_and_push(
+                &format!(
+                    "Updating package `{}/{}#{}`",
+                    &msg.package.name.group, &msg.package.name.name, &msg.package.semver
+                ),
+                &meta_path,
+            ).context("Failed to push index to remote repo")?;
+
+        Ok(())
+    }
+}
+
+impl Handler<YankAndUpdate> for Index {
+    type Result = Result<(), Error>;
+
+    fn handle(&mut self, msg: YankAndUpdate, _: &mut Self::Context) -> Self::Result {
+        self.repo.fetch_and_reset()?;
+
+        let group_path = CONFIG.index_path.join(&msg.package.name.group);
+        let meta_path = group_path.join(&msg.package.name.name);
+
+        if !meta_path.exists() {
+            return Err(format_err!("Metafile `{:?}` not found", &meta_path));
+        }
+
+        let mut file = OpenOptions::new().read(true).open(&meta_path)?;
+        let mut buf = String::new();
+        let mut new_buf = String::new();
+        file.read_to_string(&mut buf)?;
+
+        for line in buf.split("\n") {
+            let mut metadata: Metadata =
+                serde_json::from_str(line).context("Failed parse metadata")?;
+
+            if metadata.name == format!("{}/{}", &msg.package.name.group, &msg.package.name.name)
+                && metadata.version == msg.package.semver
+            {
+                metadata.yanked = msg.yanked;
+            }
+
+            let new_metadata = serde_json::to_string(&metadata)?;
+            new_buf += &new_metadata;
+            new_buf.push('\n');
+        }
+
+        let mut file = OpenOptions::new()
+            .truncate(true)
+            .write(true)
+            .open(&meta_path)?;
+        file.write_all(&new_buf.as_bytes())?;
 
         // git push
         self.repo

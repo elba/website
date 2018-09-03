@@ -10,9 +10,39 @@ use futures::prelude::*;
 use semver;
 use tar::Archive;
 
-use super::model::*;
+use crate::package::model::*;
 use crate::util::error::report_error;
 use crate::{AppState, CONFIG};
+
+#[derive(Deserialize, Clone)]
+pub struct YankReq {
+    pub package_group_name: String,
+    pub package_name: String,
+    pub semver: semver::Version,
+    pub yanked: bool,
+    pub token: String,
+}
+
+pub fn yank((query, state): (Query<YankReq>, State<AppState>)) -> impl Responder {
+    let package_version = PackageVersion {
+        name: PackageName::new(&query.package_group_name, &query.package_name),
+        semver: query.semver.to_string(),
+    };
+
+    let yank_version = state
+        .db
+        .send(YankVersion {
+            package: package_version.clone(),
+            yanked: query.yanked,
+            token: query.token.clone(),
+        }).from_err::<Error>()
+        .flatten();
+
+    yank_version
+        .map(|()| HttpResponse::Ok().finish())
+        .or_else(report_error)
+        .responder()
+}
 
 #[derive(Deserialize, Clone)]
 pub struct PublishReq {

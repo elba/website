@@ -60,6 +60,7 @@ table! {
         id -> Int4,
         package_id -> Int4,
         semver -> Varchar,
+        yanked -> Bool,
         created_at -> Timestamp,
     }
 }

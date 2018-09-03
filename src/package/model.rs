@@ -12,7 +12,7 @@ use failure::{Error, ResultExt};
 use futures::Future;
 
 use crate::database::{Connection, Database};
-use crate::index::{Index, SaveAndUpdate};
+use crate::index::{Index, SaveAndUpdate, YankAndUpdate};
 use crate::schema::{dependencies, package_groups, packages, version_authors, versions};
 use crate::user::model::{lookup_user, LookupUser};
 
@@ -77,6 +77,7 @@ pub struct Version {
     id: i32,
     package_id: i32,
     semver: String,
+    yanked: bool,
     created_at: SystemTime,
 }
 
@@ -153,6 +154,12 @@ pub struct PublishVersion {
     pub bytes: Bytes,
 }
 
+pub struct YankVersion {
+    pub package: PackageVersion,
+    pub yanked: bool,
+    pub token: String,
+}
+
 pub struct LookupVersion(pub PackageVersion);
 
 impl Message for VerifyVersion {
@@ -160,6 +167,10 @@ impl Message for VerifyVersion {
 }
 
 impl Message for PublishVersion {
+    type Result = Result<(), Error>;
+}
+
+impl Message for YankVersion {
     type Result = Result<(), Error>;
 }
 
@@ -180,6 +191,14 @@ impl Handler<PublishVersion> for Database {
 
     fn handle(&mut self, msg: PublishVersion, _: &mut Self::Context) -> Self::Result {
         publish_version(msg, &self.connection()?, &self.index)
+    }
+}
+
+impl Handler<YankVersion> for Database {
+    type Result = Result<(), Error>;
+
+    fn handle(&mut self, msg: YankVersion, _: &mut Self::Context) -> Self::Result {
+        yank_version(msg, &self.connection()?, &self.index)
     }
 }
 
@@ -253,10 +272,9 @@ pub fn publish_version(
         for dep_req in msg.dependencies.iter() {
             let dep_id = packages::table
                 .inner_join(package_groups::table)
-                .select(packages::columns::id)
-                .filter(
-                    package_groups::columns::package_group_name.eq(&dep_req.name.group_normalized),
-                ).filter(packages::columns::package_name.eq(&dep_req.name.name_normalized))
+                .select(packages::id)
+                .filter(package_groups::package_group_name.eq(&dep_req.name.group_normalized))
+                .filter(packages::package_name.eq(&dep_req.name.name_normalized))
                 .get_result::<i32>(conn)
                 .optional()?;
 
@@ -276,7 +294,7 @@ pub fn publish_version(
                 token: msg.token.clone(),
             },
             conn,
-        )?.expect("User should exist");
+        )?.unwrap();
 
         diesel::insert_into(package_groups::table)
             .values(CreatePackageGroup {
@@ -287,10 +305,9 @@ pub fn publish_version(
             .execute(conn)?;
 
         let package_group_id = package_groups::table
-            .select(package_groups::columns::id)
-            .filter(
-                package_groups::columns::package_group_name.eq(&msg.package.name.group_normalized),
-            ).get_result::<i32>(conn)?;
+            .select(package_groups::id)
+            .filter(package_groups::package_group_name.eq(&msg.package.name.group_normalized))
+            .get_result::<i32>(conn)?;
 
         let package_id = diesel::insert_into(packages::table)
             .values(CreatePackage {
@@ -306,20 +323,20 @@ pub fn publish_version(
             }).on_conflict(on_constraint("unique_group_package"))
             .do_update()
             .set((
-                packages::columns::description.eq(excluded(packages::columns::description)),
-                packages::columns::homepage.eq(excluded(packages::columns::homepage)),
-                packages::columns::repository.eq(excluded(packages::columns::repository)),
-                packages::columns::readme_file.eq(excluded(packages::columns::readme_file)),
-                packages::columns::license.eq(excluded(packages::columns::license)),
-                packages::columns::updated_at.eq(excluded(packages::columns::updated_at)),
-            )).returning(packages::columns::id)
+                packages::description.eq(excluded(packages::description)),
+                packages::homepage.eq(excluded(packages::homepage)),
+                packages::repository.eq(excluded(packages::repository)),
+                packages::readme_file.eq(excluded(packages::readme_file)),
+                packages::license.eq(excluded(packages::license)),
+                packages::updated_at.eq(excluded(packages::updated_at)),
+            )).returning(packages::id)
             .get_result::<i32>(conn)?;
 
         let version_id = diesel::insert_into(versions::table)
             .values(CreateVersion {
                 package_id,
                 semver: &msg.package.semver,
-            }).returning(versions::columns::id)
+            }).returning(versions::id)
             .get_result::<i32>(conn)?;
 
         let create_deps: Vec<CreateDependency> = deps_info
@@ -353,6 +370,58 @@ pub fn publish_version(
             }).from_err::<Error>()
             .wait()?
             .context("Failed to update index")?;
+
+        Ok(())
+    })
+}
+
+pub fn yank_version(msg: YankVersion, conn: &Connection, index: &Addr<Index>) -> Result<(), Error> {
+    conn.build_transaction().serializable().run(|| {
+        let user = lookup_user(
+            LookupUser {
+                token: msg.token.clone(),
+            },
+            conn,
+        )?;
+
+        let user = user.ok_or_else(|| human!("User not found for token {}", &msg.token))?;
+
+        let (user_id, version_id, yanked) = versions::table
+            .inner_join(packages::table.inner_join(package_groups::table))
+            .filter(package_groups::package_group_name.eq(&msg.package.name.group_normalized))
+            .filter(packages::package_name.eq(&msg.package.name.name_normalized))
+            .filter(versions::semver.eq(&msg.package.semver))
+            .select((package_groups::user_id, versions::id, versions::yanked))
+            .get_result::<(i32, i32, bool)>(conn)
+            .optional()?
+            // TODO:
+            .ok_or_else(|| human!("Package not found"))?;
+
+        if user_id != user.id {
+            // TODO:
+            return Err(human!("You don't own this package"));
+        }
+
+        if yanked && msg.yanked {
+            // TODO:
+            return Err(human!("Package has already been yanked"));
+        } else if !yanked && !msg.yanked {
+            // TODO:
+            return Err(human!("Package has not already been yanked"));
+        }
+
+        diesel::update(versions::table)
+            .filter(versions::id.eq(version_id))
+            .set(versions::yanked.eq(msg.yanked))
+            .execute(conn)?;
+
+        index
+            .send(YankAndUpdate {
+                package: msg.package,
+                yanked: msg.yanked,
+            }).from_err::<Error>()
+            .wait()?
+            .context("Failed to yank/unyank version")?;
 
         Ok(())
     })

@@ -9,5 +9,5 @@ pub fn router(app: App<AppState>) -> App<AppState> {
             "/packages/publish",
             Method::POST,
             package::controller::publish,
-        )
+        ).route("/packages/yank", Method::POST, package::controller::yank)
 }
