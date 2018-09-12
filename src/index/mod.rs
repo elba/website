@@ -9,7 +9,8 @@ use bytes::Bytes;
 use failure::{Error, ResultExt};
 use serde_json;
 
-use self::metadata::{DependencyMeta, Metadata};
+use elba::remote::{TomlDep, TomlEntry};
+
 use self::repo::IndexRepo;
 use crate::package::model::{DependencyReq, PackageVersion};
 use crate::CONFIG;
@@ -56,8 +57,8 @@ impl Handler<SaveAndUpdate> for Index {
         // store tarball
         let tar_path = CONFIG.storage_path.join(format!(
             "{}_{}_{}.tar",
-            &msg.package.name.group_normalized,
-            &msg.package.name.name_normalized,
+            &msg.package.name.normalized_group(),
+            &msg.package.name.normalized_name(),
             &msg.package.semver
         ));
 
@@ -67,20 +68,21 @@ impl Handler<SaveAndUpdate> for Index {
         file.write_all(&msg.bytes)?;
 
         info!(
-            "Updating index for `{}/{} {}`",
-            &msg.package.name.group, &msg.package.name.name, &msg.package.semver
+            "Updating index for `{} {}`",
+            &msg.package.name.as_str(),
+            &msg.package.semver
         );
 
         self.repo.fetch_and_reset()?;
 
         // create metadata file
-        let mut metadata = Metadata::from(msg.package.clone());
+        let mut metadata = TomlEntry::from(msg.package.clone());
         for dep in msg.dependencies {
-            metadata.dependencies.push(DependencyMeta::from(dep));
+            metadata.dependencies.push(TomlDep::from(dep));
         }
 
-        let group_path = CONFIG.index_path.join(&msg.package.name.group);
-        let meta_path = group_path.join(&msg.package.name.name);
+        let group_path = CONFIG.index_path.join(&msg.package.name.group());
+        let meta_path = group_path.join(&msg.package.name.name());
 
         create_dir_all(&group_path)?;
 
@@ -96,8 +98,9 @@ impl Handler<SaveAndUpdate> for Index {
         self.repo
             .commit_and_push(
                 &format!(
-                    "Updating package `{}/{}#{}`",
-                    &msg.package.name.group, &msg.package.name.name, &msg.package.semver
+                    "Updating package `{}#{}`",
+                    &msg.package.name.as_str(),
+                    &msg.package.semver
                 ),
                 &meta_path,
             ).context("Failed to push index to remote repo")?;
@@ -112,8 +115,8 @@ impl Handler<YankAndUpdate> for Index {
     fn handle(&mut self, msg: YankAndUpdate, _: &mut Self::Context) -> Self::Result {
         self.repo.fetch_and_reset()?;
 
-        let group_path = CONFIG.index_path.join(&msg.package.name.group);
-        let meta_path = group_path.join(&msg.package.name.name);
+        let group_path = CONFIG.index_path.join(&msg.package.name.group());
+        let meta_path = group_path.join(&msg.package.name.name());
 
         if !meta_path.exists() {
             return Err(format_err!("Metafile `{:?}` not found", &meta_path));
@@ -125,12 +128,10 @@ impl Handler<YankAndUpdate> for Index {
         file.read_to_string(&mut buf)?;
 
         for line in buf.split("\n") {
-            let mut metadata: Metadata =
+            let mut metadata: TomlEntry =
                 serde_json::from_str(line).context("Failed parse metadata")?;
 
-            if metadata.name == format!("{}/{}", &msg.package.name.group, &msg.package.name.name)
-                && metadata.version == msg.package.semver
-            {
+            if metadata.name == msg.package.name && metadata.version == msg.package.semver {
                 metadata.yanked = msg.yanked;
             }
 
@@ -149,8 +150,9 @@ impl Handler<YankAndUpdate> for Index {
         self.repo
             .commit_and_push(
                 &format!(
-                    "Updating package `{}/{}#{}`",
-                    &msg.package.name.group, &msg.package.name.name, &msg.package.semver
+                    "Updating package `{}#{}`",
+                    &msg.package.name.as_str(),
+                    &msg.package.semver
                 ),
                 &meta_path,
             ).context("Failed to push index to remote repo")?;

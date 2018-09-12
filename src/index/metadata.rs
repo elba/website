@@ -1,32 +1,23 @@
 use crate::package::model::{DependencyReq, PackageVersion};
 use crate::CONFIG;
 
-#[derive(Serialize, Deserialize)]
-pub struct Metadata {
-    pub name: String,
-    pub version: String,
-    pub dependencies: Vec<DependencyMeta>,
-    pub yanked: bool,
-    pub location: String,
-}
+use elba::remote::{resolution::DirectRes, TomlDep, TomlEntry};
 
-#[derive(Serialize, Deserialize)]
-pub struct DependencyMeta {
-    pub name: String,
-    pub req: String,
-}
-
-impl From<PackageVersion> for Metadata {
+impl From<PackageVersion> for TomlEntry {
     fn from(package: PackageVersion) -> Self {
-        Metadata {
-            name: format!("{}/{}", &package.name.group, &package.name.name),
-            location: format!(
-                "tar+{}/{}_{}_{}.tar",
-                &CONFIG.storage_url,
-                &package.name.group_normalized,
-                &package.name.name_normalized,
-                &package.semver
-            ),
+        TomlEntry {
+            name: package.name.clone(),
+            location: DirectRes::Tar {
+                url: format!(
+                    "{}/{}_{}_{}.tar",
+                    &CONFIG.storage_url,
+                    &package.name.normalized_group(),
+                    &package.name.normalized_name(),
+                    &package.semver
+                ).parse()
+                .unwrap(),
+                cksum: None,
+            },
             version: package.semver,
             dependencies: Vec::new(),
             yanked: false,
@@ -34,10 +25,11 @@ impl From<PackageVersion> for Metadata {
     }
 }
 
-impl From<DependencyReq> for DependencyMeta {
+impl From<DependencyReq> for TomlDep {
     fn from(req: DependencyReq) -> Self {
-        DependencyMeta {
-            name: format!("{}/{}", &req.name.group, &req.name.name),
+        TomlDep {
+            name: req.name,
+            index: None,
             req: req.version_req,
         }
     }

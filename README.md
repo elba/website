@@ -45,7 +45,6 @@ and then responses 200 OK currently.
 - [x] Fetch index
 - [x] Update index
 - [x] Push index
-- [ ] Setup local index for development usage
 - [x] Error handling middleware (currently any error represents as 500 Internal Error)
 - [ ] Use supervisor actor to recover from fatal
 - [x] Rollback publish transcaton when fs error occured
@@ -56,4 +55,4 @@ and then responses 200 OK currently.
 - [x] Add description/readme/homepage
 - [x] Add authors
 - [ ] Forced gzip compression
-- [ ] Improve `PackageName` / `PackageVersion` consistency
+- [x] Improve `PackageName` / `PackageVersion` consistency
