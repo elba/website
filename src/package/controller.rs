@@ -4,9 +4,12 @@ use std::str::FromStr;
 
 use actix_web::*;
 use bytes::Bytes;
-use elba::package::manifest::{DepReq, Manifest};
+use elba::package::{
+    manifest::{DepReq, Manifest},
+    Name,
+};
 use failure::Error;
-use futures::prelude::*;
+use futures::{future, prelude::*};
 use semver;
 use tar::Archive;
 
@@ -24,9 +27,18 @@ pub struct YankReq {
 }
 
 pub fn yank((query, state): (Query<YankReq>, State<AppState>)) -> impl Responder {
+    // TODO: These ugly codes should be fixed by async/await
+    let name = match Name::new(query.package_group_name.clone(), query.package_name.clone()) {
+        Ok(name) => name,
+        Err(err) => {
+            let error: Box<Future<Item = _, Error = _>> = Box::new(future::err(err));
+            return error;
+        }
+    };
+
     let package_version = PackageVersion {
-        name: PackageName::new(&query.package_group_name, &query.package_name),
-        semver: query.semver.to_string(),
+        name,
+        semver: query.semver.clone(),
     };
 
     let yank_version = state
@@ -55,9 +67,17 @@ pub struct PublishReq {
 pub fn publish(
     (query, state, req): (Query<PublishReq>, State<AppState>, HttpRequest<AppState>),
 ) -> impl Responder {
+    let name = match Name::new(query.package_group_name.clone(), query.package_name.clone()) {
+        Ok(name) => name,
+        Err(err) => {
+            let error: Box<Future<Item = _, Error = _>> = Box::new(future::err(err));
+            return error;
+        }
+    };
+
     let package_version = PackageVersion {
-        name: PackageName::new(&query.package_group_name, &query.package_name),
-        semver: query.semver.to_string(),
+        name,
+        semver: query.semver.clone(),
     };
 
     let verify_spec = state
@@ -181,18 +201,17 @@ fn deps_in_manifest(manifest: &Manifest) -> Result<Vec<(DependencyReq)>, Error> 
 
     for (name, ver_req) in manifest.dependencies.iter() {
         let version_req = match ver_req {
-            DepReq::Registry(constrain) => constrain.to_string(),
+            DepReq::Registry(constrain) => constrain.clone(),
             _ => {
                 return Err(human!(
-                    "Package contains non-index dependency {}/{}",
-                    name.group(),
-                    name.name()
+                    "Package contains non-index dependency {}",
+                    name.as_str()
                 ))
             }
         };
 
         deps.push(DependencyReq {
-            name: PackageName::new(name.group(), name.name()),
+            name: name.clone(),
             version_req,
         });
     }

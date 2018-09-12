@@ -7,9 +7,10 @@ use diesel::{
     pg::upsert::{excluded, on_constraint},
     prelude::*,
 };
-use elba::package::manifest::PackageInfo;
+use elba::package::{manifest::PackageInfo, version::Constraint, Name};
 use failure::{Error, ResultExt};
 use futures::Future;
+use semver;
 
 use crate::database::{Connection, Database};
 use crate::index::{Index, SaveAndUpdate, YankAndUpdate};
@@ -17,32 +18,9 @@ use crate::schema::{dependencies, package_groups, packages, version_authors, ver
 use crate::user::model::{lookup_user, LookupUser};
 
 #[derive(Clone)]
-pub struct PackageName {
-    pub group: String,
-    pub name: String,
-    pub group_normalized: String,
-    pub name_normalized: String,
-}
-
-impl PackageName {
-    pub fn new(package_group_name: &str, package_name: &str) -> PackageName {
-        PackageName {
-            group: package_group_name.to_owned(),
-            name: package_name.to_owned(),
-            group_normalized: normalize(package_group_name),
-            name_normalized: normalize(package_name),
-        }
-    }
-}
-
-fn normalize(name: &str) -> String {
-    name.replace("_", "-")
-}
-
-#[derive(Clone)]
 pub struct PackageVersion {
-    pub name: PackageName,
-    pub semver: String,
+    pub name: Name,
+    pub semver: semver::Version,
 }
 
 #[allow(dead_code)]
@@ -121,10 +99,10 @@ struct CreateVersion<'a> {
 
 #[derive(Insertable)]
 #[table_name = "dependencies"]
-struct CreateDependency<'a> {
+struct CreateDependency {
     version_id: i32,
     package_id: i32,
-    version_req: &'a str,
+    version_req: String,
 }
 
 #[derive(Insertable)]
@@ -136,8 +114,8 @@ struct CreateAuthor<'a> {
 
 #[derive(Clone)]
 pub struct DependencyReq {
-    pub name: PackageName,
-    pub version_req: String,
+    pub name: Name,
+    pub version_req: Constraint,
 }
 
 pub struct VerifyVersion {
@@ -225,17 +203,18 @@ pub fn verify_version(msg: VerifyVersion, conn: &Connection) -> Result<(), Error
         return Err(human!("User not found to token `{}`", &msg.token));
     }
 
-    let mut token_result = package_groups
+    let token_result = package_groups
         .inner_join(users)
         .select(token)
-        .filter(package_group_name.eq(&msg.package.name.group_normalized))
-        .load::<String>(conn)?;
+        .filter(package_group_name.eq(msg.package.name.normalized_group()))
+        .get_result::<String>(conn)
+        .optional()?;
 
-    if let Some(token_exist) = token_result.pop() {
+    if let Some(token_exist) = token_result {
         if token_exist != msg.token {
             return Err(human!(
                 "Package group `{}` has already been taken",
-                &msg.package.name.group
+                &msg.package.name.group()
             ));
         }
     }
@@ -244,9 +223,8 @@ pub fn verify_version(msg: VerifyVersion, conn: &Connection) -> Result<(), Error
 
     if version.is_some() {
         return Err(human!(
-            "Package `{}/{} {}` already exists",
-            &msg.package.name.group,
-            &msg.package.name.name,
+            "Package `{} {}` already exists",
+            &msg.package.name.as_str(),
             &msg.package.semver,
         ));
     }
@@ -273,8 +251,8 @@ pub fn publish_version(
             let dep_id = packages::table
                 .inner_join(package_groups::table)
                 .select(packages::id)
-                .filter(package_groups::package_group_name.eq(&dep_req.name.group_normalized))
-                .filter(packages::package_name.eq(&dep_req.name.name_normalized))
+                .filter(package_groups::package_group_name.eq(&dep_req.name.normalized_group()))
+                .filter(packages::package_name.eq(&dep_req.name.normalized_name()))
                 .get_result::<i32>(conn)
                 .optional()?;
 
@@ -282,9 +260,8 @@ pub fn publish_version(
                 deps_info.push((dep_id, dep_req.version_req.clone()));
             } else {
                 return Err(human!(
-                    "Dependency `{}/{}` not found in index",
-                    &dep_req.name.group,
-                    &dep_req.name.name,
+                    "Dependency `{}` not found in index",
+                    dep_req.name.as_str()
                 ));
             }
         }
@@ -299,21 +276,21 @@ pub fn publish_version(
         diesel::insert_into(package_groups::table)
             .values(CreatePackageGroup {
                 user_id: user.id,
-                package_group_name: &msg.package.name.group_normalized,
-                package_group_name_origin: &msg.package.name.group,
+                package_group_name: &msg.package.name.normalized_group(),
+                package_group_name_origin: &msg.package.name.group(),
             }).on_conflict_do_nothing()
             .execute(conn)?;
 
         let package_group_id = package_groups::table
             .select(package_groups::id)
-            .filter(package_groups::package_group_name.eq(&msg.package.name.group_normalized))
+            .filter(package_groups::package_group_name.eq(&msg.package.name.normalized_group()))
             .get_result::<i32>(conn)?;
 
         let package_id = diesel::insert_into(packages::table)
             .values(CreatePackage {
                 package_group_id,
-                package_name: &msg.package.name.name_normalized,
-                package_name_origin: &msg.package.name.name,
+                package_name: &msg.package.name.normalized_name(),
+                package_name_origin: &msg.package.name.name(),
                 description: msg.package_info.description.as_ref().map(|s| s.as_str()),
                 homepage: msg.package_info.homepage.as_ref().map(|s| s.as_str()),
                 repository: msg.package_info.repository.as_ref().map(|s| s.as_str()),
@@ -335,7 +312,7 @@ pub fn publish_version(
         let version_id = diesel::insert_into(versions::table)
             .values(CreateVersion {
                 package_id,
-                semver: &msg.package.semver,
+                semver: &msg.package.semver.to_string(),
             }).returning(versions::id)
             .get_result::<i32>(conn)?;
 
@@ -344,7 +321,7 @@ pub fn publish_version(
             .map(|dep_info| CreateDependency {
                 version_id,
                 package_id: dep_info.0,
-                version_req: dep_info.1.as_str(),
+                version_req: dep_info.1.to_string(),
             }).collect();
 
         diesel::insert_into(dependencies::table)
@@ -384,30 +361,41 @@ pub fn yank_version(msg: YankVersion, conn: &Connection, index: &Addr<Index>) ->
             conn,
         )?;
 
-        let user = user.ok_or_else(|| human!("User not found for token {}", &msg.token))?;
+        let user = user.ok_or_else(|| human!("User not found to token {}", &msg.token))?;
 
         let (user_id, version_id, yanked) = versions::table
             .inner_join(packages::table.inner_join(package_groups::table))
-            .filter(package_groups::package_group_name.eq(&msg.package.name.group_normalized))
-            .filter(packages::package_name.eq(&msg.package.name.name_normalized))
-            .filter(versions::semver.eq(&msg.package.semver))
+            .filter(package_groups::package_group_name.eq(&msg.package.name.normalized_group()))
+            .filter(packages::package_name.eq(&msg.package.name.normalized_name()))
+            .filter(versions::semver.eq(msg.package.semver.to_string()))
             .select((package_groups::user_id, versions::id, versions::yanked))
             .get_result::<(i32, i32, bool)>(conn)
             .optional()?
-            // TODO:
-            .ok_or_else(|| human!("Package not found"))?;
+            .ok_or_else(|| {
+                human!(
+                    "Package `{} {}` not found",
+                    msg.package.name.as_str(),
+                    msg.package.semver
+                )
+            })?;
 
         if user_id != user.id {
-            // TODO:
-            return Err(human!("You don't own this package"));
+            return Err(human!(
+                "You don't own package `{}`",
+                msg.package.name.as_str()
+            ));
         }
 
         if yanked && msg.yanked {
-            // TODO:
-            return Err(human!("Package has already been yanked"));
+            return Err(human!(
+                "Package `{}` has already been yanked",
+                msg.package.name.as_str()
+            ));
         } else if !yanked && !msg.yanked {
-            // TODO:
-            return Err(human!("Package has not already been yanked"));
+            return Err(human!(
+                "Can not unyank package `{}`, it is not yanked",
+                msg.package.name.as_str()
+            ));
         }
 
         diesel::update(versions::table)
@@ -433,9 +421,9 @@ pub fn lookup_version(msg: LookupVersion, conn: &Connection) -> Result<Option<Ve
     use schema::versions::dsl::*;
     let version = versions
         .inner_join(packages.inner_join(package_groups))
-        .filter(package_group_name.eq(&msg.0.name.group_normalized))
-        .filter(package_name.eq(&msg.0.name.name_normalized))
-        .filter(semver.eq(&msg.0.semver))
+        .filter(package_group_name.eq(&msg.0.name.normalized_group()))
+        .filter(package_name.eq(&msg.0.name.normalized_name()))
+        .filter(semver.eq(msg.0.semver.to_string()))
         .select(versions::all_columns())
         .get_result::<Version>(conn)
         .optional()?;
