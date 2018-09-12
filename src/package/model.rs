@@ -14,7 +14,9 @@ use semver;
 
 use crate::database::{Connection, Database};
 use crate::index::{Index, SaveAndUpdate, YankAndUpdate};
-use crate::schema::{dependencies, package_groups, packages, version_authors, versions};
+use crate::schema::{
+    dependencies, package_groups, packages, version_authors, version_downloads, versions,
+};
 use crate::user::model::{lookup_user, LookupUser};
 
 #[derive(Clone)]
@@ -112,6 +114,12 @@ struct CreateAuthor<'a> {
     name: &'a str,
 }
 
+#[derive(Insertable)]
+#[table_name = "version_downloads"]
+struct CreateVersionDownload {
+    version_id: i32,
+}
+
 #[derive(Clone)]
 pub struct DependencyReq {
     pub name: Name,
@@ -140,6 +148,8 @@ pub struct YankVersion {
 
 pub struct LookupVersion(pub PackageVersion);
 
+pub struct IncreaseDownload(pub PackageVersion);
+
 impl Message for VerifyVersion {
     type Result = Result<(), Error>;
 }
@@ -154,6 +164,10 @@ impl Message for YankVersion {
 
 impl Message for LookupVersion {
     type Result = Result<Option<Version>, Error>;
+}
+
+impl Message for IncreaseDownload {
+    type Result = Result<(), Error>;
 }
 
 impl Handler<VerifyVersion> for Database {
@@ -185,6 +199,14 @@ impl Handler<LookupVersion> for Database {
 
     fn handle(&mut self, msg: LookupVersion, _: &mut Self::Context) -> Self::Result {
         lookup_version(msg, &self.connection()?)
+    }
+}
+
+impl Handler<IncreaseDownload> for Database {
+    type Result = Result<(), Error>;
+
+    fn handle(&mut self, msg: IncreaseDownload, _: &mut Self::Context) -> Self::Result {
+        increase_download(msg, &self.connection()?)
     }
 }
 
@@ -428,4 +450,26 @@ pub fn lookup_version(msg: LookupVersion, conn: &Connection) -> Result<Option<Ve
         .get_result::<Version>(conn)
         .optional()?;
     Ok(version)
+}
+
+pub fn increase_download(msg: IncreaseDownload, conn: &Connection) -> Result<(), Error> {
+    use schema::version_downloads::dsl::*;
+
+    let version = lookup_version(LookupVersion(msg.0.clone()), conn)?.ok_or_else(|| {
+        human!(
+            "Package `{} {}` not found",
+            msg.0.name.as_str(),
+            msg.0.semver
+        )
+    })?;
+
+    diesel::insert_into(version_downloads)
+        .values(CreateVersionDownload {
+            version_id: version.id,
+        }).on_conflict(on_constraint("unique_version_date"))
+        .do_update()
+        .set(downloads.eq(downloads + 1))
+        .execute(conn)?;
+
+    Ok(())
 }

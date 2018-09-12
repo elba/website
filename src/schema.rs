@@ -56,6 +56,15 @@ table! {
 }
 
 table! {
+    version_downloads (id) {
+        id -> Int4,
+        version_id -> Int4,
+        date -> Date,
+        downloads -> Int4,
+    }
+}
+
+table! {
     versions (id) {
         id -> Int4,
         package_id -> Int4,
@@ -70,6 +79,7 @@ joinable!(dependencies -> versions (version_id));
 joinable!(package_groups -> users (user_id));
 joinable!(packages -> package_groups (package_group_id));
 joinable!(version_authors -> versions (version_id));
+joinable!(version_downloads -> versions (version_id));
 joinable!(versions -> packages (package_id));
 
 allow_tables_to_appear_in_same_query!(
@@ -78,5 +88,6 @@ allow_tables_to_appear_in_same_query!(
     packages,
     users,
     version_authors,
+    version_downloads,
     versions,
 );

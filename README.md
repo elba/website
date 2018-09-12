@@ -10,7 +10,7 @@ $ cargo run
 
 ## Deploy
 1. Clone this repo into your server.
-2. Edit `docker-compose.yml`: fill in `VIRTUAL_HOST`, `STORAGE_URL`, `REMOTE_INDEX_URL`, 
+2. Edit `docker-compose.yml`: fill in enviroment varibles, 
 `REMOTE_INDEX_USER` and `REMOTE_INDEX_PWD`.
 3. Place your ssl certs to `/var/lib/nginx/certs/cert.csr` and 
 `/var/lib/nginx/certs/cert.key`.
@@ -38,7 +38,7 @@ $ curl -v -L --request POST --data-binary "@your_project.tar" "http://localhost:
 
 and then responses 200 OK currently.
 
-## Roadmap
+## Back-end Roadmap
 - [x] Login
 - [x] Publish package
 - [x] Store tarballs
@@ -46,13 +46,18 @@ and then responses 200 OK currently.
 - [x] Update index
 - [x] Push index
 - [x] Error handling middleware (currently any error represents as 500 Internal Error)
-- [ ] Use supervisor actor to recover from fatal
 - [x] Rollback publish transcaton when fs error occured
 - [x] Setup nginx as TLS front-end and static server (hosts static assets and tarballs).
 - [x] Dockerfile
-- [ ] Basic search support
 - [x] Yank support
 - [x] Add description/readme/homepage
 - [x] Add authors
-- [ ] Forced gzip compression
 - [x] Improve `PackageName` / `PackageVersion` consistency
+- [ ] Forced gzip compression
+- [ ] Basic search support
+
+### Front-end Roadmap
+
+- [ ] Initially implement front-end
+- [ ] Github OAuth
+- [ ] Display token
