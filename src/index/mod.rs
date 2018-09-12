@@ -63,7 +63,7 @@ impl Handler<SaveAndUpdate> for Index {
         file.write_all(&msg.bytes)?;
 
         info!(
-            "Updating index for `{} {}`",
+            "Updating index for publishing `{} {}`",
             &msg.package.name.as_str(),
             &msg.package.semver
         );
@@ -108,6 +108,13 @@ impl Handler<YankAndUpdate> for Index {
     type Result = Result<(), Error>;
 
     fn handle(&mut self, msg: YankAndUpdate, _: &mut Self::Context) -> Self::Result {
+        info!(
+            "Updating index for yanking `{} {}` (yanked={})",
+            &msg.package.name.as_str(),
+            &msg.package.semver,
+            &msg.yanked,
+        );
+
         self.repo.fetch_and_reset()?;
 
         let group_path = CONFIG.index_path.join(&msg.package.name.group());
@@ -123,8 +130,10 @@ impl Handler<YankAndUpdate> for Index {
         file.read_to_string(&mut buf)?;
 
         for line in buf.split("\n") {
-            let mut metadata: TomlEntry =
-                serde_json::from_str(line).context("Failed parse metadata")?;
+            let mut metadata: TomlEntry = match serde_json::from_str(line) {
+                Ok(metadata) => metadata,
+                Err(_) => continue,
+            };
 
             if metadata.name == msg.package.name && metadata.version == msg.package.semver {
                 metadata.yanked = msg.yanked;
