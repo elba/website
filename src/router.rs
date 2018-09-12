@@ -10,4 +10,14 @@ pub fn router(app: App<AppState>) -> App<AppState> {
             Method::POST,
             package::controller::publish,
         ).route("/packages/yank", Method::POST, package::controller::yank)
+        // .route(
+        //     "/packages/search",
+        //     Method::GET,
+        //     package::controller::search,
+        // )
+        .route(
+            "/packages/download",
+            Method::GET,
+            package::controller::download,
+        )
 }

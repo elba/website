@@ -47,7 +47,8 @@ services:
       - BIND_TO=0.0.0.0:17000
       - MAX_UPLOAD_SIZE=31457280
       - STORAGE_PATH=./tmp/storage
-      - STORAGE_URL=https://dl.chaos.tk
+      - BACKEND_URL=https://elba.chaos.tk
+      - CDN_URL=https://dl.chaos.tk
       - INDEX_PATH=./tmp/index
       - REMOTE_INDEX_URL=https://github.com/andylokandy/index.git
       - REMOTE_INDEX_USER=

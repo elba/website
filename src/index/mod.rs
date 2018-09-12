@@ -1,4 +1,3 @@
-pub mod metadata;
 pub mod repo;
 
 use std::fs::{create_dir_all, File, OpenOptions};
@@ -9,10 +8,11 @@ use bytes::Bytes;
 use failure::{Error, ResultExt};
 use serde_json;
 
-use elba::remote::{TomlDep, TomlEntry};
+use elba::remote::{resolution::DirectRes, TomlDep, TomlEntry};
 
 use self::repo::IndexRepo;
 use crate::package::model::{DependencyReq, PackageVersion};
+
 use crate::CONFIG;
 
 pub struct Index {
@@ -55,12 +55,7 @@ impl Handler<SaveAndUpdate> for Index {
 
     fn handle(&mut self, msg: SaveAndUpdate, _: &mut Self::Context) -> Self::Result {
         // store tarball
-        let tar_path = CONFIG.storage_path.join(format!(
-            "{}_{}_{}.tar",
-            &msg.package.name.normalized_group(),
-            &msg.package.name.normalized_name(),
-            &msg.package.semver
-        ));
+        let tar_path = CONFIG.storage_path.join(tar_name(&msg.package));
 
         info!("Saving tarball to `{:?}`", &tar_path);
 
@@ -159,4 +154,49 @@ impl Handler<YankAndUpdate> for Index {
 
         Ok(())
     }
+}
+
+impl From<PackageVersion> for TomlEntry {
+    fn from(package: PackageVersion) -> Self {
+        TomlEntry {
+            name: package.name.clone(),
+            location: DirectRes::Tar {
+                url: format!(
+                    "{}/api/v1/packages/download?package_group_name={}&package_name={}&semver={}",
+                    &CONFIG.backend_url,
+                    &package.name.normalized_group(),
+                    &package.name.normalized_name(),
+                    &package.semver
+                ).parse()
+                .unwrap(),
+                cksum: None,
+            },
+            version: package.semver,
+            dependencies: Vec::new(),
+            yanked: false,
+        }
+    }
+}
+
+impl From<DependencyReq> for TomlDep {
+    fn from(req: DependencyReq) -> Self {
+        TomlDep {
+            name: req.name,
+            index: None,
+            req: req.version_req,
+        }
+    }
+}
+
+pub fn get_location(package: &PackageVersion) -> String {
+    format!("{}/{}", &CONFIG.cdn_url, &tar_name(package))
+}
+
+fn tar_name(package: &PackageVersion) -> String {
+    format!(
+        "{}_{}_{}.tar",
+        &package.name.normalized_group(),
+        &package.name.normalized_name(),
+        &package.semver
+    )
 }

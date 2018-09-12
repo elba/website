@@ -16,6 +16,7 @@ extern crate semver;
 extern crate serde_json;
 extern crate tar;
 extern crate tokio;
+extern crate url;
 #[macro_use]
 extern crate diesel;
 #[macro_use]

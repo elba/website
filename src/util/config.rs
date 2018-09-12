@@ -6,7 +6,8 @@ use std::path::PathBuf;
 pub struct Config {
     pub max_upload_size: usize,
     pub storage_path: PathBuf,
-    pub storage_url: String,
+    pub backend_url: String,
+    pub cdn_url: String,
     pub index_path: PathBuf,
     pub remote_index_url: String,
     pub remote_index_user: String,
@@ -20,7 +21,8 @@ impl Config {
                 .parse()
                 .expect("MAX_UPLOAD_SIZE is not a number!"),
             storage_path: read_env_path("STORAGE_PATH"),
-            storage_url: read_env("STORAGE_URL"),
+            backend_url: read_env("BACKEND_URL"),
+            cdn_url: read_env("CDN_URL"),
             index_path: read_env_path("INDEX_PATH"),
             remote_index_url: read_env("REMOTE_INDEX_URL"),
             remote_index_user: read_env("REMOTE_INDEX_USER"),
