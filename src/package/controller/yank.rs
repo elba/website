@@ -1,8 +1,10 @@
+use std::convert::TryFrom;
+
 use actix_web::*;
-use elba::package::Name;
 use failure::Error;
 use futures::{future, prelude::*};
-use semver;
+
+use super::PackageVersionReq;
 
 use crate::package::model::*;
 use crate::util::error::report_error;
@@ -10,26 +12,19 @@ use crate::AppState;
 
 #[derive(Deserialize, Clone)]
 pub struct YankReq {
-    pub package_group_name: String,
-    pub package_name: String,
-    pub semver: semver::Version,
     pub yanked: bool,
     pub token: String,
 }
 
-pub fn yank((query, state): (Query<YankReq>, State<AppState>)) -> impl Responder {
-    // TODO: These ugly codes should be fixed by async/await
-    let name = match Name::new(query.package_group_name.clone(), query.package_name.clone()) {
-        Ok(name) => name,
+pub fn yank(
+    (path, query, state): (Path<PackageVersionReq>, Query<YankReq>, State<AppState>),
+) -> impl Responder {
+    let package_version = match PackageVersion::try_from(path.into_inner()) {
+        Ok(package_version) => package_version,
         Err(err) => {
             let error: Box<Future<Item = _, Error = _>> = Box::new(future::err(err));
             return error;
         }
-    };
-
-    let package_version = PackageVersion {
-        name,
-        semver: query.semver.clone(),
     };
 
     let yank_version = state

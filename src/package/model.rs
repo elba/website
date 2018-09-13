@@ -7,7 +7,7 @@ use diesel::{
     pg::upsert::{excluded, on_constraint},
     prelude::*,
 };
-use elba::package::{manifest::PackageInfo, version::Constraint, Name};
+use elba::package::{manifest::PackageInfo, version::Constraint, Name as PackageName};
 use failure::{Error, ResultExt};
 use futures::Future;
 use semver;
@@ -21,7 +21,7 @@ use crate::user::model::{lookup_user, LookupUser};
 
 #[derive(Clone)]
 pub struct PackageVersion {
-    pub name: Name,
+    pub name: PackageName,
     pub semver: semver::Version,
 }
 
@@ -122,7 +122,7 @@ struct CreateVersionDownload {
 
 #[derive(Clone)]
 pub struct DependencyReq {
-    pub name: Name,
+    pub name: PackageName,
     pub version_req: Constraint,
 }
 
