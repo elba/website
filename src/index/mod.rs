@@ -93,7 +93,7 @@ impl Handler<SaveAndUpdate> for Index {
         self.repo
             .commit_and_push(
                 &format!(
-                    "Updating package `{}#{}`",
+                    "Updating package `{}|{}`",
                     &msg.package.name.as_str(),
                     &msg.package.semver
                 ),
@@ -154,7 +154,7 @@ impl Handler<YankAndUpdate> for Index {
         self.repo
             .commit_and_push(
                 &format!(
-                    "Updating package `{}#{}`",
+                    "Updating package `{}|{}`",
                     &msg.package.name.as_str(),
                     &msg.package.semver
                 ),
@@ -173,8 +173,8 @@ impl From<PackageVersion> for TomlEntry {
                 url: format!(
                     "{}/api/v1/packages/download?package_group_name={}&package_name={}&semver={}",
                     &CONFIG.backend_url,
-                    &package.name.normalized_group(),
-                    &package.name.normalized_name(),
+                    &package.name.group(),
+                    &package.name.name(),
                     &package.semver
                 ).parse()
                 .unwrap(),
