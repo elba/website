@@ -15,7 +15,7 @@ use semver;
 use crate::database::{Connection, Database};
 use crate::index::{Index, SaveAndUpdate, YankAndUpdate};
 use crate::schema::{
-    dependencies, package_groups, packages, version_authors, version_downloads, versions,
+    dependencies, package_groups, packages, readmes, version_authors, version_downloads, versions,
 };
 use crate::user::model::{lookup_user, LookupUser};
 
@@ -56,7 +56,6 @@ pub struct Version {
     description: Option<String>,
     homepage: Option<String>,
     repository: Option<String>,
-    readme_file: Option<String>,
     license: Option<String>,
     created_at: SystemTime,
 }
@@ -95,8 +94,14 @@ struct CreateVersion<'a> {
     description: Option<&'a str>,
     homepage: Option<&'a str>,
     repository: Option<&'a str>,
-    readme_file: Option<&'a str>,
     license: Option<&'a str>,
+}
+
+#[derive(Insertable)]
+#[table_name = "readmes"]
+struct CreateReadme<'a> {
+    version_id: i32,
+    textfile: &'a str,
 }
 
 #[derive(Insertable)]
@@ -327,10 +332,17 @@ pub fn publish_version(
                 description: msg.package_info.description.as_ref().map(|s| s.as_str()),
                 homepage: msg.package_info.homepage.as_ref().map(|s| s.as_str()),
                 repository: msg.package_info.repository.as_ref().map(|s| s.as_str()),
-                readme_file: msg.readme_file.as_ref().map(|s| s.as_str()),
                 license: msg.package_info.license.as_ref().map(|s| s.as_str()),
             }).returning(versions::id)
             .get_result::<i32>(conn)?;
+
+        if let Some(readme) = msg.readme_file {
+            diesel::insert_into(readmes::table)
+                .values(CreateReadme {
+                    version_id,
+                    textfile: &readme,
+                }).execute(conn)?;
+        }
 
         let create_deps: Vec<CreateDependency> = deps_info
             .iter()

@@ -29,6 +29,13 @@ table! {
 }
 
 table! {
+    readmes (version_id) {
+        version_id -> Int4,
+        textfile -> Varchar,
+    }
+}
+
+table! {
     users (id) {
         id -> Int4,
         email -> Nullable<Varchar>,
@@ -68,7 +75,6 @@ table! {
         description -> Nullable<Varchar>,
         homepage -> Nullable<Varchar>,
         repository -> Nullable<Varchar>,
-        readme_file -> Nullable<Varchar>,
         license -> Nullable<Varchar>,
         created_at -> Timestamp,
     }
@@ -78,6 +84,7 @@ joinable!(dependencies -> packages (package_id));
 joinable!(dependencies -> versions (version_id));
 joinable!(package_groups -> users (user_id));
 joinable!(packages -> package_groups (package_group_id));
+joinable!(readmes -> versions (version_id));
 joinable!(version_authors -> versions (version_id));
 joinable!(version_downloads -> versions (version_id));
 joinable!(versions -> packages (package_id));
@@ -86,6 +93,7 @@ allow_tables_to_appear_in_same_query!(
     dependencies,
     package_groups,
     packages,
+    readmes,
     users,
     version_authors,
     version_downloads,
