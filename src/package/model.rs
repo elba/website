@@ -42,11 +42,6 @@ pub struct Package {
     package_group_id: i32,
     package_name: String,
     package_name_origin: String,
-    description: Option<String>,
-    homepage: Option<String>,
-    repository: Option<String>,
-    readme_file: Option<String>,
-    license: Option<String>,
     updated_at: SystemTime,
     created_at: SystemTime,
 }
@@ -58,6 +53,11 @@ pub struct Version {
     package_id: i32,
     semver: String,
     yanked: bool,
+    description: Option<String>,
+    homepage: Option<String>,
+    repository: Option<String>,
+    readme_file: Option<String>,
+    license: Option<String>,
     created_at: SystemTime,
 }
 
@@ -84,11 +84,6 @@ struct CreatePackage<'a> {
     package_group_id: i32,
     package_name: &'a str,
     package_name_origin: &'a str,
-    description: Option<&'a str>,
-    homepage: Option<&'a str>,
-    repository: Option<&'a str>,
-    readme_file: Option<&'a str>,
-    license: Option<&'a str>,
     updated_at: SystemTime,
 }
 
@@ -97,6 +92,11 @@ struct CreatePackage<'a> {
 struct CreateVersion<'a> {
     package_id: i32,
     semver: &'a str,
+    description: Option<&'a str>,
+    homepage: Option<&'a str>,
+    repository: Option<&'a str>,
+    readme_file: Option<&'a str>,
+    license: Option<&'a str>,
 }
 
 #[derive(Insertable)]
@@ -313,28 +313,22 @@ pub fn publish_version(
                 package_group_id,
                 package_name: &msg.package.name.normalized_name(),
                 package_name_origin: &msg.package.name.name(),
-                description: msg.package_info.description.as_ref().map(|s| s.as_str()),
-                homepage: msg.package_info.homepage.as_ref().map(|s| s.as_str()),
-                repository: msg.package_info.repository.as_ref().map(|s| s.as_str()),
-                readme_file: msg.readme_file.as_ref().map(|s| s.as_str()),
-                license: msg.package_info.license.as_ref().map(|s| s.as_str()),
                 updated_at: SystemTime::now(),
             }).on_conflict(on_constraint("unique_group_package"))
             .do_update()
-            .set((
-                packages::description.eq(excluded(packages::description)),
-                packages::homepage.eq(excluded(packages::homepage)),
-                packages::repository.eq(excluded(packages::repository)),
-                packages::readme_file.eq(excluded(packages::readme_file)),
-                packages::license.eq(excluded(packages::license)),
-                packages::updated_at.eq(excluded(packages::updated_at)),
-            )).returning(packages::id)
+            .set((packages::updated_at.eq(excluded(packages::updated_at)),))
+            .returning(packages::id)
             .get_result::<i32>(conn)?;
 
         let version_id = diesel::insert_into(versions::table)
             .values(CreateVersion {
                 package_id,
                 semver: &msg.package.semver.to_string(),
+                description: msg.package_info.description.as_ref().map(|s| s.as_str()),
+                homepage: msg.package_info.homepage.as_ref().map(|s| s.as_str()),
+                repository: msg.package_info.repository.as_ref().map(|s| s.as_str()),
+                readme_file: msg.readme_file.as_ref().map(|s| s.as_str()),
+                license: msg.package_info.license.as_ref().map(|s| s.as_str()),
             }).returning(versions::id)
             .get_result::<i32>(conn)?;
 

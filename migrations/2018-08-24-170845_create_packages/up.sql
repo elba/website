@@ -4,11 +4,6 @@ CREATE TABLE packages
     package_group_id INTEGER NOT NULL REFERENCES package_groups (id),
     package_name VARCHAR NOT NULL,
     package_name_origin VARCHAR NOT NULL,
-    description VARCHAR,
-    homepage VARCHAR,
-    repository VARCHAR,
-    readme_file VARCHAR,
-    license VARCHAR,
     updated_at TIMESTAMP NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT now(),
 

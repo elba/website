@@ -23,11 +23,6 @@ table! {
         package_group_id -> Int4,
         package_name -> Varchar,
         package_name_origin -> Varchar,
-        description -> Nullable<Varchar>,
-        homepage -> Nullable<Varchar>,
-        repository -> Nullable<Varchar>,
-        readme_file -> Nullable<Varchar>,
-        license -> Nullable<Varchar>,
         updated_at -> Timestamp,
         created_at -> Timestamp,
     }
@@ -70,6 +65,11 @@ table! {
         package_id -> Int4,
         semver -> Varchar,
         yanked -> Bool,
+        description -> Nullable<Varchar>,
+        homepage -> Nullable<Varchar>,
+        repository -> Nullable<Varchar>,
+        readme_file -> Nullable<Varchar>,
+        license -> Nullable<Varchar>,
         created_at -> Timestamp,
     }
 }
