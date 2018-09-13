@@ -7,7 +7,6 @@ CREATE TABLE versions
     description VARCHAR,
     homepage VARCHAR,
     repository VARCHAR,
-    readme_file VARCHAR,
     license VARCHAR,
     created_at TIMESTAMP NOT NULL DEFAULT now(),
 
