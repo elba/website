@@ -1,8 +1,9 @@
+use std::convert::TryFrom;
 use std::io::Read;
 use std::path::Path;
 use std::str::FromStr;
 
-use actix_web::*;
+use actix_web::{self, *};
 use bytes::Bytes;
 use elba::package::{
     manifest::{DepReq, Manifest},
@@ -10,8 +11,9 @@ use elba::package::{
 };
 use failure::Error;
 use futures::{future, prelude::*};
-use semver;
 use tar::Archive;
+
+use super::PackageVersionReq;
 
 use crate::package::model::*;
 use crate::util::error::report_error;
@@ -19,26 +21,23 @@ use crate::{AppState, CONFIG};
 
 #[derive(Deserialize, Clone)]
 pub struct PublishReq {
-    pub package_group_name: String,
-    pub package_name: String,
-    pub semver: semver::Version,
     pub token: String,
 }
 
 pub fn publish(
-    (query, state, req): (Query<PublishReq>, State<AppState>, HttpRequest<AppState>),
+    (path, query, state, req): (
+        actix_web::Path<PackageVersionReq>,
+        Query<PublishReq>,
+        State<AppState>,
+        HttpRequest<AppState>,
+    ),
 ) -> impl Responder {
-    let name = match Name::new(query.package_group_name.clone(), query.package_name.clone()) {
-        Ok(name) => name,
+    let package_version = match PackageVersion::try_from(path.clone()) {
+        Ok(package_version) => package_version,
         Err(err) => {
             let error: Box<Future<Item = _, Error = _>> = Box::new(future::err(err));
             return error;
         }
-    };
-
-    let package_version = PackageVersion {
-        name,
-        semver: query.semver.clone(),
     };
 
     let verify_spec = state
@@ -57,7 +56,7 @@ pub fn publish(
     let publish_and_save = receive_body
         .and_then(move |bytes: Bytes| {
             let manifest = read_manifest(&bytes)?;
-            verify_manifest(&query, &manifest)?;
+            verify_manifest(&path, &manifest)?;
 
             let deps = deps_in_manifest(&manifest)?;
             let readme_file = read_readme(
@@ -139,16 +138,16 @@ fn read_readme(bytes: &[u8], subpath: Option<&Path>) -> Result<Option<String>, E
     }
 }
 
-fn verify_manifest(req: &PublishReq, manifest: &Manifest) -> Result<(), Error> {
-    if manifest.package.name.group() != req.package_group_name {
+fn verify_manifest(req: &PackageVersionReq, manifest: &Manifest) -> Result<(), Error> {
+    if manifest.package.name.group() != req.group {
         return Err(human!("Package group name mismatched"));
     }
 
-    if manifest.package.name.name() != req.package_name {
+    if manifest.package.name.name() != req.package {
         return Err(human!("Package name mismatched"));
     }
 
-    if manifest.package.version != req.semver {
+    if manifest.package.version != req.version {
         return Err(human!("Package version mismatched"));
     }
 
