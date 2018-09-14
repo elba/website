@@ -6,15 +6,18 @@ pub fn router(app: App<AppState>) -> App<AppState> {
     app.prefix("/api/v1")
         .route("/users/login", Method::GET, user::controller::login)
         .route("/packages/search", Method::GET, package::controller::yank)
-        .route("/packages/groups", Method::GET, package::controller::yank)
         .route(
+            "/packages/groups",
+            Method::GET,
+            package::controller::metadata::list_groups,
+        ).route(
             "/packages/{group}/metadata",
             Method::GET,
             package::controller::yank,
         ).route(
             "/packages/{group}/packages",
             Method::GET,
-            package::controller::yank,
+            package::controller::metadata::list_packages,
         ).route(
             "/packages/{group}/{package}/metadata",
             Method::GET,
@@ -22,7 +25,7 @@ pub fn router(app: App<AppState>) -> App<AppState> {
         ).route(
             "/packages/{group}/{package}/versions",
             Method::GET,
-            package::controller::yank,
+            package::controller::metadata::list_versions,
         ).route(
             "/packages/{group}/{package}/{version}/metadata",
             Method::GET,
