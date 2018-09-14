@@ -1,3 +1,4 @@
+use std::str::FromStr;
 use std::time::SystemTime;
 
 use actix::prelude::*;
@@ -18,6 +19,43 @@ use crate::schema::{
     dependencies, package_groups, packages, readmes, version_authors, version_downloads, versions,
 };
 use crate::user::model::{lookup_user, LookupUser};
+
+#[derive(Clone)]
+pub struct PackageGroupName {
+    group: String,
+    normalized: String,
+}
+
+// TODO: Move into `elba`?
+impl PackageGroupName {
+    pub fn new(group: String) -> Result<Self, Error> {
+        let group_valid = group
+            .chars()
+            .all(|x| x.is_alphanumeric() || x == '_' || x == '-');
+        if !group_valid {
+            bail!("group can only contain letters, numbers, _, and -")
+        }
+
+        let normalized = group
+            .to_ascii_lowercase()
+            .drain(..)
+            .map(|c| if c == '_' { '-' } else { c })
+            .collect::<String>();
+        if normalized.is_empty() {
+            bail!("group cannot be empty")
+        }
+
+        Ok(PackageGroupName { group, normalized })
+    }
+
+    pub fn group(&self) -> &str {
+        &self.group
+    }
+
+    pub fn normalized_group(&self) -> &str {
+        &self.normalized
+    }
+}
 
 #[derive(Clone)]
 pub struct PackageVersion {
@@ -151,6 +189,12 @@ pub struct YankVersion {
     pub token: String,
 }
 
+pub struct ListGroups;
+
+pub struct ListPackages(pub PackageGroupName);
+
+pub struct ListVersions(pub PackageName);
+
 pub struct LookupVersion(pub PackageVersion);
 
 pub struct IncreaseDownload(pub PackageVersion);
@@ -165,6 +209,18 @@ impl Message for PublishVersion {
 
 impl Message for YankVersion {
     type Result = Result<(), Error>;
+}
+
+impl Message for ListGroups {
+    type Result = Result<Vec<PackageGroupName>, Error>;
+}
+
+impl Message for ListPackages {
+    type Result = Result<Vec<PackageName>, Error>;
+}
+
+impl Message for ListVersions {
+    type Result = Result<Vec<PackageVersion>, Error>;
 }
 
 impl Message for LookupVersion {
@@ -196,6 +252,30 @@ impl Handler<YankVersion> for Database {
 
     fn handle(&mut self, msg: YankVersion, _: &mut Self::Context) -> Self::Result {
         yank_version(msg, &self.connection()?, &self.index)
+    }
+}
+
+impl Handler<ListGroups> for Database {
+    type Result = Result<Vec<PackageGroupName>, Error>;
+
+    fn handle(&mut self, msg: ListGroups, _: &mut Self::Context) -> Self::Result {
+        list_groups(msg, &self.connection()?)
+    }
+}
+
+impl Handler<ListPackages> for Database {
+    type Result = Result<Vec<PackageName>, Error>;
+
+    fn handle(&mut self, msg: ListPackages, _: &mut Self::Context) -> Self::Result {
+        list_packages(msg, &self.connection()?)
+    }
+}
+
+impl Handler<ListVersions> for Database {
+    type Result = Result<Vec<PackageVersion>, Error>;
+
+    fn handle(&mut self, msg: ListVersions, _: &mut Self::Context) -> Self::Result {
+        list_versions(msg, &self.connection()?)
     }
 }
 
@@ -441,6 +521,68 @@ pub fn yank_version(msg: YankVersion, conn: &Connection, index: &Addr<Index>) ->
 
         Ok(())
     })
+}
+
+pub fn list_groups(_: ListGroups, conn: &Connection) -> Result<Vec<PackageGroupName>, Error> {
+    let mut group_names = {
+        use schema::package_groups::dsl::*;
+
+        package_groups
+            .select(package_group_name)
+            .load::<String>(conn)?
+    };
+
+    let groups: Vec<_> = group_names
+        .drain(..)
+        .filter_map(|group_name| PackageGroupName::new(group_name).ok())
+        .collect();
+
+    Ok(groups)
+}
+
+pub fn list_packages(msg: ListPackages, conn: &Connection) -> Result<Vec<PackageName>, Error> {
+    let mut packages_names = {
+        use schema::package_groups::dsl::*;
+        use schema::packages::dsl::*;
+
+        packages
+            .inner_join(package_groups)
+            .filter(package_group_name.eq(&msg.0.normalized_group()))
+            .select(package_name)
+            .load::<String>(conn)?
+    };
+
+    let packages: Vec<_> = packages_names
+        .drain(..)
+        .filter_map(|packages_name| PackageName::new(msg.0.group().to_owned(), packages_name).ok())
+        .collect();
+
+    Ok(packages)
+}
+
+pub fn list_versions(msg: ListVersions, conn: &Connection) -> Result<Vec<PackageVersion>, Error> {
+    let semvers = {
+        use schema::package_groups::dsl::*;
+        use schema::packages::dsl::*;
+        use schema::versions::dsl::*;
+
+        versions
+            .inner_join(packages.inner_join(package_groups))
+            .filter(package_group_name.eq(&msg.0.normalized_group()))
+            .filter(package_name.eq(&msg.0.normalized_name()))
+            .select(semver)
+            .load::<String>(conn)?
+    };
+
+    let versions: Vec<_> = semvers
+        .iter()
+        .filter_map(|semver| semver::Version::from_str(semver).ok())
+        .map(|semver| PackageVersion {
+            name: msg.0.clone(),
+            semver,
+        }).collect();
+
+    Ok(versions)
 }
 
 pub fn lookup_version(msg: LookupVersion, conn: &Connection) -> Result<Option<Version>, Error> {

@@ -5,10 +5,7 @@ use std::str::FromStr;
 
 use actix_web::{self, *};
 use bytes::Bytes;
-use elba::package::{
-    manifest::{DepReq, Manifest},
-    Name,
-};
+use elba::package::manifest::{DepReq, Manifest};
 use failure::Error;
 use futures::{future, prelude::*};
 use tar::Archive;
