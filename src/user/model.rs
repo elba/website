@@ -1,4 +1,4 @@
-use std::time::SystemTime;
+use chrono::NaiveDateTime;
 
 use actix::prelude::*;
 use diesel::{self, prelude::*};
@@ -17,8 +17,8 @@ pub struct User {
     pub gh_access_token: String,
     pub gh_avatar: Option<String>,
     pub token: String,
-    pub created_at: SystemTime,
-    pub last_used_at: SystemTime,
+    pub created_at: NaiveDateTime,
+    pub last_used_at: NaiveDateTime,
 }
 
 #[derive(Insertable, AsChangeset)]
@@ -29,7 +29,7 @@ pub struct CreateUser {
     pub gh_name: String,
     pub gh_access_token: String,
     pub gh_avatar: Option<String>,
-    pub last_used_at: SystemTime,
+    pub last_used_at: NaiveDateTime,
 }
 
 pub struct LookupUser {

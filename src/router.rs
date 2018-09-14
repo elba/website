@@ -13,7 +13,7 @@ pub fn router(app: App<AppState>) -> App<AppState> {
         ).route(
             "/packages/{group}/metadata",
             Method::GET,
-            package::controller::yank,
+            package::controller::metadata::show_group,
         ).route(
             "/packages/{group}/packages",
             Method::GET,
@@ -21,7 +21,7 @@ pub fn router(app: App<AppState>) -> App<AppState> {
         ).route(
             "/packages/{group}/{package}/metadata",
             Method::GET,
-            package::controller::yank,
+            package::controller::metadata::show_package,
         ).route(
             "/packages/{group}/{package}/versions",
             Method::GET,
@@ -29,7 +29,7 @@ pub fn router(app: App<AppState>) -> App<AppState> {
         ).route(
             "/packages/{group}/{package}/{version}/metadata",
             Method::GET,
-            package::controller::download,
+            package::controller::metadata::show_version,
         ).route(
             "/packages/{group}/{package}/{version}/readme",
             Method::GET,

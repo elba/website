@@ -1,8 +1,8 @@
 use std::str::FromStr;
-use std::time::SystemTime;
 
 use actix::prelude::*;
 use bytes::Bytes;
+use chrono::{offset::Utc, NaiveDateTime};
 use diesel::{
     self,
     pg::upsert::{excluded, on_constraint},
@@ -66,45 +66,45 @@ pub struct PackageVersion {
 #[allow(dead_code)]
 #[derive(Queryable)]
 pub struct PackageGroup {
-    id: i32,
-    user_id: i32,
-    package_group_name: String,
-    package_group_name_origin: String,
-    created_at: SystemTime,
+    pub id: i32,
+    pub user_id: i32,
+    pub package_group_name: String,
+    pub package_group_name_origin: String,
+    pub created_at: NaiveDateTime,
 }
 
 #[allow(dead_code)]
 #[derive(Queryable)]
 pub struct Package {
-    id: i32,
-    package_group_id: i32,
-    package_name: String,
-    package_name_origin: String,
-    updated_at: SystemTime,
-    created_at: SystemTime,
+    pub id: i32,
+    pub package_group_id: i32,
+    pub package_name: String,
+    pub package_name_origin: String,
+    pub updated_at: NaiveDateTime,
+    pub created_at: NaiveDateTime,
 }
 
 #[allow(dead_code)]
 #[derive(Queryable)]
 pub struct Version {
-    id: i32,
-    package_id: i32,
-    semver: String,
-    yanked: bool,
-    description: Option<String>,
-    homepage: Option<String>,
-    repository: Option<String>,
-    license: Option<String>,
-    created_at: SystemTime,
+    pub id: i32,
+    pub package_id: i32,
+    pub semver: String,
+    pub yanked: bool,
+    pub description: Option<String>,
+    pub homepage: Option<String>,
+    pub repository: Option<String>,
+    pub license: Option<String>,
+    pub created_at: NaiveDateTime,
 }
 
 #[allow(dead_code)]
 #[derive(Queryable)]
 pub struct Dependency {
-    id: i32,
-    version_id: i32,
-    package_id: i32,
-    version_req: String,
+    pub id: i32,
+    pub version_id: i32,
+    pub package_id: i32,
+    pub version_req: String,
 }
 
 #[derive(Insertable)]
@@ -121,7 +121,7 @@ struct CreatePackage<'a> {
     package_group_id: i32,
     package_name: &'a str,
     package_name_origin: &'a str,
-    updated_at: SystemTime,
+    updated_at: NaiveDateTime,
 }
 
 #[derive(Insertable)]
@@ -190,11 +190,11 @@ pub struct YankVersion {
 }
 
 pub struct ListGroups;
-
 pub struct ListPackages(pub PackageGroupName);
-
 pub struct ListVersions(pub PackageName);
 
+pub struct LookupGroup(pub PackageGroupName);
+pub struct LookupPackage(pub PackageName);
 pub struct LookupVersion(pub PackageVersion);
 
 pub struct IncreaseDownload(pub PackageVersion);
@@ -221,6 +221,14 @@ impl Message for ListPackages {
 
 impl Message for ListVersions {
     type Result = Result<Vec<PackageVersion>, Error>;
+}
+
+impl Message for LookupGroup {
+    type Result = Result<Option<PackageGroup>, Error>;
+}
+
+impl Message for LookupPackage {
+    type Result = Result<Option<Package>, Error>;
 }
 
 impl Message for LookupVersion {
@@ -276,6 +284,22 @@ impl Handler<ListVersions> for Database {
 
     fn handle(&mut self, msg: ListVersions, _: &mut Self::Context) -> Self::Result {
         list_versions(msg, &self.connection()?)
+    }
+}
+
+impl Handler<LookupGroup> for Database {
+    type Result = Result<Option<PackageGroup>, Error>;
+
+    fn handle(&mut self, msg: LookupGroup, _: &mut Self::Context) -> Self::Result {
+        lookup_group(msg, &self.connection()?)
+    }
+}
+
+impl Handler<LookupPackage> for Database {
+    type Result = Result<Option<Package>, Error>;
+
+    fn handle(&mut self, msg: LookupPackage, _: &mut Self::Context) -> Self::Result {
+        lookup_package(msg, &self.connection()?)
     }
 }
 
@@ -398,7 +422,7 @@ pub fn publish_version(
                 package_group_id,
                 package_name: &msg.package.name.normalized_name(),
                 package_name_origin: &msg.package.name.name(),
-                updated_at: SystemTime::now(),
+                updated_at: Utc::now().naive_utc(),
             }).on_conflict(on_constraint("unique_group_package"))
             .do_update()
             .set((packages::updated_at.eq(excluded(packages::updated_at)),))
@@ -583,6 +607,29 @@ pub fn list_versions(msg: ListVersions, conn: &Connection) -> Result<Vec<Package
         }).collect();
 
     Ok(versions)
+}
+
+pub fn lookup_group(msg: LookupGroup, conn: &Connection) -> Result<Option<PackageGroup>, Error> {
+    use schema::package_groups::dsl::*;
+    let group = package_groups
+        .filter(package_group_name.eq(&msg.0.normalized_group()))
+        .select(package_groups::all_columns())
+        .get_result::<PackageGroup>(conn)
+        .optional()?;
+    Ok(group)
+}
+
+pub fn lookup_package(msg: LookupPackage, conn: &Connection) -> Result<Option<Package>, Error> {
+    use schema::package_groups::dsl::*;
+    use schema::packages::dsl::*;
+    let package = packages
+        .inner_join(package_groups)
+        .filter(package_group_name.eq(&msg.0.normalized_group()))
+        .filter(package_name.eq(&msg.0.normalized_name()))
+        .select(packages::all_columns())
+        .get_result::<Package>(conn)
+        .optional()?;
+    Ok(package)
 }
 
 pub fn lookup_version(msg: LookupVersion, conn: &Connection) -> Result<Option<Version>, Error> {

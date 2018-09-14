@@ -53,7 +53,7 @@ pub fn publish(
     let publish_and_save = receive_body
         .and_then(move |bytes: Bytes| {
             let manifest = read_manifest(&bytes)?;
-            verify_manifest(&path, &manifest)?;
+            verify_manifest(&package_version, &manifest)?;
 
             let deps = deps_in_manifest(&manifest)?;
             let readme_file = read_readme(
@@ -135,16 +135,16 @@ fn read_readme(bytes: &[u8], subpath: Option<&Path>) -> Result<Option<String>, E
     }
 }
 
-fn verify_manifest(req: &PackageVersionReq, manifest: &Manifest) -> Result<(), Error> {
-    if manifest.package.name.group() != req.group {
+fn verify_manifest(req: &PackageVersion, manifest: &Manifest) -> Result<(), Error> {
+    if manifest.package.name.group() != req.name.group() {
         return Err(human!("Package group name mismatched"));
     }
 
-    if manifest.package.name.name() != req.package {
+    if manifest.package.name.name() != req.name.name() {
         return Err(human!("Package name mismatched"));
     }
 
-    if manifest.package.version != req.version {
+    if manifest.package.version != req.semver {
         return Err(human!("Package version mismatched"));
     }
 

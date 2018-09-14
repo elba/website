@@ -12,9 +12,9 @@ pub use self::yank::yank;
 
 use std::convert::TryFrom;
 
+use chrono::NaiveDateTime;
 use elba::package::Name as PackageName;
-use failure::Error;
-use semver;
+use failure::{Error, ResultExt};
 
 use super::model::{PackageGroupName, PackageVersion};
 
@@ -33,7 +33,38 @@ pub struct PackageReq {
 pub struct PackageVersionReq {
     pub group: String,
     pub package: String,
-    pub version: semver::Version,
+    pub version: String,
+}
+
+#[derive(Serialize, Clone)]
+pub struct GroupMetadata {
+    #[serde(flatten)]
+    pub group: GroupReq,
+    #[serde(with = "::util::rfc3339")]
+    pub created_at: NaiveDateTime,
+}
+
+#[derive(Serialize, Clone)]
+pub struct PackageMetadata {
+    #[serde(flatten)]
+    pub package: PackageReq,
+    #[serde(with = "::util::rfc3339")]
+    pub updated_at: NaiveDateTime,
+    #[serde(with = "::util::rfc3339")]
+    pub created_at: NaiveDateTime,
+}
+
+#[derive(Serialize, Clone)]
+pub struct VersionMetadata {
+    #[serde(flatten)]
+    pub package_version: PackageVersionReq,
+    pub yanked: bool,
+    pub description: Option<String>,
+    pub homepage: Option<String>,
+    pub repository: Option<String>,
+    pub license: Option<String>,
+    #[serde(with = "::util::rfc3339")]
+    pub created_at: NaiveDateTime,
 }
 
 impl TryFrom<GroupReq> for PackageGroupName {
@@ -56,7 +87,9 @@ impl TryFrom<PackageReq> for PackageName {
     type Error = Error;
 
     fn try_from(req: PackageReq) -> Result<PackageName, Self::Error> {
-        Ok(PackageName::new(req.group, req.package)?)
+        let name = PackageName::new(req.group, req.package)
+            .with_context(|err| human!("Invalid package name: {}", err))?;
+        Ok(name)
     }
 }
 
@@ -73,10 +106,11 @@ impl TryFrom<PackageVersionReq> for PackageVersion {
     type Error = Error;
 
     fn try_from(req: PackageVersionReq) -> Result<PackageVersion, Self::Error> {
-        let name = PackageName::new(req.group, req.package)?;
+        let name = PackageName::new(req.group, req.package)
+            .with_context(|err| human!("Invalid package name: {}", err))?;
         Ok(PackageVersion {
             name,
-            semver: req.version,
+            semver: req.version.parse()?,
         })
     }
 }
@@ -86,7 +120,7 @@ impl From<PackageVersion> for PackageVersionReq {
         PackageVersionReq {
             group: package.name.group().to_owned(),
             package: package.name.name().to_owned(),
-            version: package.semver,
+            version: package.semver.to_string(),
         }
     }
 }
