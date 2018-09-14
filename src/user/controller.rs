@@ -1,9 +1,8 @@
-use std::time::SystemTime;
-
 use actix_web::{
     client, http::StatusCode, AsyncResponder, HttpMessage, HttpResponse, Query, Responder, State,
 };
 use base64;
+use chrono::offset::Utc;
 use failure::Error;
 use futures::prelude::*;
 
@@ -57,7 +56,7 @@ pub fn login((req, state): (Query<LoginReq>, State<AppState>)) -> impl Responder
                 gh_name: req.gh_name.clone(),
                 gh_access_token: req.gh_access_token.clone(),
                 gh_avatar: json.avatar_url,
-                last_used_at: SystemTime::now(),
+                last_used_at: Utc::now().naive_utc(),
             }).flatten()
     });
 
