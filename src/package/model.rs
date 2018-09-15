@@ -63,7 +63,6 @@ pub struct PackageVersion {
     pub semver: semver::Version,
 }
 
-#[allow(dead_code)]
 #[derive(Queryable)]
 pub struct PackageGroup {
     pub id: i32,
@@ -73,7 +72,6 @@ pub struct PackageGroup {
     pub created_at: NaiveDateTime,
 }
 
-#[allow(dead_code)]
 #[derive(Queryable)]
 pub struct Package {
     pub id: i32,
@@ -84,7 +82,6 @@ pub struct Package {
     pub created_at: NaiveDateTime,
 }
 
-#[allow(dead_code)]
 #[derive(Queryable)]
 pub struct Version {
     pub id: i32,
@@ -224,15 +221,15 @@ impl Message for ListVersions {
 }
 
 impl Message for LookupGroup {
-    type Result = Result<Option<PackageGroup>, Error>;
+    type Result = Result<Option<(PackageGroupName, PackageGroup)>, Error>;
 }
 
 impl Message for LookupPackage {
-    type Result = Result<Option<Package>, Error>;
+    type Result = Result<Option<(PackageName, Package)>, Error>;
 }
 
 impl Message for LookupVersion {
-    type Result = Result<Option<Version>, Error>;
+    type Result = Result<Option<(PackageVersion, Version)>, Error>;
 }
 
 impl Message for IncreaseDownload {
@@ -288,7 +285,7 @@ impl Handler<ListVersions> for Database {
 }
 
 impl Handler<LookupGroup> for Database {
-    type Result = Result<Option<PackageGroup>, Error>;
+    type Result = Result<Option<(PackageGroupName, PackageGroup)>, Error>;
 
     fn handle(&mut self, msg: LookupGroup, _: &mut Self::Context) -> Self::Result {
         lookup_group(msg, &self.connection()?)
@@ -296,7 +293,7 @@ impl Handler<LookupGroup> for Database {
 }
 
 impl Handler<LookupPackage> for Database {
-    type Result = Result<Option<Package>, Error>;
+    type Result = Result<Option<(PackageName, Package)>, Error>;
 
     fn handle(&mut self, msg: LookupPackage, _: &mut Self::Context) -> Self::Result {
         lookup_package(msg, &self.connection()?)
@@ -304,7 +301,7 @@ impl Handler<LookupPackage> for Database {
 }
 
 impl Handler<LookupVersion> for Database {
-    type Result = Result<Option<Version>, Error>;
+    type Result = Result<Option<(PackageVersion, Version)>, Error>;
 
     fn handle(&mut self, msg: LookupVersion, _: &mut Self::Context) -> Self::Result {
         lookup_version(msg, &self.connection()?)
@@ -609,48 +606,85 @@ pub fn list_versions(msg: ListVersions, conn: &Connection) -> Result<Vec<Package
     Ok(versions)
 }
 
-pub fn lookup_group(msg: LookupGroup, conn: &Connection) -> Result<Option<PackageGroup>, Error> {
+pub fn lookup_group(
+    msg: LookupGroup,
+    conn: &Connection,
+) -> Result<Option<(PackageGroupName, PackageGroup)>, Error> {
     use schema::package_groups::dsl::*;
-    let group = package_groups
+
+    let result = package_groups
         .filter(package_group_name.eq(&msg.0.normalized_group()))
-        .select(package_groups::all_columns())
-        .get_result::<PackageGroup>(conn)
-        .optional()?;
-    Ok(group)
+        .select((package_group_name_origin, package_groups::all_columns()))
+        .get_result::<(String, PackageGroup)>(conn)
+        .optional()?
+        .and_then(|(group_name, group)| Some((PackageGroupName::new(group_name).ok()?, group)));
+
+    Ok(result)
 }
 
-pub fn lookup_package(msg: LookupPackage, conn: &Connection) -> Result<Option<Package>, Error> {
-    use schema::package_groups::dsl::*;
-    use schema::packages::dsl::*;
-    let package = packages
-        .inner_join(package_groups)
-        .filter(package_group_name.eq(&msg.0.normalized_group()))
-        .filter(package_name.eq(&msg.0.normalized_name()))
-        .select(packages::all_columns())
-        .get_result::<Package>(conn)
-        .optional()?;
-    Ok(package)
+pub fn lookup_package(
+    msg: LookupPackage,
+    conn: &Connection,
+) -> Result<Option<(PackageName, Package)>, Error> {
+    let result = {
+        use schema::package_groups::dsl::*;
+        use schema::packages::dsl::*;
+        packages
+            .inner_join(package_groups)
+            .filter(package_group_name.eq(&msg.0.normalized_group()))
+            .filter(package_name.eq(&msg.0.normalized_name()))
+            .select((
+                package_group_name_origin,
+                package_name_origin,
+                packages::all_columns(),
+            )).get_result::<(String, String, Package)>(conn)
+            .optional()?
+    };
+
+    let result = result.and_then(|(group_name, package_name, package)| {
+        Some((PackageName::new(group_name, package_name).ok()?, package))
+    });
+
+    Ok(result)
 }
 
-pub fn lookup_version(msg: LookupVersion, conn: &Connection) -> Result<Option<Version>, Error> {
-    use schema::package_groups::dsl::*;
-    use schema::packages::dsl::*;
-    use schema::versions::dsl::*;
-    let version = versions
-        .inner_join(packages.inner_join(package_groups))
-        .filter(package_group_name.eq(&msg.0.name.normalized_group()))
-        .filter(package_name.eq(&msg.0.name.normalized_name()))
-        .filter(semver.eq(msg.0.semver.to_string()))
-        .select(versions::all_columns())
-        .get_result::<Version>(conn)
-        .optional()?;
-    Ok(version)
+pub fn lookup_version(
+    msg: LookupVersion,
+    conn: &Connection,
+) -> Result<Option<(PackageVersion, Version)>, Error> {
+    let result = {
+        use schema::package_groups::dsl::*;
+        use schema::packages::dsl::*;
+        use schema::versions::dsl::*;
+        versions
+            .inner_join(packages.inner_join(package_groups))
+            .filter(package_group_name.eq(&msg.0.name.normalized_group()))
+            .filter(package_name.eq(&msg.0.name.normalized_name()))
+            .filter(semver.eq(msg.0.semver.to_string()))
+            .select((
+                package_group_name_origin,
+                package_name_origin,
+                versions::all_columns(),
+            )).get_result::<(String, String, Version)>(conn)
+            .optional()?
+    };
+
+    let result = result.and_then(|(group_name, package_name, version)| {
+        let package_name = PackageName::new(group_name, package_name).ok()?;
+        let package_version = PackageVersion {
+            name: package_name,
+            semver: version.semver.parse().ok()?,
+        };
+        Some((package_version, version))
+    });
+
+    Ok(result)
 }
 
 pub fn increase_download(msg: IncreaseDownload, conn: &Connection) -> Result<(), Error> {
     use schema::version_downloads::dsl::*;
 
-    let version = lookup_version(LookupVersion(msg.0.clone()), conn)?.ok_or_else(|| {
+    let (_, version) = lookup_version(LookupVersion(msg.0.clone()), conn)?.ok_or_else(|| {
         human!(
             "Package `{} {}` not found",
             msg.0.name.as_str(),

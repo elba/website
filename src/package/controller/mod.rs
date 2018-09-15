@@ -36,37 +36,6 @@ pub struct PackageVersionReq {
     pub version: String,
 }
 
-#[derive(Serialize, Clone)]
-pub struct GroupMetadata {
-    #[serde(flatten)]
-    pub group: GroupReq,
-    #[serde(with = "::util::rfc3339")]
-    pub created_at: NaiveDateTime,
-}
-
-#[derive(Serialize, Clone)]
-pub struct PackageMetadata {
-    #[serde(flatten)]
-    pub package: PackageReq,
-    #[serde(with = "::util::rfc3339")]
-    pub updated_at: NaiveDateTime,
-    #[serde(with = "::util::rfc3339")]
-    pub created_at: NaiveDateTime,
-}
-
-#[derive(Serialize, Clone)]
-pub struct VersionMetadata {
-    #[serde(flatten)]
-    pub package_version: PackageVersionReq,
-    pub yanked: bool,
-    pub description: Option<String>,
-    pub homepage: Option<String>,
-    pub repository: Option<String>,
-    pub license: Option<String>,
-    #[serde(with = "::util::rfc3339")]
-    pub created_at: NaiveDateTime,
-}
-
 impl TryFrom<GroupReq> for PackageGroupName {
     type Error = Error;
 

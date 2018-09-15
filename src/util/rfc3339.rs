@@ -2,6 +2,8 @@
 //! Used for returning time values in JSON API responses.
 //! Example: `2012-02-22T14:53:18+00:00`.
 
+#![allow(dead_code)]
+
 use chrono::{DateTime, NaiveDateTime, Utc};
 use serde::{self, Deserialize, Deserializer, Serializer};
 
