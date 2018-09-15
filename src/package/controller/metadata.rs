@@ -11,6 +11,37 @@ use crate::package::model::*;
 use crate::util::error::report_error;
 use crate::AppState;
 
+#[derive(Serialize, Clone)]
+pub struct GroupMetadata {
+    #[serde(flatten)]
+    pub group: GroupReq,
+    #[serde(with = "::util::rfc3339")]
+    pub created_at: NaiveDateTime,
+}
+
+#[derive(Serialize, Clone)]
+pub struct PackageMetadata {
+    #[serde(flatten)]
+    pub package: PackageReq,
+    #[serde(with = "::util::rfc3339")]
+    pub updated_at: NaiveDateTime,
+    #[serde(with = "::util::rfc3339")]
+    pub created_at: NaiveDateTime,
+}
+
+#[derive(Serialize, Clone)]
+pub struct VersionMetadata {
+    #[serde(flatten)]
+    pub package_version: PackageVersionReq,
+    pub yanked: bool,
+    pub description: Option<String>,
+    pub homepage: Option<String>,
+    pub repository: Option<String>,
+    pub license: Option<String>,
+    #[serde(with = "::util::rfc3339")]
+    pub created_at: NaiveDateTime,
+}
+
 pub fn list_groups(state: State<AppState>) -> impl Responder {
     let list_groups = state.db.send(ListGroups).from_err::<Error>().flatten();
 
@@ -84,12 +115,12 @@ pub fn show_group((path, state): (Path<GroupReq>, State<AppState>)) -> impl Resp
         .flatten();
 
     lookup_group
-        .map(move |group| {
-            let group = group
+        .map(move |result| {
+            let (group_name, group) = result
                 .ok_or_else(|| human!("Package group `{}` not found", &package_group.group()))?;
 
             let group_meta = GroupMetadata {
-                group: path.into_inner(),
+                group: group_name.into(),
                 created_at: group.created_at,
             };
 
@@ -115,12 +146,12 @@ pub fn show_package((path, state): (Path<PackageReq>, State<AppState>)) -> impl 
         .flatten();
 
     lookup_package
-        .map(move |package| {
-            let package =
-                package.ok_or_else(|| human!("Package `{}` not found", &package_name.name(),))?;
+        .map(move |result| {
+            let (package_name, package) =
+                result.ok_or_else(|| human!("Package `{}` not found", &package_name.name(),))?;
 
             let package_meta = PackageMetadata {
-                package: path.into_inner(),
+                package: package_name.into(),
                 updated_at: package.updated_at,
                 created_at: package.created_at,
             };
@@ -147,8 +178,8 @@ pub fn show_version((path, state): (Path<PackageVersionReq>, State<AppState>)) -
         .flatten();
 
     lookup_version
-        .map(move |version| {
-            let version = version.ok_or_else(|| {
+        .map(move |result| {
+            let (package_version, version) = result.ok_or_else(|| {
                 human!(
                     "Package version `{} {}` not found",
                     &package_version.name,
@@ -157,7 +188,7 @@ pub fn show_version((path, state): (Path<PackageVersionReq>, State<AppState>)) -
             })?;
 
             let version_meta = VersionMetadata {
-                package_version: path.into_inner(),
+                package_version: package_version.into(),
                 yanked: version.yanked,
                 description: version.description,
                 homepage: version.homepage,
