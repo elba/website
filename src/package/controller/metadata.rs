@@ -202,3 +202,34 @@ pub fn show_version((path, state): (Path<PackageVersionReq>, State<AppState>)) -
         .or_else(report_error)
         .responder()
 }
+
+pub fn show_readme((path, state): (Path<PackageVersionReq>, State<AppState>)) -> impl Responder {
+    let package_version = match PackageVersion::try_from(path.clone()) {
+        Ok(package_version) => package_version,
+        Err(err) => {
+            let error: Box<Future<Item = _, Error = _>> = Box::new(future::err(err));
+            return error;
+        }
+    };
+
+    let lookup_readme = state
+        .db
+        .send(LookupReadme(package_version.clone()))
+        .from_err::<Error>()
+        .flatten();
+
+    lookup_readme
+        .map(move |result| {
+            let readme = result.ok_or_else(|| {
+                human!(
+                    "Package version `{} {}` not found",
+                    &package_version.name,
+                    &package_version.semver
+                )
+            })?;
+
+            Ok(HttpResponse::Ok().body(readme))
+        }).flatten()
+        .or_else(report_error)
+        .responder()
+}

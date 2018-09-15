@@ -193,6 +193,7 @@ pub struct ListVersions(pub PackageName);
 pub struct LookupGroup(pub PackageGroupName);
 pub struct LookupPackage(pub PackageName);
 pub struct LookupVersion(pub PackageVersion);
+pub struct LookupReadme(pub PackageVersion);
 
 pub struct IncreaseDownload(pub PackageVersion);
 
@@ -230,6 +231,10 @@ impl Message for LookupPackage {
 
 impl Message for LookupVersion {
     type Result = Result<Option<(PackageVersion, Version)>, Error>;
+}
+
+impl Message for LookupReadme {
+    type Result = Result<Option<String>, Error>;
 }
 
 impl Message for IncreaseDownload {
@@ -305,6 +310,14 @@ impl Handler<LookupVersion> for Database {
 
     fn handle(&mut self, msg: LookupVersion, _: &mut Self::Context) -> Self::Result {
         lookup_version(msg, &self.connection()?)
+    }
+}
+
+impl Handler<LookupReadme> for Database {
+    type Result = Result<Option<String>, Error>;
+
+    fn handle(&mut self, msg: LookupReadme, _: &mut Self::Context) -> Self::Result {
+        lookup_readme(msg, &self.connection()?)
     }
 }
 
@@ -679,6 +692,24 @@ pub fn lookup_version(
     });
 
     Ok(result)
+}
+
+pub fn lookup_readme(msg: LookupReadme, conn: &Connection) -> Result<Option<String>, Error> {
+    use schema::package_groups::dsl::*;
+    use schema::packages::dsl::*;
+    use schema::readmes::dsl::*;
+    use schema::versions::dsl::*;
+
+    let readme = readmes
+        .inner_join(versions.inner_join(packages.inner_join(package_groups)))
+        .filter(package_group_name.eq(&msg.0.name.normalized_group()))
+        .filter(package_name.eq(&msg.0.name.normalized_name()))
+        .filter(semver.eq(msg.0.semver.to_string()))
+        .select(textfile)
+        .get_result::<String>(conn)
+        .optional()?;
+
+    Ok(readme)
 }
 
 pub fn increase_download(msg: IncreaseDownload, conn: &Connection) -> Result<(), Error> {
