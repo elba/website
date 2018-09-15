@@ -33,7 +33,7 @@ pub fn router(app: App<AppState>) -> App<AppState> {
         ).route(
             "/packages/{group}/{package}/{version}/readme",
             Method::GET,
-            package::controller::download,
+            package::controller::metadata::show_readme,
         ).route(
             "/packages/{group}/{package}/{version}/dependencies",
             Method::GET,
