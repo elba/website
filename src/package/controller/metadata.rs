@@ -14,7 +14,7 @@ use crate::AppState;
 #[derive(Serialize, Clone)]
 pub struct GroupMetadata {
     #[serde(flatten)]
-    pub group: GroupReq,
+    pub group: GroupView,
     #[serde(with = "::util::rfc3339")]
     pub created_at: NaiveDateTime,
 }
@@ -22,7 +22,7 @@ pub struct GroupMetadata {
 #[derive(Serialize, Clone)]
 pub struct PackageMetadata {
     #[serde(flatten)]
-    pub package: PackageReq,
+    pub package: PackageView,
     #[serde(with = "::util::rfc3339")]
     pub updated_at: NaiveDateTime,
     #[serde(with = "::util::rfc3339")]
@@ -32,7 +32,7 @@ pub struct PackageMetadata {
 #[derive(Serialize, Clone)]
 pub struct VersionMetadata {
     #[serde(flatten)]
-    pub package_version: PackageVersionReq,
+    pub package_version: PackageVersionView,
     pub yanked: bool,
     pub description: Option<String>,
     pub homepage: Option<String>,
@@ -42,18 +42,25 @@ pub struct VersionMetadata {
     pub created_at: NaiveDateTime,
 }
 
+#[derive(Serialize, Clone)]
+pub struct DependencyMetadata {
+    #[serde(flatten)]
+    pub package: PackageView,
+    pub version_req: String,
+}
+
 pub fn list_groups(state: State<AppState>) -> impl Responder {
     let list_groups = state.db.send(ListGroups).from_err::<Error>().flatten();
 
     list_groups
         .map(|mut groups| {
-            let groups: Vec<_> = groups.drain(..).map(GroupReq::from).collect();
+            let groups: Vec<_> = groups.drain(..).map(GroupView::from).collect();
             HttpResponse::Ok().json(groups)
         }).or_else(report_error)
         .responder()
 }
 
-pub fn list_packages((path, state): (Path<GroupReq>, State<AppState>)) -> impl Responder {
+pub fn list_packages((path, state): (Path<GroupView>, State<AppState>)) -> impl Responder {
     let package_group = match PackageGroupName::try_from(path.clone()) {
         Ok(package_group) => package_group,
         Err(err) => {
@@ -70,13 +77,13 @@ pub fn list_packages((path, state): (Path<GroupReq>, State<AppState>)) -> impl R
 
     list_packages
         .map(|mut packages| {
-            let packages: Vec<_> = packages.drain(..).map(PackageReq::from).collect();
+            let packages: Vec<_> = packages.drain(..).map(PackageView::from).collect();
             HttpResponse::Ok().json(packages)
         }).or_else(report_error)
         .responder()
 }
 
-pub fn list_versions((path, state): (Path<PackageReq>, State<AppState>)) -> impl Responder {
+pub fn list_versions((path, state): (Path<PackageView>, State<AppState>)) -> impl Responder {
     let package_name = match PackageName::try_from(path.clone()) {
         Ok(package_name) => package_name,
         Err(err) => {
@@ -93,13 +100,43 @@ pub fn list_versions((path, state): (Path<PackageReq>, State<AppState>)) -> impl
 
     list_versions
         .map(|mut versions| {
-            let versions: Vec<_> = versions.drain(..).map(PackageVersionReq::from).collect();
+            let versions: Vec<_> = versions.drain(..).map(PackageVersionView::from).collect();
             HttpResponse::Ok().json(versions)
         }).or_else(report_error)
         .responder()
 }
 
-pub fn show_group((path, state): (Path<GroupReq>, State<AppState>)) -> impl Responder {
+pub fn list_dependencies(
+    (path, state): (Path<PackageVersionView>, State<AppState>),
+) -> impl Responder {
+    let package_version = match PackageVersion::try_from(path.clone()) {
+        Ok(package_version) => package_version,
+        Err(err) => {
+            let error: Box<Future<Item = _, Error = _>> = Box::new(future::err(err));
+            return error;
+        }
+    };
+
+    let list_dependencies = state
+        .db
+        .send(ListDependencies(package_version))
+        .from_err::<Error>()
+        .flatten();
+
+    list_dependencies
+        .map(|mut dependencies| {
+            let versions: Vec<_> = dependencies
+                .drain(..)
+                .map(|dependency| DependencyMetadata {
+                    package: dependency.name.into(),
+                    version_req: dependency.version_req.to_string(),
+                }).collect();
+            HttpResponse::Ok().json(versions)
+        }).or_else(report_error)
+        .responder()
+}
+
+pub fn show_group((path, state): (Path<GroupView>, State<AppState>)) -> impl Responder {
     let package_group = match PackageGroupName::try_from(path.clone()) {
         Ok(package_group) => package_group,
         Err(err) => {
@@ -130,7 +167,7 @@ pub fn show_group((path, state): (Path<GroupReq>, State<AppState>)) -> impl Resp
         .responder()
 }
 
-pub fn show_package((path, state): (Path<PackageReq>, State<AppState>)) -> impl Responder {
+pub fn show_package((path, state): (Path<PackageView>, State<AppState>)) -> impl Responder {
     let package_name = match PackageName::try_from(path.clone()) {
         Ok(package_name) => package_name,
         Err(err) => {
@@ -162,7 +199,7 @@ pub fn show_package((path, state): (Path<PackageReq>, State<AppState>)) -> impl 
         .responder()
 }
 
-pub fn show_version((path, state): (Path<PackageVersionReq>, State<AppState>)) -> impl Responder {
+pub fn show_version((path, state): (Path<PackageVersionView>, State<AppState>)) -> impl Responder {
     let package_version = match PackageVersion::try_from(path.clone()) {
         Ok(package_version) => package_version,
         Err(err) => {
@@ -203,7 +240,7 @@ pub fn show_version((path, state): (Path<PackageVersionReq>, State<AppState>)) -
         .responder()
 }
 
-pub fn show_readme((path, state): (Path<PackageVersionReq>, State<AppState>)) -> impl Responder {
+pub fn show_readme((path, state): (Path<PackageVersionView>, State<AppState>)) -> impl Responder {
     let package_version = match PackageVersion::try_from(path.clone()) {
         Ok(package_version) => package_version,
         Err(err) => {

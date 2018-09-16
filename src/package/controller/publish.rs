@@ -10,7 +10,7 @@ use failure::Error;
 use futures::{future, prelude::*};
 use tar::Archive;
 
-use super::PackageVersionReq;
+use super::PackageVersionView;
 
 use crate::package::model::*;
 use crate::util::error::report_error;
@@ -23,7 +23,7 @@ pub struct PublishReq {
 
 pub fn publish(
     (path, query, state, req): (
-        actix_web::Path<PackageVersionReq>,
+        actix_web::Path<PackageVersionView>,
         Query<PublishReq>,
         State<AppState>,
         HttpRequest<AppState>,

@@ -63,6 +63,12 @@ pub struct PackageVersion {
     pub semver: semver::Version,
 }
 
+#[derive(Clone)]
+pub struct PackageDependency {
+    pub name: PackageName,
+    pub version_req: Constraint,
+}
+
 #[derive(Queryable)]
 pub struct PackageGroup {
     pub id: i32,
@@ -189,6 +195,7 @@ pub struct YankVersion {
 pub struct ListGroups;
 pub struct ListPackages(pub PackageGroupName);
 pub struct ListVersions(pub PackageName);
+pub struct ListDependencies(pub PackageVersion);
 
 pub struct LookupGroup(pub PackageGroupName);
 pub struct LookupPackage(pub PackageName);
@@ -219,6 +226,10 @@ impl Message for ListPackages {
 
 impl Message for ListVersions {
     type Result = Result<Vec<PackageVersion>, Error>;
+}
+
+impl Message for ListDependencies {
+    type Result = Result<Vec<PackageDependency>, Error>;
 }
 
 impl Message for LookupGroup {
@@ -286,6 +297,14 @@ impl Handler<ListVersions> for Database {
 
     fn handle(&mut self, msg: ListVersions, _: &mut Self::Context) -> Self::Result {
         list_versions(msg, &self.connection()?)
+    }
+}
+
+impl Handler<ListDependencies> for Database {
+    type Result = Result<Vec<PackageDependency>, Error>;
+
+    fn handle(&mut self, msg: ListDependencies, _: &mut Self::Context) -> Self::Result {
+        list_dependencies(msg, &self.connection()?)
     }
 }
 
@@ -617,6 +636,36 @@ pub fn list_versions(msg: ListVersions, conn: &Connection) -> Result<Vec<Package
         }).collect();
 
     Ok(versions)
+}
+
+pub fn list_dependencies(
+    msg: ListDependencies,
+    conn: &Connection,
+) -> Result<Vec<PackageDependency>, Error> {
+    let version_reqs = {
+        use schema::dependencies::dsl::*;
+        use schema::package_groups::dsl::*;
+        use schema::packages::dsl::*;
+        use schema::versions::dsl::*;
+
+        dependencies
+            .inner_join(versions.inner_join(packages.inner_join(package_groups)))
+            .filter(package_group_name.eq(&msg.0.name.normalized_group()))
+            .filter(package_name.eq(&msg.0.name.normalized_name()))
+            .filter(semver.eq(&msg.0.semver.to_string()))
+            .select(version_req)
+            .load::<String>(conn)?
+    };
+
+    let dependencies: Vec<_> = version_reqs
+        .iter()
+        .filter_map(|version_req| Constraint::from_str(version_req).ok())
+        .map(|version_req| PackageDependency {
+            name: msg.0.name.clone(),
+            version_req,
+        }).collect();
+
+    Ok(dependencies)
 }
 
 pub fn lookup_group(
