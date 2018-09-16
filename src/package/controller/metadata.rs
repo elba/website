@@ -152,10 +152,7 @@ pub fn show_group((path, state): (Path<GroupView>, State<AppState>)) -> impl Res
         .flatten();
 
     lookup_group
-        .map(move |result| {
-            let (group_name, group) = result
-                .ok_or_else(|| human!("Package group `{}` not found", &package_group.group()))?;
-
+        .map(move |(group_name, group)| {
             let group_meta = GroupMetadata {
                 group: group_name.into(),
                 created_at: group.created_at,
@@ -183,10 +180,7 @@ pub fn show_package((path, state): (Path<PackageView>, State<AppState>)) -> impl
         .flatten();
 
     lookup_package
-        .map(move |result| {
-            let (package_name, package) =
-                result.ok_or_else(|| human!("Package `{}` not found", &package_name.name(),))?;
-
+        .map(move |(package_name, package)| {
             let package_meta = PackageMetadata {
                 package: package_name.into(),
                 updated_at: package.updated_at,
@@ -215,15 +209,7 @@ pub fn show_version((path, state): (Path<PackageVersionView>, State<AppState>)) 
         .flatten();
 
     lookup_version
-        .map(move |result| {
-            let (package_version, version) = result.ok_or_else(|| {
-                human!(
-                    "Package version `{} {}` not found",
-                    &package_version.name,
-                    &package_version.semver
-                )
-            })?;
-
+        .map(move |(package_version, version)| {
             let version_meta = VersionMetadata {
                 package_version: package_version.into(),
                 yanked: version.yanked,
@@ -256,17 +242,8 @@ pub fn show_readme((path, state): (Path<PackageVersionView>, State<AppState>)) -
         .flatten();
 
     lookup_readme
-        .map(move |result| {
-            let readme = result.ok_or_else(|| {
-                human!(
-                    "Package version `{} {}` not found",
-                    &package_version.name,
-                    &package_version.semver
-                )
-            })?;
-
-            Ok(HttpResponse::Ok().body(readme))
-        }).flatten()
+        .map(move |readme| Ok(HttpResponse::Ok().body(readme)))
+        .flatten()
         .or_else(report_error)
         .responder()
 }
