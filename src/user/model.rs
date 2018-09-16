@@ -41,7 +41,7 @@ impl Message for CreateUser {
 }
 
 impl Message for LookupUser {
-    type Result = Result<Option<User>, Error>;
+    type Result = Result<User, Error>;
 }
 
 impl Handler<CreateUser> for Database {
@@ -53,7 +53,7 @@ impl Handler<CreateUser> for Database {
 }
 
 impl Handler<LookupUser> for Database {
-    type Result = Result<Option<User>, Error>;
+    type Result = Result<User, Error>;
 
     fn handle(&mut self, msg: LookupUser, _: &mut Self::Context) -> Self::Result {
         lookup_user(msg, &self.connection()?)
@@ -71,11 +71,12 @@ pub fn create_user(msg: CreateUser, conn: &Connection) -> Result<User, Error> {
     Ok(user)
 }
 
-pub fn lookup_user(msg: LookupUser, conn: &Connection) -> Result<Option<User>, Error> {
+pub fn lookup_user(msg: LookupUser, conn: &Connection) -> Result<User, Error> {
     use schema::users::dsl::*;
     let user = users
-        .filter(token.eq(msg.token))
+        .filter(token.eq(&msg.token))
         .get_result::<User>(conn)
-        .optional()?;
+        .optional()?
+        .ok_or_else(|| human!("User not found to token `{}`", &msg.token))?;
     Ok(user)
 }
