@@ -4,7 +4,7 @@ use actix_web::*;
 use failure::Error;
 use futures::{future, prelude::*};
 
-use super::PackageVersionReq;
+use super::PackageVersionView;
 
 use crate::package::model::*;
 use crate::util::error::report_error;
@@ -17,7 +17,7 @@ pub struct YankReq {
 }
 
 pub fn yank(
-    (path, query, state): (Path<PackageVersionReq>, Query<YankReq>, State<AppState>),
+    (path, query, state): (Path<PackageVersionView>, Query<YankReq>, State<AppState>),
 ) -> impl Responder {
     let package_version = match PackageVersion::try_from(path.into_inner()) {
         Ok(package_version) => package_version,

@@ -37,7 +37,7 @@ pub fn router(app: App<AppState>) -> App<AppState> {
         ).route(
             "/packages/{group}/{package}/{version}/dependencies",
             Method::GET,
-            package::controller::download,
+            package::controller::metadata::list_dependencies,
         ).route(
             "/packages/{group}/{package}/{version}/downloads",
             Method::GET,
