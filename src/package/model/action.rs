@@ -12,7 +12,7 @@ use futures::Future;
 
 use crate::database::{Connection, Database};
 use crate::index::{Index, SaveAndUpdate, YankAndUpdate};
-use crate::schema::{dependencies, package_groups, packages, readmes, version_authors, versions};
+use crate::schema::*;
 use crate::user::model::{lookup_user, LookupUser};
 
 use super::schema::*;
@@ -47,6 +47,8 @@ pub struct LookupGroup(pub PackageGroupName);
 pub struct LookupPackage(pub PackageName);
 pub struct LookupVersion(pub PackageVersion);
 pub struct LookupReadme(pub PackageVersion);
+
+pub struct SearchPackage(pub String);
 
 pub struct IncreaseDownload(pub PackageVersion);
 
@@ -92,6 +94,10 @@ impl Message for LookupVersion {
 
 impl Message for LookupReadme {
     type Result = Result<String, Error>;
+}
+
+impl Message for SearchPackage {
+    type Result = Result<Vec<PackageName>, Error>;
 }
 
 impl Message for IncreaseDownload {
@@ -183,6 +189,14 @@ impl Handler<LookupReadme> for Database {
 
     fn handle(&mut self, msg: LookupReadme, _: &mut Self::Context) -> Self::Result {
         lookup_readme(msg, &self.connection()?)
+    }
+}
+
+impl Handler<SearchPackage> for Database {
+    type Result = Result<Vec<PackageName>, Error>;
+
+    fn handle(&mut self, msg: SearchPackage, _: &mut Self::Context) -> Self::Result {
+        search_package(msg, &self.connection()?)
     }
 }
 
@@ -343,6 +357,8 @@ pub fn publish_version(
             .values(create_authors)
             .execute(conn)?;
 
+        diesel::sql_query("REFRESH MATERIALIZED VIEW ts_vectors;").execute(conn)?;
+
         index
             .send(SaveAndUpdate {
                 package: msg.package,
@@ -432,17 +448,17 @@ pub fn list_packages(msg: ListPackages, conn: &Connection) -> Result<Vec<Package
         conn,
     )?;
 
-    let mut packages_names = Package::belonging_to(&package_group)
+    let mut package_names = Package::belonging_to(&package_group)
         .select(package_name)
         .load::<String>(conn)?;
 
-    let packages_names: Vec<_> = packages_names
+    let package_names: Vec<_> = package_names
         .drain(..)
         .filter_map(|packages_name| {
             PackageName::new(group_name.group().to_owned(), packages_name).ok()
         }).collect();
 
-    Ok(packages_names)
+    Ok(package_names)
 }
 
 pub fn list_versions(msg: ListVersions, conn: &Connection) -> Result<Vec<PackageVersion>, Error> {
@@ -602,4 +618,28 @@ pub fn increase_download(msg: IncreaseDownload, conn: &Connection) -> Result<(),
         .execute(conn)?;
 
     Ok(())
+}
+
+pub fn search_package(msg: SearchPackage, conn: &Connection) -> Result<Vec<PackageName>, Error> {
+    use diesel::dsl::*;
+    use diesel_full_text_search::*;
+    use schema::ts_vectors::dsl::*;
+
+    let tsquery = plainto_tsquery(msg.0);
+    let rank = ts_rank_cd(document, tsquery.clone());
+
+    let query = ts_vectors
+        .select((package_group_name, package_name))
+        .filter(tsquery.matches(document))
+        .group_by((package_group_name, package_name))
+        .order_by(max(rank).desc())
+        .limit(50);
+
+    let mut results = query.load::<(String, String)>(conn)?;
+    let package_names: Vec<_> = results
+        .drain(..)
+        .filter_map(|(group, package)| PackageName::new(group, package).ok())
+        .collect();
+
+    Ok(package_names)
 }

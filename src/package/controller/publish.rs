@@ -3,33 +3,30 @@ use std::io::Read;
 use std::path::Path;
 use std::str::FromStr;
 
-use actix_web::{self, *};
+use actix_web::*;
 use bytes::Bytes;
 use elba::package::manifest::{DepReq, Manifest};
 use failure::Error;
 use futures::{future, prelude::*};
 use tar::Archive;
 
-use super::PackageVersionView;
-
 use crate::package::model::*;
 use crate::util::error::report_error;
 use crate::{AppState, CONFIG};
 
+use super::PackageVersionView;
+
 #[derive(Deserialize, Clone)]
 pub struct PublishReq {
+    #[serde(flatten)]
+    pub package: PackageVersionView,
     pub token: String,
 }
 
 pub fn publish(
-    (path, query, state, req): (
-        actix_web::Path<PackageVersionView>,
-        Query<PublishReq>,
-        State<AppState>,
-        HttpRequest<AppState>,
-    ),
+    (query, state, req): (Query<PublishReq>, State<AppState>, HttpRequest<AppState>),
 ) -> impl Responder {
-    let package_version = match PackageVersion::try_from(path.clone()) {
+    let package_version = match PackageVersion::try_from(query.package.clone()) {
         Ok(package_version) => package_version,
         Err(err) => {
             let error: Box<Future<Item = _, Error = _>> = Box::new(future::err(err));

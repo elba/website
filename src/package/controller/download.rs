@@ -1,15 +1,15 @@
+use std::convert::TryFrom;
+
 use actix_web::*;
 use failure::Error;
 use futures::{future, prelude::*};
-
-use super::PackageVersionView;
 
 use crate::index::get_location;
 use crate::package::model::*;
 use crate::util::error::report_error;
 use crate::AppState;
 
-use std::convert::TryFrom;
+use super::PackageVersionView;
 
 pub fn download((path, state): (Path<PackageVersionView>, State<AppState>)) -> impl Responder {
     let package_version = match PackageVersion::try_from(path.into_inner()) {

@@ -2,12 +2,12 @@ pub mod metadata;
 
 mod download;
 mod publish;
-// mod search;
+mod search;
 mod yank;
 
 pub use self::download::download;
 pub use self::publish::publish;
-// pub use self::search::search;
+pub use self::search::search;
 pub use self::yank::yank;
 
 use std::convert::TryFrom;

@@ -8,6 +8,7 @@ extern crate actix_web;
 extern crate base64;
 extern crate bytes;
 extern crate chrono;
+extern crate diesel_full_text_search;
 extern crate dotenv;
 extern crate elba;
 extern crate env_logger;
