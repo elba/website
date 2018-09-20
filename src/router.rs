@@ -5,7 +5,12 @@ use crate::{package, user, AppState};
 pub fn router(app: App<AppState>) -> App<AppState> {
     app.prefix("/api/v1")
         .route("/users/login", Method::GET, user::controller::login)
-        .route("/packages/search", Method::GET, package::controller::yank)
+        .route(
+            "/packages/publish",
+            Method::PUT,
+            package::controller::publish,
+        ).route("/packages/yank", Method::PATCH, package::controller::yank)
+        .route("/packages/search", Method::GET, package::controller::search)
         .route(
             "/packages/groups",
             Method::GET,
@@ -46,13 +51,5 @@ pub fn router(app: App<AppState>) -> App<AppState> {
             "/packages/{group}/{package}/{version}/download",
             Method::GET,
             package::controller::download,
-        ).route(
-            "/packages/{group}/{package}/{version}/publish",
-            Method::PUT,
-            package::controller::publish,
-        ).route(
-            "/packages/{group}/{package}/{version}/yank",
-            Method::PATCH,
-            package::controller::yank,
         )
 }

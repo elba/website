@@ -1,27 +1,29 @@
-use std::io::Read;
-use std::path::Path;
-use std::str::FromStr;
-
 use actix_web::*;
-use bytes::Bytes;
-use elba::package::{
-    manifest::{DepReq, Manifest},
-    Name,
-};
 use failure::Error;
-use futures::{future, prelude::*};
-use semver;
-use tar::Archive;
+use futures::prelude::*;
 
 use crate::package::model::*;
 use crate::util::error::report_error;
-use crate::{AppState, CONFIG};
+use crate::AppState;
+
+use super::PackageView;
 
 #[derive(Deserialize, Clone)]
 pub struct SearchReq {
     pub q: String,
 }
 
-// pub fn search((query, state): (Query<SearchReq>, State<AppState>)) -> impl Responder {
-//     unimplemented!()
-// }
+pub fn search((query, state): (Query<SearchReq>, State<AppState>)) -> impl Responder {
+    let search_package = state
+        .db
+        .send(SearchPackage(query.into_inner().q))
+        .from_err::<Error>()
+        .flatten();
+
+    search_package
+        .map(|mut packages| {
+            let packages: Vec<_> = packages.drain(..).map(PackageView::from).collect();
+            HttpResponse::Ok().json(packages)
+        }).or_else(report_error)
+        .responder()
+}

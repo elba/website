@@ -5,11 +5,11 @@ use elba::package::Name as PackageName;
 use failure::Error;
 use futures::{future, prelude::*};
 
-use super::*;
-
 use crate::package::model::*;
 use crate::util::error::report_error;
 use crate::AppState;
+
+use super::*;
 
 #[derive(Serialize, Clone)]
 pub struct GroupMetadata {
