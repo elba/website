@@ -1,23 +1,21 @@
 use chrono::NaiveDateTime;
 
-use crate::schema::{
-    dependencies, package_groups, packages, readmes, version_authors, version_downloads, versions,
-};
+use crate::schema::*;
 
 #[derive(Identifiable, Queryable)]
-pub struct PackageGroup {
+pub struct Group {
     pub id: i32,
+    pub group_name: String,
+    pub group_name_origin: String,
     pub user_id: i32,
-    pub package_group_name: String,
-    pub package_group_name_origin: String,
     pub created_at: NaiveDateTime,
 }
 
-#[derive(Identifiable, Queryable, Associations)]
-#[belongs_to(PackageGroup)]
+#[derive(Identifiable, Queryable, Associations, AsChangeset)]
+#[belongs_to(Group)]
 pub struct Package {
     pub id: i32,
-    pub package_group_id: i32,
+    pub group_id: i32,
     pub package_name: String,
     pub package_name_origin: String,
     pub updated_at: NaiveDateTime,
@@ -49,6 +47,14 @@ pub struct Dependency {
 }
 
 #[derive(Identifiable, Queryable, Associations)]
+#[belongs_to(Package)]
+pub struct PackageOwner {
+    pub id: i32,
+    pub package_id: i32,
+    pub user_id: i32,
+}
+
+#[derive(Identifiable, Queryable, Associations)]
 #[primary_key(version_id)]
 #[belongs_to(Version)]
 pub struct Readme {
@@ -57,20 +63,19 @@ pub struct Readme {
 }
 
 #[derive(Insertable)]
-#[table_name = "package_groups"]
-pub struct CreatePackageGroup<'a> {
+#[table_name = "groups"]
+pub struct CreateGroup<'a> {
+    pub group_name: &'a str,
+    pub group_name_origin: &'a str,
     pub user_id: i32,
-    pub package_group_name: &'a str,
-    pub package_group_name_origin: &'a str,
 }
 
 #[derive(Insertable)]
 #[table_name = "packages"]
 pub struct CreatePackage<'a> {
-    pub package_group_id: i32,
+    pub group_id: i32,
     pub package_name: &'a str,
     pub package_name_origin: &'a str,
-    pub updated_at: NaiveDateTime,
 }
 
 #[derive(Insertable)]
@@ -104,6 +109,13 @@ pub struct CreateDependency {
 pub struct CreateAuthor<'a> {
     pub version_id: i32,
     pub name: &'a str,
+}
+
+#[derive(Insertable)]
+#[table_name = "package_owners"]
+pub struct CreateOwner {
+    pub package_id: i32,
+    pub user_id: i32,
 }
 
 #[derive(Insertable)]

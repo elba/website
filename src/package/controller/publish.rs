@@ -34,18 +34,9 @@ pub fn publish(
         }
     };
 
-    let verify_spec = state
-        .db
-        .send(VerifyVersion {
-            package: package_version.clone(),
-            token: query.token.clone(),
-        }).from_err::<Error>()
-        .flatten();
+    info!("Receiving tarball");
 
-    let receive_body = verify_spec.and_then(move |()| {
-        info!("Receiving tarball");
-        req.body().limit(CONFIG.max_upload_size).from_err()
-    });
+    let receive_body = req.body().limit(CONFIG.max_upload_size).from_err::<Error>();
 
     let publish_and_save = receive_body
         .and_then(move |bytes: Bytes| {

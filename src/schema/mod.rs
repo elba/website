@@ -8,7 +8,7 @@ table! {
 
     ts_vectors (id) {
         id -> Int4,
-        package_group_name -> Varchar,
+        group_name -> Varchar,
         package_name -> Varchar,
         semver -> Varchar,
         document -> TsVector,

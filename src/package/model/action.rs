@@ -1,11 +1,7 @@
 use actix::prelude::*;
 use bytes::Bytes;
 use chrono::offset::Utc;
-use diesel::{
-    self,
-    pg::upsert::{excluded, on_constraint},
-    prelude::*,
-};
+use diesel::{self, pg::upsert::on_constraint, prelude::*};
 use elba::package::{manifest::PackageInfo, Name as PackageName};
 use failure::{Error, ResultExt};
 use futures::Future;
@@ -17,11 +13,6 @@ use crate::user::model::{lookup_user, LookupUser};
 
 use super::schema::*;
 use super::*;
-
-pub struct VerifyVersion {
-    pub package: PackageVersion,
-    pub token: String,
-}
 
 pub struct PublishVersion {
     pub package: PackageVersion,
@@ -39,11 +30,11 @@ pub struct YankVersion {
 }
 
 pub struct ListGroups;
-pub struct ListPackages(pub PackageGroupName);
+pub struct ListPackages(pub GroupName);
 pub struct ListVersions(pub PackageName);
 pub struct ListDependencies(pub PackageVersion);
 
-pub struct LookupGroup(pub PackageGroupName);
+pub struct LookupGroup(pub GroupName);
 pub struct LookupPackage(pub PackageName);
 pub struct LookupVersion(pub PackageVersion);
 pub struct LookupReadme(pub PackageVersion);
@@ -51,10 +42,6 @@ pub struct LookupReadme(pub PackageVersion);
 pub struct SearchPackage(pub String);
 
 pub struct IncreaseDownload(pub PackageVersion);
-
-impl Message for VerifyVersion {
-    type Result = Result<(), Error>;
-}
 
 impl Message for PublishVersion {
     type Result = Result<(), Error>;
@@ -65,7 +52,7 @@ impl Message for YankVersion {
 }
 
 impl Message for ListGroups {
-    type Result = Result<Vec<PackageGroupName>, Error>;
+    type Result = Result<Vec<GroupName>, Error>;
 }
 
 impl Message for ListPackages {
@@ -81,7 +68,7 @@ impl Message for ListDependencies {
 }
 
 impl Message for LookupGroup {
-    type Result = Result<(PackageGroupName, PackageGroup), Error>;
+    type Result = Result<(GroupName, Group), Error>;
 }
 
 impl Message for LookupPackage {
@@ -104,14 +91,6 @@ impl Message for IncreaseDownload {
     type Result = Result<(), Error>;
 }
 
-impl Handler<VerifyVersion> for Database {
-    type Result = Result<(), Error>;
-
-    fn handle(&mut self, msg: VerifyVersion, _: &mut Self::Context) -> Self::Result {
-        verify_version(msg, &self.connection()?)
-    }
-}
-
 impl Handler<PublishVersion> for Database {
     type Result = Result<(), Error>;
 
@@ -129,7 +108,7 @@ impl Handler<YankVersion> for Database {
 }
 
 impl Handler<ListGroups> for Database {
-    type Result = Result<Vec<PackageGroupName>, Error>;
+    type Result = Result<Vec<GroupName>, Error>;
 
     fn handle(&mut self, msg: ListGroups, _: &mut Self::Context) -> Self::Result {
         list_groups(msg, &self.connection()?)
@@ -161,7 +140,7 @@ impl Handler<ListDependencies> for Database {
 }
 
 impl Handler<LookupGroup> for Database {
-    type Result = Result<(PackageGroupName, PackageGroup), Error>;
+    type Result = Result<(GroupName, Group), Error>;
 
     fn handle(&mut self, msg: LookupGroup, _: &mut Self::Context) -> Self::Result {
         lookup_group(msg, &self.connection()?)
@@ -208,66 +187,113 @@ impl Handler<IncreaseDownload> for Database {
     }
 }
 
-pub fn verify_version(msg: VerifyVersion, conn: &Connection) -> Result<(), Error> {
-    use schema::package_groups::dsl::*;
-    use schema::users::dsl::*;
-
-    let _ = lookup_user(
-        LookupUser {
-            token: msg.token.clone(),
-        },
-        conn,
-    )?;
-
-    let token_result = package_groups
-        .inner_join(users)
-        .select(token)
-        .filter(package_group_name.eq(msg.package.name.normalized_group()))
-        .get_result::<String>(conn)
-        .optional()?;
-
-    if let Some(token_exist) = token_result {
-        if token_exist != msg.token {
-            return Err(human!(
-                "Package group `{}` has already been taken",
-                &msg.package.name.group()
-            ));
-        }
-    }
-
-    let version = lookup_version(LookupVersion(msg.package.clone()), conn);
-
-    // TODO
-    if version.is_ok() {
-        return Err(human!(
-            "Package `{} {}` already exists",
-            &msg.package.name.as_str(),
-            &msg.package.semver,
-        ));
-    }
-
-    Ok(())
-}
-
 pub fn publish_version(
     msg: PublishVersion,
     conn: &Connection,
     index: &Addr<Index>,
 ) -> Result<(), Error> {
     conn.build_transaction().serializable().run(|| {
-        verify_version(
-            VerifyVersion {
+        let user = lookup_user(
+            LookupUser {
                 token: msg.token.clone(),
-                package: msg.package.clone(),
             },
             conn,
         )?;
 
+        let group = groups::table
+            .filter(groups::columns::group_name.eq(&msg.package.name.normalized_group()))
+            .first::<Group>(conn)
+            .optional()?;
+
+        let group = match group {
+            Some(group) => group,
+            None => diesel::insert_into(groups::table)
+                .values(CreateGroup {
+                    group_name: &msg.package.name.normalized_group(),
+                    group_name_origin: &msg.package.name.group(),
+                    user_id: user.id,
+                })
+                .get_result(conn)?,
+        };
+
+        let package = Package::belonging_to(&group)
+            .filter(packages::columns::package_name.eq(&msg.package.name.normalized_name()))
+            .first::<Package>(conn)
+            .optional()?;
+
+        let mut package = match package {
+            Some(package) => {
+                let package_owners =
+                    PackageOwner::belonging_to(&package).load::<PackageOwner>(conn)?;
+
+                if !package_owners.iter().any(|owner| owner.user_id == user.id) {
+                    return Err(human!(
+                        "You have no permission to access package `{}`",
+                        &msg.package.name.as_str()
+                    ));
+                }
+
+                package
+            }
+            None => {
+                if group.user_id != user.id {
+                    return Err(human!(
+                        "You have no permission to create package under group `{}`",
+                        &msg.package.name.group()
+                    ));
+                }
+
+                let package = diesel::insert_into(packages::table)
+                    .values(CreatePackage {
+                        group_id: group.id,
+                        package_name: &msg.package.name.normalized_name(),
+                        package_name_origin: &msg.package.name.name(),
+                    })
+                    .get_result::<Package>(conn)?;
+
+                diesel::insert_into(package_owners::table)
+                    .values(CreateOwner {
+                        package_id: package.id,
+                        user_id: user.id,
+                    })
+                    .execute(conn)?;
+
+                package
+            }
+        };
+
+        package.updated_at = Utc::now().naive_utc();
+        let package: Package = package.save_changes(conn)?;
+
+        let version = Version::belonging_to(&package)
+            .filter(versions::columns::semver.eq(msg.package.semver.to_string()))
+            .first::<Version>(conn)
+            .optional()?;
+
+        if version.is_some() {
+            return Err(human!(
+                "Package `{} {}` already exists",
+                &msg.package.name.as_str(),
+                &msg.package.semver,
+            ));
+        }
+
+        let version = diesel::insert_into(versions::table)
+            .values(CreateVersion {
+                package_id: package.id,
+                semver: &msg.package.semver.to_string(),
+                description: msg.package_info.description.as_ref().map(|s| s.as_str()),
+                homepage: msg.package_info.homepage.as_ref().map(|s| s.as_str()),
+                repository: msg.package_info.repository.as_ref().map(|s| s.as_str()),
+                license: msg.package_info.license.as_ref().map(|s| s.as_str()),
+            })
+            .get_result::<Version>(conn)?;
+
         let mut deps_info = Vec::new();
         for dep_req in msg.dependencies.iter() {
             let dep_id = packages::table
-                .inner_join(package_groups::table)
-                .filter(package_groups::package_group_name.eq(&dep_req.name.normalized_group()))
+                .inner_join(groups::table)
+                .filter(groups::group_name.eq(&dep_req.name.normalized_group()))
                 .filter(packages::package_name.eq(&dep_req.name.normalized_name()))
                 .select(packages::id)
                 .get_result::<i32>(conn)
@@ -283,64 +309,14 @@ pub fn publish_version(
             }
         }
 
-        let user = lookup_user(
-            LookupUser {
-                token: msg.token.clone(),
-            },
-            conn,
-        )?;
-
-        diesel::insert_into(package_groups::table)
-            .values(CreatePackageGroup {
-                user_id: user.id,
-                package_group_name: &msg.package.name.normalized_group(),
-                package_group_name_origin: &msg.package.name.group(),
-            }).on_conflict_do_nothing()
-            .execute(conn)?;
-
-        let package_group_id = package_groups::table
-            .select(package_groups::id)
-            .filter(package_groups::package_group_name.eq(&msg.package.name.normalized_group()))
-            .get_result::<i32>(conn)?;
-
-        let package_id = diesel::insert_into(packages::table)
-            .values(CreatePackage {
-                package_group_id,
-                package_name: &msg.package.name.normalized_name(),
-                package_name_origin: &msg.package.name.name(),
-                updated_at: Utc::now().naive_utc(),
-            }).on_conflict(on_constraint("unique_group_package"))
-            .do_update()
-            .set((packages::updated_at.eq(excluded(packages::updated_at)),))
-            .returning(packages::id)
-            .get_result::<i32>(conn)?;
-
-        let version_id = diesel::insert_into(versions::table)
-            .values(CreateVersion {
-                package_id,
-                semver: &msg.package.semver.to_string(),
-                description: msg.package_info.description.as_ref().map(|s| s.as_str()),
-                homepage: msg.package_info.homepage.as_ref().map(|s| s.as_str()),
-                repository: msg.package_info.repository.as_ref().map(|s| s.as_str()),
-                license: msg.package_info.license.as_ref().map(|s| s.as_str()),
-            }).returning(versions::id)
-            .get_result::<i32>(conn)?;
-
-        if let Some(readme) = msg.readme_file {
-            diesel::insert_into(readmes::table)
-                .values(CreateReadme {
-                    version_id,
-                    textfile: &readme,
-                }).execute(conn)?;
-        }
-
         let create_deps: Vec<CreateDependency> = deps_info
             .iter()
             .map(|dep_info| CreateDependency {
-                version_id,
+                version_id: version.id,
                 package_id: dep_info.0,
                 version_req: dep_info.1.to_string(),
-            }).collect();
+            })
+            .collect();
 
         diesel::insert_into(dependencies::table)
             .values(create_deps)
@@ -350,12 +326,24 @@ pub fn publish_version(
             .package_info
             .authors
             .iter()
-            .map(|name| CreateAuthor { version_id, name })
+            .map(|name| CreateAuthor {
+                version_id: version.id,
+                name,
+            })
             .collect();
 
         diesel::insert_into(version_authors::table)
             .values(create_authors)
             .execute(conn)?;
+
+        if let Some(readme) = msg.readme_file {
+            diesel::insert_into(readmes::table)
+                .values(CreateReadme {
+                    version_id: version.id,
+                    textfile: &readme,
+                })
+                .execute(conn)?;
+        }
 
         diesel::sql_query("REFRESH MATERIALIZED VIEW ts_vectors;").execute(conn)?;
 
@@ -364,7 +352,8 @@ pub fn publish_version(
                 package: msg.package,
                 dependencies: msg.dependencies,
                 bytes: msg.bytes,
-            }).from_err::<Error>()
+            })
+            .from_err::<Error>()
             .wait()?
             .context("Failed to update index")?;
 
@@ -382,7 +371,7 @@ pub fn yank_version(msg: YankVersion, conn: &Connection, index: &Addr<Index>) ->
         )?;
 
         let (_, group) = lookup_group(
-            LookupGroup(PackageGroupName::new(msg.package.name.group().to_owned())?),
+            LookupGroup(GroupName::new(msg.package.name.group().to_owned())?),
             conn,
         )?;
         let (_, version) = lookup_version(LookupVersion(msg.package.clone()), conn)?;
@@ -415,7 +404,8 @@ pub fn yank_version(msg: YankVersion, conn: &Connection, index: &Addr<Index>) ->
             .send(YankAndUpdate {
                 package: msg.package,
                 yanked: msg.yanked,
-            }).from_err::<Error>()
+            })
+            .from_err::<Error>()
             .wait()?
             .context("Failed to yank/unyank version")?;
 
@@ -423,18 +413,16 @@ pub fn yank_version(msg: YankVersion, conn: &Connection, index: &Addr<Index>) ->
     })
 }
 
-pub fn list_groups(_: ListGroups, conn: &Connection) -> Result<Vec<PackageGroupName>, Error> {
+pub fn list_groups(_: ListGroups, conn: &Connection) -> Result<Vec<GroupName>, Error> {
     let mut group_names = {
-        use schema::package_groups::dsl::*;
+        use schema::groups::dsl::*;
 
-        package_groups
-            .select(package_group_name)
-            .load::<String>(conn)?
+        groups.select(group_name).load::<String>(conn)?
     };
 
     let group_names: Vec<_> = group_names
         .drain(..)
-        .filter_map(|group_name| PackageGroupName::new(group_name).ok())
+        .filter_map(|group_name| GroupName::new(group_name).ok())
         .collect();
 
     Ok(group_names)
@@ -443,12 +431,10 @@ pub fn list_groups(_: ListGroups, conn: &Connection) -> Result<Vec<PackageGroupN
 pub fn list_packages(msg: ListPackages, conn: &Connection) -> Result<Vec<PackageName>, Error> {
     use schema::packages::dsl::*;
 
-    let (group_name, package_group) = lookup_group(
-        LookupGroup(PackageGroupName::new(msg.0.group().to_owned())?),
-        conn,
-    )?;
+    let (group_name, group) =
+        lookup_group(LookupGroup(GroupName::new(msg.0.group().to_owned())?), conn)?;
 
-    let mut package_names = Package::belonging_to(&package_group)
+    let mut package_names = Package::belonging_to(&group)
         .select(package_name)
         .load::<String>(conn)?;
 
@@ -456,7 +442,8 @@ pub fn list_packages(msg: ListPackages, conn: &Connection) -> Result<Vec<Package
         .drain(..)
         .filter_map(|packages_name| {
             PackageName::new(group_name.group().to_owned(), packages_name).ok()
-        }).collect();
+        })
+        .collect();
 
     Ok(package_names)
 }
@@ -477,7 +464,8 @@ pub fn list_versions(msg: ListVersions, conn: &Connection) -> Result<Vec<Package
                 name: package_name.clone(),
                 semver: packages_version.parse().ok()?,
             })
-        }).collect();
+        })
+        .collect();
 
     Ok(packages_versions)
 }
@@ -487,47 +475,43 @@ pub fn list_dependencies(
     conn: &Connection,
 ) -> Result<Vec<DependencyReq>, Error> {
     use schema::dependencies::dsl::*;
-    use schema::package_groups::dsl::*;
+    use schema::groups::dsl::*;
     use schema::packages::dsl::*;
 
     let (_, version) = lookup_version(LookupVersion(msg.0), conn)?;
 
     let mut result = Dependency::belonging_to(&version)
-        .inner_join(packages.inner_join(package_groups))
+        .inner_join(packages.inner_join(groups))
         .select((
-            package_group_name_origin,
+            group_name_origin,
             package_name_origin,
             dependencies::all_columns(),
-        )).load::<((String, String, Dependency))>(conn)?;
+        ))
+        .load::<((String, String, Dependency))>(conn)?;
 
     let package_dependencies: Vec<_> = result
         .drain(..)
-        .filter_map(|(group_name, packages_name, dependency)| {
+        .filter_map(|(groups_name, packages_name, dependency)| {
             Some(DependencyReq {
-                name: PackageName::new(group_name, packages_name).ok()?,
+                name: PackageName::new(groups_name, packages_name).ok()?,
                 version_req: dependency.version_req.parse().ok()?,
             })
-        }).collect();
+        })
+        .collect();
 
     Ok(package_dependencies)
 }
 
-pub fn lookup_group(
-    msg: LookupGroup,
-    conn: &Connection,
-) -> Result<(PackageGroupName, PackageGroup), Error> {
-    use schema::package_groups::dsl::*;
+pub fn lookup_group(msg: LookupGroup, conn: &Connection) -> Result<(GroupName, Group), Error> {
+    use schema::groups::dsl::*;
 
-    let package_group = package_groups
-        .filter(package_group_name.eq(&msg.0.normalized_group()))
-        .first::<PackageGroup>(conn)
+    let group = groups
+        .filter(group_name.eq(&msg.0.normalized_group()))
+        .first::<Group>(conn)
         .optional()?
         .ok_or_else(|| human!("Package group `{}` not found", msg.0.group(),))?;
 
-    Ok((
-        PackageGroupName::new(package_group.package_group_name_origin.clone())?,
-        package_group,
-    ))
+    Ok((GroupName::new(group.group_name_origin.clone())?, group))
 }
 
 pub fn lookup_package(
@@ -536,23 +520,16 @@ pub fn lookup_package(
 ) -> Result<(PackageName, Package), Error> {
     use schema::packages::dsl::*;
 
-    // TODO:
-    let (_, package_group) = lookup_group(
-        LookupGroup(PackageGroupName::new(msg.0.group().to_owned())?),
-        conn,
-    )?;
+    let (_, group) = lookup_group(LookupGroup(group_of_package(&msg.0)), conn)?;
 
-    let package = Package::belonging_to(&package_group)
+    let package = Package::belonging_to(&group)
         .filter(package_name.eq(&msg.0.normalized_name()))
         .first::<Package>(conn)
         .optional()?
         .ok_or_else(|| human!("Package `{}` not found", msg.0.as_str(),))?;
 
     Ok((
-        PackageName::new(
-            package_group.package_group_name_origin,
-            package.package_name_origin.clone(),
-        )?,
+        PackageName::new(group.group_name_origin, package.package_name_origin.clone())?,
         package,
     ))
 }
@@ -612,7 +589,8 @@ pub fn increase_download(msg: IncreaseDownload, conn: &Connection) -> Result<(),
     diesel::insert_into(version_downloads)
         .values(CreateVersionDownload {
             version_id: version.id,
-        }).on_conflict(on_constraint("unique_version_date"))
+        })
+        .on_conflict(on_constraint("unique_version_date"))
         .do_update()
         .set(downloads.eq(downloads + 1))
         .execute(conn)?;
@@ -629,9 +607,9 @@ pub fn search_package(msg: SearchPackage, conn: &Connection) -> Result<Vec<Packa
     let rank = ts_rank_cd(document, tsquery.clone());
 
     let query = ts_vectors
-        .select((package_group_name, package_name))
+        .select((group_name, package_name))
         .filter(tsquery.matches(document))
-        .group_by((package_group_name, package_name))
+        .group_by((group_name, package_name))
         .order_by(max(rank).desc())
         .limit(50);
 

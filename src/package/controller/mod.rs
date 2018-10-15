@@ -16,7 +16,7 @@ use chrono::NaiveDateTime;
 use elba::package::Name as PackageName;
 use failure::{Error, ResultExt};
 
-use super::model::{PackageGroupName, PackageVersion};
+use super::model::{GroupName, PackageVersion};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct GroupView {
@@ -36,16 +36,16 @@ pub struct PackageVersionView {
     pub version: String,
 }
 
-impl TryFrom<GroupView> for PackageGroupName {
+impl TryFrom<GroupView> for GroupName {
     type Error = Error;
 
-    fn try_from(req: GroupView) -> Result<PackageGroupName, Self::Error> {
-        Ok(PackageGroupName::new(req.group)?)
+    fn try_from(req: GroupView) -> Result<GroupName, Self::Error> {
+        Ok(GroupName::new(req.group)?)
     }
 }
 
-impl From<PackageGroupName> for GroupView {
-    fn from(group: PackageGroupName) -> GroupView {
+impl From<GroupName> for GroupView {
+    fn from(group: GroupName) -> GroupView {
         GroupView {
             group: group.group().to_owned(),
         }

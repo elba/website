@@ -1,4 +1,3 @@
-#![feature(crate_in_paths)]
 #![feature(nll)]
 #![feature(try_from)]
 #![allow(proc_macro_derive_resolution_fallback)]

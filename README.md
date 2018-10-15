@@ -33,7 +33,7 @@ Response:
 3.
 Prepare a tar file with proper `elba.toml` in it, and then:
 ```
-$ curl -v -L --request POST --data-binary "@your_project.tar" "http://localhost:17000/api/v1/packages/publish?package_group_name=package_group_name&package_name=package_name&semver=semver&token=your_token" 
+$ curl -v -L --request POST --data-binary "@your_project.tar" "http://localhost:17000/api/v1/packages/publish?group_name=group_name&package_name=package_name&semver=semver&token=your_token" 
 ```
 
 and then responses 200 OK currently.
