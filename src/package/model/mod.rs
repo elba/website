@@ -8,13 +8,13 @@ use semver;
 pub use self::action::*;
 
 #[derive(Clone)]
-pub struct PackageGroupName {
+pub struct GroupName {
     group: String,
     normalized: String,
 }
 
 // TODO: Move into `elba`?
-impl PackageGroupName {
+impl GroupName {
     pub fn new(group: String) -> Result<Self, Error> {
         let group_valid = group
             .chars()
@@ -32,7 +32,7 @@ impl PackageGroupName {
             bail!("group cannot be empty")
         }
 
-        Ok(PackageGroupName { group, normalized })
+        Ok(GroupName { group, normalized })
     }
 
     pub fn group(&self) -> &str {
@@ -41,6 +41,13 @@ impl PackageGroupName {
 
     pub fn normalized_group(&self) -> &str {
         &self.normalized
+    }
+}
+
+pub fn group_of_package(name: &PackageName) -> GroupName {
+    GroupName {
+        group: name.group().into(),
+        normalized: name.normalized_group().into(),
     }
 }
 

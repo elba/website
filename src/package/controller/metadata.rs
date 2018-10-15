@@ -61,8 +61,8 @@ pub fn list_groups(state: State<AppState>) -> impl Responder {
 }
 
 pub fn list_packages((path, state): (Path<GroupView>, State<AppState>)) -> impl Responder {
-    let package_group = match PackageGroupName::try_from(path.clone()) {
-        Ok(package_group) => package_group,
+    let group = match GroupName::try_from(path.clone()) {
+        Ok(group) => group,
         Err(err) => {
             let error: Box<Future<Item = _, Error = _>> = Box::new(future::err(err));
             return error;
@@ -71,7 +71,7 @@ pub fn list_packages((path, state): (Path<GroupView>, State<AppState>)) -> impl 
 
     let list_packages = state
         .db
-        .send(ListPackages(package_group))
+        .send(ListPackages(group))
         .from_err::<Error>()
         .flatten();
 
@@ -137,8 +137,8 @@ pub fn list_dependencies(
 }
 
 pub fn show_group((path, state): (Path<GroupView>, State<AppState>)) -> impl Responder {
-    let package_group = match PackageGroupName::try_from(path.clone()) {
-        Ok(package_group) => package_group,
+    let group = match GroupName::try_from(path.clone()) {
+        Ok(group) => group,
         Err(err) => {
             let error: Box<Future<Item = _, Error = _>> = Box::new(future::err(err));
             return error;
@@ -147,7 +147,7 @@ pub fn show_group((path, state): (Path<GroupView>, State<AppState>)) -> impl Res
 
     let lookup_group = state
         .db
-        .send(LookupGroup(package_group.clone()))
+        .send(LookupGroup(group.clone()))
         .from_err::<Error>()
         .flatten();
 

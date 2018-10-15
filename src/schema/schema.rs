@@ -8,19 +8,27 @@ table! {
 }
 
 table! {
-    package_groups (id) {
+    groups (id) {
         id -> Int4,
+        group_name -> Varchar,
+        group_name_origin -> Varchar,
         user_id -> Int4,
-        package_group_name -> Varchar,
-        package_group_name_origin -> Varchar,
         created_at -> Timestamp,
+    }
+}
+
+table! {
+    package_owners (id) {
+        id -> Int4,
+        package_id -> Int4,
+        user_id -> Int4,
     }
 }
 
 table! {
     packages (id) {
         id -> Int4,
-        package_group_id -> Int4,
+        group_id -> Int4,
         package_name -> Varchar,
         package_name_origin -> Varchar,
         updated_at -> Timestamp,
@@ -82,8 +90,10 @@ table! {
 
 joinable!(dependencies -> packages (package_id));
 joinable!(dependencies -> versions (version_id));
-joinable!(package_groups -> users (user_id));
-joinable!(packages -> package_groups (package_group_id));
+joinable!(groups -> users (user_id));
+joinable!(package_owners -> packages (package_id));
+joinable!(package_owners -> users (user_id));
+joinable!(packages -> groups (group_id));
 joinable!(readmes -> versions (version_id));
 joinable!(version_authors -> versions (version_id));
 joinable!(version_downloads -> versions (version_id));
@@ -91,7 +101,8 @@ joinable!(versions -> packages (package_id));
 
 allow_tables_to_appear_in_same_query!(
     dependencies,
-    package_groups,
+    groups,
+    package_owners,
     packages,
     readmes,
     users,
