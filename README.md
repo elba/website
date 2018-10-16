@@ -1,6 +1,12 @@
 # website
 elba's (currently non-existent) presence on the world wide web
 
+## System Dependencies
+
+### `PostgreSQL`
+
+elba's backend requires `PostgreSQL`. This can be installed through the your preferred package manager or an installer provided by the `PostgreSQL` project.
+
 ## Install
 ```
 $ cargo install diesel_cli --no-default-features --features postgres
