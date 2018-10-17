@@ -370,16 +370,15 @@ pub fn yank_version(msg: YankVersion, conn: &Connection, index: &Addr<Index>) ->
             conn,
         )?;
 
-        let (_, group) = lookup_group(
-            LookupGroup(GroupName::new(msg.package.name.group().to_owned())?),
-            conn,
-        )?;
+        let (_, package) = lookup_package(LookupPackage(msg.package.name.clone()), conn)?;
         let (_, version) = lookup_version(LookupVersion(msg.package.clone()), conn)?;
 
-        if group.user_id != user.id {
+        let package_owners = PackageOwner::belonging_to(&package).load::<PackageOwner>(conn)?;
+
+        if !package_owners.iter().any(|owner| owner.user_id == user.id) {
             return Err(human!(
-                "You don't own package `{}`",
-                msg.package.name.as_str()
+                "You have no permission to access package `{}`",
+                &msg.package.name.as_str()
             ));
         }
 
