@@ -1,13 +1,10 @@
 # website
 elba's (currently non-existent) presence on the world wide web
 
-## System Dependencies
+## Install (Development)
 
-### `PostgreSQL`
+elba's backend requires `PostgreSQL`. It can be installed through the your preferred package manager or an installer provided by the `PostgreSQL` project.
 
-elba's backend requires `PostgreSQL`. This can be installed through the your preferred package manager or an installer provided by the `PostgreSQL` project.
-
-## Install
 ```
 $ cargo install diesel_cli --no-default-features --features postgres
 $ diesel setup
@@ -16,8 +13,7 @@ $ cargo run
 
 ## Deploy
 1. Clone this repo into your server.
-2. Edit `docker-compose.yml`: fill in enviroment varibles, 
-`REMOTE_INDEX_USER` and `REMOTE_INDEX_PWD`.
+2. Edit `docker-compose.yml`: fill in enviroment varibles.
 3. Place your ssl certs to `/var/lib/nginx/certs/cert.csr` and 
 `/var/lib/nginx/certs/cert.key`.
 4. Make sure you exposed port 80 and port 443 if you have a firewall.
@@ -39,12 +35,12 @@ Response:
 3.
 Prepare a tar file with proper `elba.toml` in it, and then:
 ```
-$ curl -v -L --request POST --data-binary "@your_project.tar" "http://localhost:17000/api/v1/packages/publish?group_name=group_name&package_name=package_name&semver=semver&token=your_token" 
+$ curl -v -L --request PUT --data-binary "@your_project.tar" "http://localhost:17000/api/v1/packages/publish?group=group_name&package=package_name&version=version&token=your_token"
 ```
 
-and then responses 200 OK currently.
+and then responses 200 OK.
 
-## Back-end Roadmap
+## Backend Roadmap
 - [x] Login
 - [x] Publish package
 - [x] Store tarballs
@@ -62,7 +58,7 @@ and then responses 200 OK currently.
 - [ ] Forced gzip compression
 - [ ] Basic search support
 
-### Front-end Roadmap
+### Frontend Roadmap
 
 - [ ] Initially implement front-end
 - [ ] Github OAuth
