@@ -7,7 +7,7 @@ use failure::Error;
 use futures::prelude::*;
 
 use super::model::{CreateUser, User};
-use crate::util::error::report_error;
+use crate::util::error::{report_error, Reason};
 use crate::AppState;
 
 #[derive(Deserialize)]
@@ -38,16 +38,20 @@ pub fn login((req, state): (Query<LoginReq>, State<AppState>)) -> impl Responder
         .send()
         .from_err::<Error>();
 
-    let pares_response = login_github
+    let parse_response = login_github
         .and_then(|res| {
             if res.status() != StatusCode::OK {
-                return Err(human!("Bad username or access token to Github"));
+                return Err(human!(
+                    Reason::UserNotFound,
+                    "Bad username or access token to Github"
+                ));
             }
 
             Ok(res.json().from_err())
-        }).flatten();
+        })
+        .flatten();
 
-    let create_user = pares_response.and_then(move |json: GithubRes| {
+    let create_user = parse_response.and_then(move |json: GithubRes| {
         state
             .db
             .send(CreateUser {
@@ -57,7 +61,8 @@ pub fn login((req, state): (Query<LoginReq>, State<AppState>)) -> impl Responder
                 gh_access_token: req.gh_access_token.clone(),
                 gh_avatar: json.avatar_url,
                 last_used_at: Utc::now().naive_utc(),
-            }).flatten()
+            })
+            .flatten()
     });
 
     create_user

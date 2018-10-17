@@ -55,6 +55,7 @@ and then responses 200 OK.
 - [x] Add description/readme/homepage
 - [x] Add authors
 - [x] Improve `PackageName` / `PackageVersion` consistency
+- [x] Error reason
 - [ ] Forced gzip compression
 - [ ] Basic search support
 

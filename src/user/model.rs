@@ -6,6 +6,7 @@ use failure::Error;
 
 use crate::database::{Connection, Database};
 use crate::schema::users;
+use crate::util::error::Reason;
 
 #[allow(dead_code)]
 #[derive(Queryable)]
@@ -77,6 +78,12 @@ pub fn lookup_user(msg: LookupUser, conn: &Connection) -> Result<User, Error> {
         .filter(token.eq(&msg.token))
         .get_result::<User>(conn)
         .optional()?
-        .ok_or_else(|| human!("User not found to token `{}`", &msg.token))?;
+        .ok_or_else(|| {
+            human!(
+                Reason::UserNotFound,
+                "User not found to token `{}`",
+                &msg.token
+            )
+        })?;
     Ok(user)
 }

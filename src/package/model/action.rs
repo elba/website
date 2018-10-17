@@ -10,6 +10,7 @@ use crate::database::{Connection, Database};
 use crate::index::{Index, SaveAndUpdate, YankAndUpdate};
 use crate::schema::*;
 use crate::user::model::{lookup_user, LookupUser};
+use crate::util::error::Reason;
 
 use super::schema::*;
 use super::*;
@@ -228,6 +229,7 @@ pub fn publish_version(
 
                 if !package_owners.iter().any(|owner| owner.user_id == user.id) {
                     return Err(human!(
+                        Reason::NoPermission,
                         "You have no permission to access package `{}`",
                         &msg.package.name.as_str()
                     ));
@@ -238,6 +240,7 @@ pub fn publish_version(
             None => {
                 if group.user_id != user.id {
                     return Err(human!(
+                        Reason::NoPermission,
                         "You have no permission to create package under group `{}`",
                         &msg.package.name.group()
                     ));
@@ -272,6 +275,7 @@ pub fn publish_version(
 
         if version.is_some() {
             return Err(human!(
+                Reason::NoPermission,
                 "Package `{} {}` already exists",
                 &msg.package.name.as_str(),
                 &msg.package.semver,
@@ -303,6 +307,7 @@ pub fn publish_version(
                 deps_info.push((dep_id, dep_req.version_req.clone()));
             } else {
                 return Err(human!(
+                    Reason::DependencyNotFound,
                     "Dependency `{}` not found in index",
                     dep_req.name.as_str()
                 ));
@@ -377,6 +382,7 @@ pub fn yank_version(msg: YankVersion, conn: &Connection, index: &Addr<Index>) ->
 
         if !package_owners.iter().any(|owner| owner.user_id == user.id) {
             return Err(human!(
+                Reason::NoPermission,
                 "You have no permission to access package `{}`",
                 &msg.package.name.as_str()
             ));
@@ -384,11 +390,13 @@ pub fn yank_version(msg: YankVersion, conn: &Connection, index: &Addr<Index>) ->
 
         if version.yanked && msg.yanked {
             return Err(human!(
+                Reason::NoPermission,
                 "Package `{}` has already been yanked",
                 msg.package.name.as_str()
             ));
         } else if !version.yanked && !msg.yanked {
             return Err(human!(
+                Reason::NoPermission,
                 "Can not unyank package `{}`, it is not yanked",
                 msg.package.name.as_str()
             ));
@@ -508,7 +516,13 @@ pub fn lookup_group(msg: LookupGroup, conn: &Connection) -> Result<(GroupName, G
         .filter(group_name.eq(&msg.0.normalized_group()))
         .first::<Group>(conn)
         .optional()?
-        .ok_or_else(|| human!("Package group `{}` not found", msg.0.group(),))?;
+        .ok_or_else(|| {
+            human!(
+                Reason::PackageNotFound,
+                "Package group `{}` not found",
+                msg.0.group(),
+            )
+        })?;
 
     Ok((GroupName::new(group.group_name_origin.clone())?, group))
 }
@@ -525,7 +539,13 @@ pub fn lookup_package(
         .filter(package_name.eq(&msg.0.normalized_name()))
         .first::<Package>(conn)
         .optional()?
-        .ok_or_else(|| human!("Package `{}` not found", msg.0.as_str(),))?;
+        .ok_or_else(|| {
+            human!(
+                Reason::PackageNotFound,
+                "Package `{}` not found",
+                msg.0.as_str(),
+            )
+        })?;
 
     Ok((
         PackageName::new(group.group_name_origin, package.package_name_origin.clone())?,
@@ -548,6 +568,7 @@ pub fn lookup_version(
         .optional()?
         .ok_or_else(|| {
             human!(
+                Reason::PackageNotFound,
                 "Package version `{} {}` not found",
                 msg.0.name.as_str(),
                 msg.0.semver
@@ -571,6 +592,7 @@ pub fn lookup_readme(msg: LookupReadme, conn: &Connection) -> Result<String, Err
         .optional()?
         .ok_or_else(|| {
             human!(
+                Reason::PackageNotFound,
                 "Package readme for `{} {}` not found",
                 msg.0.name.as_str(),
                 msg.0.semver

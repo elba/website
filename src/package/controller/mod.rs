@@ -17,6 +17,7 @@ use elba::package::Name as PackageName;
 use failure::{Error, ResultExt};
 
 use super::model::{GroupName, PackageVersion};
+use crate::util::error::Reason;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct GroupView {
@@ -40,7 +41,8 @@ impl TryFrom<GroupView> for GroupName {
     type Error = Error;
 
     fn try_from(req: GroupView) -> Result<GroupName, Self::Error> {
-        Ok(GroupName::new(req.group)?)
+        Ok(GroupName::new(req.group)
+            .with_context(|err| human!(Reason::InvalidFormat, "Invalid group name: {}", err))?)
     }
 }
 
@@ -57,7 +59,7 @@ impl TryFrom<PackageView> for PackageName {
 
     fn try_from(req: PackageView) -> Result<PackageName, Self::Error> {
         let name = PackageName::new(req.group, req.package)
-            .with_context(|err| human!("Invalid package name: {}", err))?;
+            .with_context(|err| human!(Reason::InvalidFormat, "Invalid package name: {}", err))?;
         Ok(name)
     }
 }
@@ -76,7 +78,7 @@ impl TryFrom<PackageVersionView> for PackageVersion {
 
     fn try_from(req: PackageVersionView) -> Result<PackageVersion, Self::Error> {
         let name = PackageName::new(req.group, req.package)
-            .with_context(|err| human!("Invalid package name: {}", err))?;
+            .with_context(|err| human!(Reason::InvalidFormat, "Invalid package name: {}", err))?;
         Ok(PackageVersion {
             name,
             semver: req.version.parse()?,

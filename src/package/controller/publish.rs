@@ -11,7 +11,7 @@ use futures::{future, prelude::*};
 use tar::Archive;
 
 use crate::package::model::*;
-use crate::util::error::report_error;
+use crate::util::error::{report_error, Reason};
 use crate::{AppState, CONFIG};
 
 use super::PackageVersionView;
@@ -62,11 +62,13 @@ pub fn publish(
                     dependencies: deps.clone(),
                     token: query.token.clone(),
                     bytes,
-                }).from_err::<Error>()
+                })
+                .from_err::<Error>()
                 .flatten();
 
             Ok(publish)
-        }).flatten();
+        })
+        .flatten();
 
     publish_and_save
         .map(|()| HttpResponse::Ok().finish())
@@ -82,7 +84,8 @@ fn read_manifest(bytes: &[u8]) -> Result<Manifest, Error> {
         .find(|entry| match entry.path() {
             Ok(ref path) if *path == Path::new("elba.toml") => true,
             _ => false,
-        }).ok_or_else(|| human!("Manifest not found in archive"))?;
+        })
+        .ok_or_else(|| human!(Reason::InvalidManifest, "Manifest not found in archive"))?;
 
     let mut buffer = String::new();
     entry.read_to_string(&mut buffer)?;
@@ -125,15 +128,21 @@ fn read_readme(bytes: &[u8], subpath: Option<&Path>) -> Result<Option<String>, E
 
 fn verify_manifest(req: &PackageVersion, manifest: &Manifest) -> Result<(), Error> {
     if manifest.package.name.group() != req.name.group() {
-        return Err(human!("Package group name mismatched"));
+        return Err(human!(
+            Reason::InvalidManifest,
+            "Package group name mismatched"
+        ));
     }
 
     if manifest.package.name.name() != req.name.name() {
-        return Err(human!("Package name mismatched"));
+        return Err(human!(Reason::InvalidManifest, "Package name mismatched"));
     }
 
     if manifest.package.version != req.semver {
-        return Err(human!("Package version mismatched"));
+        return Err(human!(
+            Reason::InvalidManifest,
+            "Package version mismatched"
+        ));
     }
 
     // TODO: check outer index reference
@@ -149,6 +158,7 @@ fn deps_in_manifest(manifest: &Manifest) -> Result<Vec<(DependencyReq)>, Error> 
             DepReq::Registry(constrain) => constrain.clone(),
             _ => {
                 return Err(human!(
+                    Reason::InvalidManifest,
                     "Package contains non-index dependency {}",
                     name.as_str()
                 ))

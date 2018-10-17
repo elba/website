@@ -15,7 +15,11 @@ pub fn report_error(error: Error) -> Result<HttpResponse, Error> {
         .nth(0);
 
     if let Some(human_error) = human_error {
-        Ok(HttpResponse::BadRequest().body(format!("{{error:\"{}\"}}", human_error.message)))
+        Ok(HttpResponse::BadRequest().body(format!(
+            "{{error:\"{}\",description:\"{}\"}}",
+            human_error.reason.tag(),
+            human_error.message
+        )))
     } else {
         let mut error_chain_str = String::new();
         error
@@ -28,9 +32,32 @@ pub fn report_error(error: Error) -> Result<HttpResponse, Error> {
 }
 
 #[derive(Debug)]
+pub enum Reason {
+    InvalidFormat,
+    InvalidManifest,
+    NoPermission,
+    UserNotFound,
+    PackageNotFound,
+    DependencyNotFound,
+}
+
+#[derive(Debug)]
 pub struct HumanError {
+    pub reason: Reason,
     pub message: String,
-    pub failure: Option<Error>,
+}
+
+impl Reason {
+    pub fn tag(&self) -> &'static str {
+        match self {
+            Reason::InvalidFormat => "invalid_format",
+            Reason::InvalidManifest => "invalid_manifest",
+            Reason::NoPermission => "no_permission",
+            Reason::UserNotFound => "user_not_found",
+            Reason::PackageNotFound => "package_not_found",
+            Reason::DependencyNotFound => "dependency_not_found",
+        }
+    }
 }
 
 impl HumanError {
@@ -47,14 +74,14 @@ impl Display for HumanError {
 
 impl Fail for HumanError {
     fn cause(&self) -> Option<&Fail> {
-        self.failure.as_ref().map(|err| err.as_fail())
+        None
     }
 }
 
 #[macro_export]
 macro_rules! human {
-    ($($arg:tt)*) => ({
+    ($reason:expr, $($arg:tt)*) => ({
         let message = format!($($arg)*);
-        $crate::util::error::HumanError { message, failure: None }.into_error()
+        $crate::util::error::HumanError { reason: $reason, message }.into_error()
     })
 }
