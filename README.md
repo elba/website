@@ -57,7 +57,7 @@ and then responses 200 OK.
 - [x] Improve `PackageName` / `PackageVersion` consistency
 - [x] Error reason
 - [ ] Forced gzip compression
-- [ ] Basic search support
+- [x] Basic search support
 
 ### Frontend Roadmap
 

@@ -18,15 +18,18 @@ use super::PackageVersionView;
 
 #[derive(Deserialize, Clone)]
 pub struct PublishReq {
-    #[serde(flatten)]
-    pub package: PackageVersionView,
     pub token: String,
 }
 
 pub fn publish(
-    (query, state, req): (Query<PublishReq>, State<AppState>, HttpRequest<AppState>),
+    (path, query, state, req): (
+        actix_web::Path<PackageVersionView>,
+        Query<PublishReq>,
+        State<AppState>,
+        HttpRequest<AppState>,
+    ),
 ) -> impl Responder {
-    let package_version = match PackageVersion::try_from(query.package.clone()) {
+    let package_version = match PackageVersion::try_from(path.into_inner()) {
         Ok(package_version) => package_version,
         Err(err) => {
             let error: Box<Future<Item = _, Error = _>> = Box::new(future::err(err));
@@ -62,11 +65,13 @@ pub fn publish(
                     dependencies: deps.clone(),
                     token: query.token.clone(),
                     bytes,
-                }).from_err::<Error>()
+                })
+                .from_err::<Error>()
                 .flatten();
 
             Ok(publish)
-        }).flatten();
+        })
+        .flatten();
 
     publish_and_save
         .map(|()| HttpResponse::Ok().finish())
@@ -82,7 +87,8 @@ fn read_manifest(bytes: &[u8]) -> Result<Manifest, Error> {
         .find(|entry| match entry.path() {
             Ok(ref path) if *path == Path::new("elba.toml") => true,
             _ => false,
-        }).ok_or_else(|| human!(Reason::InvalidManifest, "Manifest not found in archive"))?;
+        })
+        .ok_or_else(|| human!(Reason::InvalidManifest, "Manifest not found in archive"))?;
 
     let mut buffer = String::new();
     entry.read_to_string(&mut buffer)?;

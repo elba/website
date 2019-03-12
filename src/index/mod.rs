@@ -171,7 +171,7 @@ impl From<PackageVersion> for TomlEntry {
             name: package.name.clone(),
             location: DirectRes::Tar {
                 url: format!(
-                    "{}/api/v1/packages/download?group={}&package={}&version={}",
+                    "{}/api/v1/packages/{}/{}/{}/download",
                     &CONFIG.backend_url,
                     &package.name.group(),
                     &package.name.name(),

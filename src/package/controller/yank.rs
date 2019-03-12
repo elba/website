@@ -12,14 +12,14 @@ use super::PackageVersionView;
 
 #[derive(Deserialize, Clone)]
 pub struct YankReq {
-    #[serde(flatten)]
-    pub package: PackageVersionView,
     pub yanked: bool,
     pub token: String,
 }
 
-pub fn yank((query, state): (Query<YankReq>, State<AppState>)) -> impl Responder {
-    let package_version = match PackageVersion::try_from(query.package.clone()) {
+pub fn yank(
+    (path, query, state): (Path<PackageVersionView>, Query<YankReq>, State<AppState>),
+) -> impl Responder {
+    let package_version = match PackageVersion::try_from(path.into_inner()) {
         Ok(package_version) => package_version,
         Err(err) => {
             let error: Box<Future<Item = _, Error = _>> = Box::new(future::err(err));
@@ -33,7 +33,8 @@ pub fn yank((query, state): (Query<YankReq>, State<AppState>)) -> impl Responder
             package: package_version.clone(),
             yanked: query.yanked,
             token: query.token.clone(),
-        }).from_err::<Error>()
+        })
+        .from_err::<Error>()
         .flatten();
 
     yank_version
