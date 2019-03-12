@@ -266,7 +266,8 @@ pub fn publish_version(
         };
 
         package.updated_at = Utc::now().naive_utc();
-        let package: Package = package.save_changes(conn)?;
+        let connection: &PgConnection = &*conn;
+        let package: Package = package.save_changes(connection)?;
 
         let version = Version::belonging_to(&package)
             .filter(versions::columns::semver.eq(msg.package.semver.to_string()))
@@ -422,7 +423,7 @@ pub fn yank_version(msg: YankVersion, conn: &Connection, index: &Addr<Index>) ->
 
 pub fn list_groups(_: ListGroups, conn: &Connection) -> Result<Vec<GroupName>, Error> {
     let mut group_names = {
-        use schema::groups::dsl::*;
+        use crate::schema::groups::dsl::*;
 
         groups.select(group_name).load::<String>(conn)?
     };
@@ -436,7 +437,7 @@ pub fn list_groups(_: ListGroups, conn: &Connection) -> Result<Vec<GroupName>, E
 }
 
 pub fn list_packages(msg: ListPackages, conn: &Connection) -> Result<Vec<PackageName>, Error> {
-    use schema::packages::dsl::*;
+    use crate::schema::packages::dsl::*;
 
     let (group_name, group) =
         lookup_group(LookupGroup(GroupName::new(msg.0.group().to_owned())?), conn)?;
@@ -456,7 +457,7 @@ pub fn list_packages(msg: ListPackages, conn: &Connection) -> Result<Vec<Package
 }
 
 pub fn list_versions(msg: ListVersions, conn: &Connection) -> Result<Vec<PackageVersion>, Error> {
-    use schema::versions::dsl::*;
+    use crate::schema::versions::dsl::*;
 
     let (package_name, package) = lookup_package(LookupPackage(msg.0), conn)?;
 
@@ -481,9 +482,9 @@ pub fn list_dependencies(
     msg: ListDependencies,
     conn: &Connection,
 ) -> Result<Vec<DependencyReq>, Error> {
-    use schema::dependencies::dsl::*;
-    use schema::groups::dsl::*;
-    use schema::packages::dsl::*;
+    use crate::schema::dependencies::dsl::*;
+    use crate::schema::groups::dsl::*;
+    use crate::schema::packages::dsl::*;
 
     let (_, version) = lookup_version(LookupVersion(msg.0), conn)?;
 
@@ -510,7 +511,7 @@ pub fn list_dependencies(
 }
 
 pub fn lookup_group(msg: LookupGroup, conn: &Connection) -> Result<(GroupName, Group), Error> {
-    use schema::groups::dsl::*;
+    use crate::schema::groups::dsl::*;
 
     let group = groups
         .filter(group_name.eq(&msg.0.normalized_group()))
@@ -531,7 +532,7 @@ pub fn lookup_package(
     msg: LookupPackage,
     conn: &Connection,
 ) -> Result<(PackageName, Package), Error> {
-    use schema::packages::dsl::*;
+    use crate::schema::packages::dsl::*;
 
     let (_, group) = lookup_group(LookupGroup(group_of_package(&msg.0)), conn)?;
 
@@ -557,7 +558,7 @@ pub fn lookup_version(
     msg: LookupVersion,
     conn: &Connection,
 ) -> Result<(PackageVersion, Version), Error> {
-    use schema::versions::dsl::*;
+    use crate::schema::versions::dsl::*;
 
     // TODO:
     let (package_name, package) = lookup_package(LookupPackage(msg.0.name.clone()), conn)?;
@@ -603,7 +604,7 @@ pub fn lookup_readme(msg: LookupReadme, conn: &Connection) -> Result<String, Err
 }
 
 pub fn increase_download(msg: IncreaseDownload, conn: &Connection) -> Result<(), Error> {
-    use schema::version_downloads::dsl::*;
+    use crate::schema::version_downloads::dsl::*;
 
     let (_, version) = lookup_version(LookupVersion(msg.0), conn)?;
 
@@ -622,7 +623,7 @@ pub fn increase_download(msg: IncreaseDownload, conn: &Connection) -> Result<(),
 pub fn search_package(msg: SearchPackage, conn: &Connection) -> Result<Vec<PackageName>, Error> {
     use diesel::dsl::*;
     use diesel_full_text_search::*;
-    use schema::ts_vectors::dsl::*;
+    use crate::schema::ts_vectors::dsl::*;
 
     let tsquery = plainto_tsquery(msg.0);
     let rank = ts_rank_cd(document, tsquery.clone());

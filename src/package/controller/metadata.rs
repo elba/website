@@ -15,7 +15,7 @@ use super::*;
 pub struct GroupMetadata {
     #[serde(flatten)]
     pub group: GroupView,
-    #[serde(with = "::util::rfc3339")]
+    #[serde(with = "crate::util::rfc3339")]
     pub created_at: NaiveDateTime,
 }
 
@@ -23,9 +23,9 @@ pub struct GroupMetadata {
 pub struct PackageMetadata {
     #[serde(flatten)]
     pub package: PackageView,
-    #[serde(with = "::util::rfc3339")]
+    #[serde(with = "crate::util::rfc3339")]
     pub updated_at: NaiveDateTime,
-    #[serde(with = "::util::rfc3339")]
+    #[serde(with = "crate::util::rfc3339")]
     pub created_at: NaiveDateTime,
 }
 
@@ -38,7 +38,7 @@ pub struct VersionMetadata {
     pub homepage: Option<String>,
     pub repository: Option<String>,
     pub license: Option<String>,
-    #[serde(with = "::util::rfc3339")]
+    #[serde(with = "crate::util::rfc3339")]
     pub created_at: NaiveDateTime,
 }
 

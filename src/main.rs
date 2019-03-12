@@ -1,35 +1,5 @@
 #![feature(nll)]
-#![feature(try_from)]
 #![allow(proc_macro_derive_resolution_fallback)]
-
-extern crate actix;
-extern crate actix_web;
-extern crate base64;
-extern crate bytes;
-extern crate chrono;
-extern crate diesel_full_text_search;
-extern crate dotenv;
-extern crate elba;
-extern crate env_logger;
-extern crate futures;
-extern crate git2;
-extern crate num_cpus;
-extern crate semver;
-extern crate serde;
-extern crate serde_json;
-extern crate tar;
-extern crate tokio;
-extern crate url;
-#[macro_use]
-extern crate diesel;
-#[macro_use]
-extern crate failure;
-#[macro_use]
-extern crate lazy_static;
-#[macro_use]
-extern crate serde_derive;
-#[macro_use]
-extern crate log;
 
 #[macro_use]
 mod util;
@@ -41,6 +11,18 @@ mod schema;
 mod user;
 
 use std::env;
+
+extern crate actix;
+#[macro_use]
+extern crate diesel;
+#[macro_use]
+extern crate failure;
+#[macro_use]
+extern crate lazy_static;
+#[macro_use]
+extern crate serde_derive;
+#[macro_use]
+extern crate log;
 
 use actix::prelude::*;
 use actix_web::{middleware, server, App};
@@ -81,7 +63,8 @@ fn main() {
     server::new(move || {
         let app = App::with_state(app_state.clone()).middleware(middleware::Logger::default());
         router::router(app)
-    }).bind(&address)
+    })
+    .bind(&address)
     .expect(&format!("Can't bind to {}", &address))
     .start();
 

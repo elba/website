@@ -1,5 +1,6 @@
 use chrono::NaiveDateTime;
 
+use actix;
 use actix::prelude::*;
 use diesel::{self, prelude::*};
 use failure::Error;
@@ -62,7 +63,7 @@ impl Handler<LookupUser> for Database {
 }
 
 pub fn create_user(msg: CreateUser, conn: &Connection) -> Result<User, Error> {
-    use schema::users::dsl::*;
+    use crate::schema::users::dsl::*;
     let user = diesel::insert_into(users)
         .values(&msg)
         .on_conflict(gh_id)
@@ -73,7 +74,7 @@ pub fn create_user(msg: CreateUser, conn: &Connection) -> Result<User, Error> {
 }
 
 pub fn lookup_user(msg: LookupUser, conn: &Connection) -> Result<User, Error> {
-    use schema::users::dsl::*;
+    use crate::schema::users::dsl::*;
     let user = users
         .filter(token.eq(&msg.token))
         .get_result::<User>(conn)
