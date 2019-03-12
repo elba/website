@@ -48,8 +48,7 @@ pub fn login((req, state): (Query<LoginReq>, State<AppState>)) -> impl Responder
             }
 
             Ok(res.json().from_err())
-        })
-        .flatten();
+        }).flatten();
 
     let create_user = parse_response.and_then(move |json: GithubRes| {
         state
@@ -61,8 +60,7 @@ pub fn login((req, state): (Query<LoginReq>, State<AppState>)) -> impl Responder
                 gh_access_token: req.gh_access_token.clone(),
                 gh_avatar: json.avatar_url,
                 last_used_at: Utc::now().naive_utc(),
-            })
-            .flatten()
+            }).flatten()
     });
 
     create_user

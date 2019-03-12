@@ -63,8 +63,7 @@ fn main() {
     server::new(move || {
         let app = App::with_state(app_state.clone()).middleware(middleware::Logger::default());
         router::router(app)
-    })
-    .bind(&address)
+    }).bind(&address)
     .expect(&format!("Can't bind to {}", &address))
     .start();
 
