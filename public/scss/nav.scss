@@ -1,0 +1,71 @@
+.page-border-top {
+  background-color: $primary;
+  height: 10px;
+}
+
+.navbar {
+  .navbar-brand {
+    color: black;
+    font-size: 1.5rem;
+    font-weight: bold;
+
+    a {
+      padding-left: 0;
+    }
+  }
+
+  @include tablet {
+    .navbar-item {
+      padding: 0.5rem;
+    }
+  }
+}
+
+.search {
+  background-color: $grey-1;
+
+  .search-form {
+    height: 3.5rem;
+    padding-top: 3px;
+    padding-bottom: 3px;
+
+    .control {
+      height: 100%;
+      flex-shrink: 1;
+    }
+
+    .search-input {
+      .input {
+        color: $grey-8;
+        font-size: 1.25rem;
+        height: 100%;
+        padding-left: 3.25rem;
+        padding-bottom: 0.5em;
+        background-color: $grey-2;
+
+        &:focus {
+          background-color: $grey-3;
+        }
+      }
+
+      .icon {
+        color: #bcbccb;
+        font-size: 1.5rem;
+        padding-bottom: 0.25em;
+      }
+    }
+
+    .search-button {
+      color: black;
+      border-color: transparent;
+      background-color: $yellow;
+      font-size: 1rem;
+      font-weight: bold;
+      height: 100%;
+
+      &:active {
+        background-color: darken($yellow, 30%);
+      }
+    }
+  }
+}

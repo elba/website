@@ -1,0 +1,50 @@
+.splash {
+  margin: 5rem auto;
+  max-width: 45rem;
+}
+
+.splash-text {
+  h1 {
+    color: $grey-8;
+    font-weight: bold;
+    line-height: 1.25em;
+    white-space: pre-line;
+    margin-bottom: 6rem;
+
+    @include mobile {
+      font-size: 2rem;
+    }
+
+    @include tablet {
+      font-size: 3rem;
+    }
+
+    .highlight {
+      color: $magenta;
+      font-weight: inherit;
+      border-bottom: 3px dotted black;
+      display: inline-block;
+      line-height: 1em;
+      padding-top: 0.25em;
+    }
+  }
+}
+
+.splash-buttons {
+  margin-top: 5rem;
+
+  a {
+    color: white;
+    background-color: $purple;
+    box-shadow: 0.25rem 0.25rem 0 $grey-2;
+    font-size: 1rem;
+    font-weight: bold;
+    width: 8em;
+    height: 3em;
+
+    &:active {
+      color: $grey-8;
+      background-color: $yellow;
+    }
+  }
+}

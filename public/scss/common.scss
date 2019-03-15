@@ -1,0 +1,33 @@
+.container {
+  padding-left: 20px;
+  padding-right: 20px;
+}
+
+.input {
+  font-family: $family-secondary;
+  box-shadow: none;
+  border: none;
+  border-radius: 0;
+
+  &:focus {
+    border: none;
+    box-shadow: none;
+  }
+}
+
+.button-simple {
+  text-align: center;
+  padding: 0.375em 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// .button {
+//   border-color: transparent;
+//   border-radius: 0;
+
+//   &:focus {
+//     border-color: transparent;
+//   }
+// }

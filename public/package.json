@@ -1,0 +1,9 @@
+{
+  "devDependencies": {
+    "sass": "^1.17.2",
+    "bulma": "^0.7.4"
+  },
+  "scripts": {
+    "start": "parcel serve index.html"
+  }
+}
