@@ -1,20 +1,20 @@
 .page-border-top {
-  background-color: $primary;
   height: 10px;
+  background-color: $primary;
 }
 
 .navbar {
   .navbar-brand {
-    color: black;
     font-size: 1.5rem;
     font-weight: bold;
+    color: black;
 
-    a {
+    .navbar-logo {
       padding-left: 0;
     }
   }
 
-  @include tablet {
+  @include mobile {
     .navbar-item {
       padding: 0.5rem;
     }
@@ -36,12 +36,12 @@
 
     .search-input {
       .input {
-        color: $grey-8;
-        font-size: 1.25rem;
         height: 100%;
-        padding-left: 3.25rem;
+        padding-left: 2.75em;
         padding-bottom: 0.5em;
+        color: $grey-8;
         background-color: $grey-2;
+        font-size: 1.25rem;
 
         &:focus {
           background-color: $grey-3;
@@ -49,19 +49,19 @@
       }
 
       .icon {
+        padding-bottom: 0.25em;
         color: #bcbccb;
         font-size: 1.5rem;
-        padding-bottom: 0.25em;
       }
     }
 
     .search-button {
+      height: 100%;
+      font-size: 1rem;
+      font-weight: bold;
       color: black;
       border-color: transparent;
       background-color: $yellow;
-      font-size: 1rem;
-      font-weight: bold;
-      height: 100%;
 
       &:active {
         background-color: darken($yellow, 30%);

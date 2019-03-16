@@ -1,15 +1,46 @@
 .splash {
-  margin: 5rem auto;
+  position: relative;
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+}
+
+.splash-background-container {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-width: 55rem;
+
+  // TODO: replace it with canvas?
+  .splash-background {
+    height: 100%;
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+
+    @include mobile {
+      background-image: url(../svg/splash-background-mobile.svg);
+    }
+
+    @include tablet {
+      background-image: url(../svg/splash-background.svg);
+    }
+  }
+}
+
+.splash-content {
+  padding-top: 3.5rem;
+  padding-bottom: 3.5rem;
   max-width: 45rem;
 }
 
 .splash-text {
   h1 {
-    color: $grey-8;
+    margin-bottom: 6rem;
+    white-space: pre-line;
     font-weight: bold;
     line-height: 1.25em;
-    white-space: pre-line;
-    margin-bottom: 6rem;
+    color: $grey-8;
 
     @include mobile {
       font-size: 2rem;
@@ -20,12 +51,16 @@
     }
 
     .highlight {
-      color: $magenta;
-      font-weight: inherit;
-      border-bottom: 3px dotted black;
       display: inline-block;
-      line-height: 1em;
-      padding-top: 0.25em;
+      white-space: normal;
+      font-weight: inherit;
+      color: $magenta;
+      border-bottom: 3px dotted black;
+
+      &:active {
+        color: white;
+        background-color: $magenta;
+      }
     }
   }
 }
@@ -33,18 +68,60 @@
 .splash-buttons {
   margin-top: 5rem;
 
-  a {
+  .splash-button {
+    width: 8em;
+    height: 3.5em;
+    font-size: 1rem;
+    font-weight: bold;
     color: white;
     background-color: $purple;
     box-shadow: 0.25rem 0.25rem 0 $grey-2;
-    font-size: 1rem;
-    font-weight: bold;
-    width: 8em;
-    height: 3em;
 
     &:active {
       color: $grey-8;
       background-color: $yellow;
     }
+  }
+}
+
+.features {
+  color: white;
+  background-color: $magenta;
+}
+
+.feature {
+  margin-bottom: 2rem;
+
+  // TODO: pseudo feautre icon
+  div {
+    width: 6rem;
+    height: 6rem;
+    margin-bottom: 0.5rem;
+    border-radius: 10px;
+    background-color: $yellow;
+  }
+
+  h2 {
+    padding: 1rem 0 0.2rem 0;
+    font-size: 1.5rem;
+    font-weight: bold;
+  }
+
+  p {
+    font-size: 0.9rem;
+  }
+}
+
+.statistics {
+  background-color: $grey-1;
+
+  .statistics-data {
+    color: $primary;
+    font-size: 2.25rem;
+    font-weight: bold;
+  }
+
+  .statistics-title {
+    font-size: 1.125rem;
   }
 }

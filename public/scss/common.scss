@@ -3,6 +3,16 @@
   padding-right: 20px;
 }
 
+.section {
+  padding: 2rem 20px;
+
+  .section-title {
+    margin-bottom: 3rem;
+    font-size: 1.9rem;
+    font-weight: bold;
+  }
+}
+
 .input {
   font-family: $family-secondary;
   box-shadow: none;
