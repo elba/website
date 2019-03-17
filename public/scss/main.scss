@@ -1,11 +1,8 @@
 @charset "utf-8";
 
-@import "./variables.scss";
-@import "./colors.scss";
-@import "./fonts.scss";
+@import "./variables/_all.scss";
 
-@import "../node_modules/bulma/bulma.sass";
+@import "./bulma.scss";
 
-@import "./common.scss";
-@import "./nav.scss";
-@import "./homepage.scss";
+@import "./elements/_all.scss";
+@import "./pages/all.scss";

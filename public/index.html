@@ -20,7 +20,7 @@
 </head>
 
 <body>
-    <div class="page-border-top"></div>
+    <div class="page-border-line"></div>
 
     <!-- Navigation -->
     <nav class="navbar container">
@@ -53,7 +53,7 @@
                     <i class="fas fa-search"></i>
                 </span>
             </div>
-            <button class="search-button button-simple" type="submit">Search</button>
+            <button class="search-button button" type="submit">Search</button>
         </form>
     </div>
 
@@ -74,10 +74,10 @@
 
             <div class="splash-buttons columns is-gapless is-mobile">
                 <div class="column is-half">
-                    <a class="splash-button button-simple" href="#">Get Started</a>
+                    <a class="splash-button button is-purple has-shadow" href="#">Get Started</a>
                 </div>
                 <div class="column is-half">
-                    <a class="splash-button button-simple" href="#">Download</a>
+                    <a class="splash-button button is-purple has-shadow" href="#">Download</a>
                 </div>
             </div>
         </div>
@@ -120,16 +120,16 @@
         <div class="section container">
             <h1 class="section-title">Until now, we have</h1>
 
-            <div class="columns is-gapless is-mobile">
-                <div class="column is-half">
-                    <p class="statistics-data">1230</p>
+            <ul class="columns is-gapless is-mobile">
+                <li class="column is-half">
+                    <p class="statistics-value">1230</p>
                     <p class="statistics-title">packages</p>
-                </div>
-                <div class="column is-half">
-                    <p class="statistics-data">201649</p>
+                </li>
+                <li class="column is-half">
+                    <p class="statistics-value">201649</p>
                     <p class="statistics-title">downloads</p>
-                </div>
-            </div>
+                </li>
+            </ul>
 
         </div>
     </div>
@@ -138,8 +138,75 @@
     <div class="packages">
         <div class="section container">
             <h1 class="section-title">Popular pacakges</h1>
+            <ul>
+                <li class="package-item columns is-mobile is-gapless is-multiline">
+                    <div class="column">
+                        <div>
+                            <a class="package-name" link="#">lightyear/lightyear</a>
+                            <span class="package-version">0.2.1</span>
+                        </div>
+                        <p class="package-description">Lightweight parser combinator library for Idris, inspired by
+                            Parsec.</p>
+                    </div>
+                    <div class="column is-narrow">
+                        <p class="download-value">1230</p>
+                        <p class="download-title">downloads</p>
+                    </div>
+                    <div class="column is-full">
+                        <div class="tags">
+                            <a class="tag" href="#">parser</a>
+                            <a class="tag" href="#">parser</a>
+                            <a class="tag" href="#">parser</a>
+                            <a class="tag" href="#">parser</a>
+                            <a class="tag" href="#">parser</a>
+                        </div>
+                    </div>
+                    <div class="column is-full">
+                        <div class="metadata">
+                            <img class="avatar" src="./img/avatar.jpg" alt="avatar">
+                            <span class="author">andylokandy</span>
+                            <span class="separator">•</span>
+                            <span class="date">updated 2 months ago</span>
+                        </div>
+                    </div>
+                </li>
+            </ul>
         </div>
     </div>
+
+    <!-- Question -->
+    <div class="question">
+        <div class="section container">
+            <h1 class="section-title">Looks good?</h1>
+            <a class="button is-purple has-shadow">
+                Start to explore elba
+            </a>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer container">
+        <ul class="columns">
+            <li class="footer-section column">
+                <h2>Help</h2>
+                <a href="#">Get started</a>
+                <a href="#">Docs</a>
+                <a href="#">Guide</a>
+            </li>
+            <li class="footer-section column">
+                <h2>Get in touch</h2>
+                <a href="#">Github issue</a>
+                <a href="#">Riot</a>
+            </li>
+            <li class="footer-section column">
+                <h2>Link</h2>
+                <a href="#">Idris</a>
+                <a href="#">Github</a>
+            </li>
+        </ul>
+    </div>
+
+    <div class="page-border-line"></div>
 
 </body>
 
