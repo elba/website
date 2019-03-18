@@ -9,7 +9,7 @@ use futures::Future;
 use crate::database::{Connection, Database};
 use crate::index::{Index, SaveAndUpdate, YankAndUpdate};
 use crate::schema::*;
-use crate::user::model::{lookup_user, LookupUser};
+use crate::user::model::{lookup_user_by_token, LookupUserByToken, User};
 use crate::util::error::Reason;
 
 use super::schema::*;
@@ -33,6 +33,7 @@ pub struct YankVersion {
 pub struct ListGroups;
 pub struct ListPackages(pub GroupName);
 pub struct ListVersions(pub PackageName);
+pub struct ListOwners(pub PackageName);
 pub struct ListDependencies(pub PackageVersion);
 
 pub struct LookupGroup(pub GroupName);
@@ -62,6 +63,10 @@ impl Message for ListPackages {
 
 impl Message for ListVersions {
     type Result = Result<Vec<PackageVersion>, Error>;
+}
+
+impl Message for ListOwners {
+    type Result = Result<Vec<User>, Error>;
 }
 
 impl Message for ListDependencies {
@@ -132,6 +137,14 @@ impl Handler<ListVersions> for Database {
     }
 }
 
+impl Handler<ListOwners> for Database {
+    type Result = Result<Vec<User>, Error>;
+
+    fn handle(&mut self, msg: ListOwners, _: &mut Self::Context) -> Self::Result {
+        list_owners(msg, &self.connection()?)
+    }
+}
+
 impl Handler<ListDependencies> for Database {
     type Result = Result<Vec<DependencyReq>, Error>;
 
@@ -194,8 +207,8 @@ pub fn publish_version(
     index: &Addr<Index>,
 ) -> Result<(), Error> {
     conn.build_transaction().serializable().run(|| {
-        let user = lookup_user(
-            LookupUser {
+        let user = lookup_user_by_token(
+            LookupUserByToken {
                 token: msg.token.clone(),
             },
             conn,
@@ -213,7 +226,8 @@ pub fn publish_version(
                     group_name: &msg.package.name.normalized_group(),
                     group_name_origin: &msg.package.name.group(),
                     user_id: user.id,
-                }).get_result(conn)?,
+                })
+                .get_result(conn)?,
         };
 
         let package = Package::belonging_to(&group)
@@ -229,7 +243,7 @@ pub fn publish_version(
                 if !package_owners.iter().any(|owner| owner.user_id == user.id) {
                     return Err(human!(
                         Reason::NoPermission,
-                        "You have no permission to access package `{}`",
+                        "You have no access permission to package `{}`",
                         &msg.package.name.as_str()
                     ));
                 }
@@ -250,13 +264,15 @@ pub fn publish_version(
                         group_id: group.id,
                         package_name: &msg.package.name.normalized_name(),
                         package_name_origin: &msg.package.name.name(),
-                    }).get_result::<Package>(conn)?;
+                    })
+                    .get_result::<Package>(conn)?;
 
                 diesel::insert_into(package_owners::table)
                     .values(CreateOwner {
                         package_id: package.id,
                         user_id: user.id,
-                    }).execute(conn)?;
+                    })
+                    .execute(conn)?;
 
                 package
             }
@@ -288,7 +304,8 @@ pub fn publish_version(
                 homepage: msg.package_info.homepage.as_ref().map(|s| s.as_str()),
                 repository: msg.package_info.repository.as_ref().map(|s| s.as_str()),
                 license: msg.package_info.license.as_ref().map(|s| s.as_str()),
-            }).get_result::<Version>(conn)?;
+            })
+            .get_result::<Version>(conn)?;
 
         let mut deps_info = Vec::new();
         for dep_req in msg.dependencies.iter() {
@@ -317,7 +334,8 @@ pub fn publish_version(
                 version_id: version.id,
                 package_id: dep_info.0,
                 version_req: dep_info.1.to_string(),
-            }).collect();
+            })
+            .collect();
 
         diesel::insert_into(dependencies::table)
             .values(create_deps)
@@ -330,7 +348,8 @@ pub fn publish_version(
             .map(|name| CreateAuthor {
                 version_id: version.id,
                 name,
-            }).collect();
+            })
+            .collect();
 
         diesel::insert_into(version_authors::table)
             .values(create_authors)
@@ -341,7 +360,8 @@ pub fn publish_version(
                 .values(CreateReadme {
                     version_id: version.id,
                     textfile: &readme,
-                }).execute(conn)?;
+                })
+                .execute(conn)?;
         }
 
         diesel::sql_query("REFRESH MATERIALIZED VIEW ts_vectors;").execute(conn)?;
@@ -351,7 +371,8 @@ pub fn publish_version(
                 package: msg.package,
                 dependencies: msg.dependencies,
                 bytes: msg.bytes,
-            }).from_err::<Error>()
+            })
+            .from_err::<Error>()
             .wait()?
             .context("Failed to update index")?;
 
@@ -361,8 +382,8 @@ pub fn publish_version(
 
 pub fn yank_version(msg: YankVersion, conn: &Connection, index: &Addr<Index>) -> Result<(), Error> {
     conn.build_transaction().serializable().run(|| {
-        let user = lookup_user(
-            LookupUser {
+        let user = lookup_user_by_token(
+            LookupUserByToken {
                 token: msg.token.clone(),
             },
             conn,
@@ -376,7 +397,7 @@ pub fn yank_version(msg: YankVersion, conn: &Connection, index: &Addr<Index>) ->
         if !package_owners.iter().any(|owner| owner.user_id == user.id) {
             return Err(human!(
                 Reason::NoPermission,
-                "You have no permission to access package `{}`",
+                "You have no access permission to package `{}`",
                 &msg.package.name.as_str()
             ));
         }
@@ -390,7 +411,7 @@ pub fn yank_version(msg: YankVersion, conn: &Connection, index: &Addr<Index>) ->
         } else if !version.yanked && !msg.yanked {
             return Err(human!(
                 Reason::NoPermission,
-                "Can not unyank package `{}`, it is not yanked",
+                "Can not unyank package `{}`, because it is not yanked",
                 msg.package.name.as_str()
             ));
         }
@@ -404,7 +425,8 @@ pub fn yank_version(msg: YankVersion, conn: &Connection, index: &Addr<Index>) ->
             .send(YankAndUpdate {
                 package: msg.package,
                 yanked: msg.yanked,
-            }).from_err::<Error>()
+            })
+            .from_err::<Error>()
             .wait()?
             .context("Failed to yank/unyank version")?;
 
@@ -441,7 +463,8 @@ pub fn list_packages(msg: ListPackages, conn: &Connection) -> Result<Vec<Package
         .drain(..)
         .filter_map(|packages_name| {
             PackageName::new(group_name.group().to_owned(), packages_name).ok()
-        }).collect();
+        })
+        .collect();
 
     Ok(package_names)
 }
@@ -462,9 +485,23 @@ pub fn list_versions(msg: ListVersions, conn: &Connection) -> Result<Vec<Package
                 name: package_name.clone(),
                 semver: packages_version.parse().ok()?,
             })
-        }).collect();
+        })
+        .collect();
 
     Ok(packages_versions)
+}
+
+pub fn list_owners(msg: ListOwners, conn: &Connection) -> Result<Vec<User>, Error> {
+    use crate::schema::users::dsl::*;
+
+    let (_, package) = lookup_package(LookupPackage(msg.0), conn)?;
+
+    let  packages_owners = PackageOwner::belonging_to(&package)
+        .inner_join(users)
+        .select(users::all_columns())
+        .load::<User>(conn)?;
+
+    Ok(packages_owners)
 }
 
 pub fn list_dependencies(
@@ -483,7 +520,8 @@ pub fn list_dependencies(
             group_name_origin,
             package_name_origin,
             dependencies::all_columns(),
-        )).load::<((String, String, Dependency))>(conn)?;
+        ))
+        .load::<((String, String, Dependency))>(conn)?;
 
     let package_dependencies: Vec<_> = result
         .drain(..)
@@ -492,7 +530,8 @@ pub fn list_dependencies(
                 name: PackageName::new(groups_name, packages_name).ok()?,
                 version_req: dependency.version_req.parse().ok()?,
             })
-        }).collect();
+        })
+        .collect();
 
     Ok(package_dependencies)
 }
@@ -598,7 +637,8 @@ pub fn increase_download(msg: IncreaseDownload, conn: &Connection) -> Result<(),
     diesel::insert_into(version_downloads)
         .values(CreateVersionDownload {
             version_id: version.id,
-        }).on_conflict(on_constraint("unique_version_date"))
+        })
+        .on_conflict(on_constraint("unique_version_date"))
         .do_update()
         .set(downloads.eq(downloads + 1))
         .execute(conn)?;

@@ -35,6 +35,10 @@ pub struct CreateUser {
 }
 
 pub struct LookupUser {
+    pub id: i32,
+}
+
+pub struct LookupUserByToken {
     pub token: String,
 }
 
@@ -43,6 +47,10 @@ impl Message for CreateUser {
 }
 
 impl Message for LookupUser {
+    type Result = Result<User, Error>;
+}
+
+impl Message for LookupUserByToken {
     type Result = Result<User, Error>;
 }
 
@@ -62,6 +70,14 @@ impl Handler<LookupUser> for Database {
     }
 }
 
+impl Handler<LookupUserByToken> for Database {
+    type Result = Result<User, Error>;
+
+    fn handle(&mut self, msg: LookupUserByToken, _: &mut Self::Context) -> Self::Result {
+        lookup_user_by_token(msg, &self.connection()?)
+    }
+}
+
 pub fn create_user(msg: CreateUser, conn: &Connection) -> Result<User, Error> {
     use crate::schema::users::dsl::*;
     let user = diesel::insert_into(users)
@@ -74,6 +90,16 @@ pub fn create_user(msg: CreateUser, conn: &Connection) -> Result<User, Error> {
 }
 
 pub fn lookup_user(msg: LookupUser, conn: &Connection) -> Result<User, Error> {
+    use crate::schema::users::dsl::*;
+    let user = users
+        .find(msg.id)
+        .get_result::<User>(conn)
+        .optional()?
+        .ok_or_else(|| human!(Reason::UserNotFound, "User not found to id `{}`", &msg.id))?;
+    Ok(user)
+}
+
+pub fn lookup_user_by_token(msg: LookupUserByToken, conn: &Connection) -> Result<User, Error> {
     use crate::schema::users::dsl::*;
     let user = users
         .filter(token.eq(&msg.token))

@@ -37,6 +37,44 @@ pub struct PackageVersionView {
     pub version: String,
 }
 
+#[derive(Serialize, Clone)]
+pub struct GroupMetadata {
+    #[serde(flatten)]
+    pub group: GroupView,
+    #[serde(with = "crate::util::rfc3339")]
+    pub created_at: NaiveDateTime,
+}
+
+#[derive(Serialize, Clone)]
+pub struct PackageMetadata {
+    #[serde(flatten)]
+    pub package: PackageView,
+    #[serde(with = "crate::util::rfc3339")]
+    pub updated_at: NaiveDateTime,
+    #[serde(with = "crate::util::rfc3339")]
+    pub created_at: NaiveDateTime,
+}
+
+#[derive(Serialize, Clone)]
+pub struct VersionMetadata {
+    #[serde(flatten)]
+    pub package_version: PackageVersionView,
+    pub yanked: bool,
+    pub description: Option<String>,
+    pub homepage: Option<String>,
+    pub repository: Option<String>,
+    pub license: Option<String>,
+    #[serde(with = "crate::util::rfc3339")]
+    pub created_at: NaiveDateTime,
+}
+
+#[derive(Serialize, Clone)]
+pub struct DependencyMetadata {
+    #[serde(flatten)]
+    pub package: PackageView,
+    pub version_req: String,
+}
+
 impl TryFrom<GroupView> for GroupName {
     type Error = Error;
 

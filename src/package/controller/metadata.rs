@@ -6,48 +6,11 @@ use failure::Error;
 use futures::{future, prelude::*};
 
 use crate::package::model::*;
+use crate::user::controller::UserMetadata;
 use crate::util::error::report_error;
 use crate::AppState;
 
 use super::*;
-
-#[derive(Serialize, Clone)]
-pub struct GroupMetadata {
-    #[serde(flatten)]
-    pub group: GroupView,
-    #[serde(with = "crate::util::rfc3339")]
-    pub created_at: NaiveDateTime,
-}
-
-#[derive(Serialize, Clone)]
-pub struct PackageMetadata {
-    #[serde(flatten)]
-    pub package: PackageView,
-    #[serde(with = "crate::util::rfc3339")]
-    pub updated_at: NaiveDateTime,
-    #[serde(with = "crate::util::rfc3339")]
-    pub created_at: NaiveDateTime,
-}
-
-#[derive(Serialize, Clone)]
-pub struct VersionMetadata {
-    #[serde(flatten)]
-    pub package_version: PackageVersionView,
-    pub yanked: bool,
-    pub description: Option<String>,
-    pub homepage: Option<String>,
-    pub repository: Option<String>,
-    pub license: Option<String>,
-    #[serde(with = "crate::util::rfc3339")]
-    pub created_at: NaiveDateTime,
-}
-
-#[derive(Serialize, Clone)]
-pub struct DependencyMetadata {
-    #[serde(flatten)]
-    pub package: PackageView,
-    pub version_req: String,
-}
 
 pub fn list_groups(state: State<AppState>) -> impl Responder {
     let list_groups = state.db.send(ListGroups).from_err::<Error>().flatten();
@@ -102,6 +65,29 @@ pub fn list_versions((path, state): (Path<PackageView>, State<AppState>)) -> imp
         .map(|mut versions| {
             let versions: Vec<_> = versions.drain(..).map(PackageVersionView::from).collect();
             HttpResponse::Ok().json(versions)
+        }).or_else(report_error)
+        .responder()
+}
+
+pub fn list_owners((path, state): (Path<PackageView>, State<AppState>)) -> impl Responder {
+    let package_name = match PackageName::try_from(path.clone()) {
+        Ok(package_name) => package_name,
+        Err(err) => {
+            let error: Box<Future<Item = _, Error = _>> = Box::new(future::err(err));
+            return error;
+        }
+    };
+
+    let list_owners = state
+        .db
+        .send(ListOwners(package_name))
+        .from_err::<Error>()
+        .flatten();
+
+    list_owners
+        .map(|mut owners| {
+            let owners: Vec<_> = owners.drain(..).map(UserMetadata::from).collect();
+            HttpResponse::Ok().json(owners)
         }).or_else(report_error)
         .responder()
 }

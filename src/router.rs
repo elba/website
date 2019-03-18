@@ -5,6 +5,11 @@ use crate::{package, user, AppState};
 pub fn router(app: App<AppState>) -> App<AppState> {
     app.prefix("/api/v1")
         .route("/users/login", Method::GET, user::controller::login)
+        .route(
+            "/users/{id}/metadata",
+            Method::GET,
+            user::controller::metadata::show_user,
+        )
         .route("/packages/search", Method::GET, package::controller::search)
         .route(
             "/packages/groups",
@@ -30,6 +35,11 @@ pub fn router(app: App<AppState>) -> App<AppState> {
             "/packages/{group}/{package}/versions",
             Method::GET,
             package::controller::metadata::list_versions,
+        )
+        .route(
+            "/packages/{group}/{package}/owners",
+            Method::GET,
+            package::controller::metadata::list_owners,
         )
         .route(
             "/packages/{group}/{package}/{version}/metadata",

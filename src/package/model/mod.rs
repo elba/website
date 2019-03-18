@@ -6,6 +6,7 @@ use failure::Error;
 use semver;
 
 pub use self::action::*;
+pub use self::schema::*;
 
 #[derive(Clone)]
 pub struct GroupName {
