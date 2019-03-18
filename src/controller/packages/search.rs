@@ -2,7 +2,7 @@ use actix_web::*;
 use failure::Error;
 use futures::prelude::*;
 
-use crate::package::model::*;
+use crate::model::packages::*;
 use crate::util::error::report_error;
 use crate::AppState;
 

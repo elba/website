@@ -2,7 +2,7 @@ use actix_web::*;
 use failure::Error;
 use futures::prelude::*;
 
-use crate::user::model::*;
+use crate::model::users::*;
 use crate::util::error::report_error;
 use crate::AppState;
 
@@ -19,8 +19,7 @@ pub fn show_user((path, state): (Path<UserView>, State<AppState>)) -> impl Respo
         .map(move |user| {
             let user_meta = UserMetadata::from(user);
             Ok(HttpResponse::Ok().json(user_meta))
-        })
-        .flatten()
+        }).flatten()
         .or_else(report_error)
         .responder()
 }

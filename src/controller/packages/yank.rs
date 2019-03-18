@@ -4,7 +4,7 @@ use actix_web::*;
 use failure::Error;
 use futures::{future, prelude::*};
 
-use crate::package::model::*;
+use crate::model::packages::*;
 use crate::util::error::report_error;
 use crate::AppState;
 
@@ -33,8 +33,7 @@ pub fn yank(
             package: package_version.clone(),
             yanked: query.yanked,
             token: query.token.clone(),
-        })
-        .from_err::<Error>()
+        }).from_err::<Error>()
         .flatten();
 
     yank_version

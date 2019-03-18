@@ -16,7 +16,7 @@ use chrono::NaiveDateTime;
 use elba::package::Name as PackageName;
 use failure::{Error, ResultExt};
 
-use super::model::{GroupName, PackageVersion};
+use crate::model::packages::{GroupName, PackageVersion};
 use crate::util::error::Reason;
 
 #[derive(Serialize, Deserialize, Clone)]

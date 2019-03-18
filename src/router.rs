@@ -1,75 +1,67 @@
 use actix_web::{http::Method, App};
 
-use crate::{package, user, AppState};
+use crate::controller;
+use crate::AppState;
 
 pub fn router(app: App<AppState>) -> App<AppState> {
     app.prefix("/api/v1")
-        .route("/users/login", Method::GET, user::controller::login)
+        .route("/users/login", Method::GET, controller::users::login)
         .route(
             "/users/{id}/metadata",
             Method::GET,
-            user::controller::metadata::show_user,
-        )
-        .route("/packages/search", Method::GET, package::controller::search)
-        .route(
+            controller::users::metadata::show_user,
+        ).route(
+            "/packages/search",
+            Method::GET,
+            controller::packages::search,
+        ).route(
             "/packages/groups",
             Method::GET,
-            package::controller::metadata::list_groups,
-        )
-        .route(
+            controller::packages::metadata::list_groups,
+        ).route(
             "/packages/{group}/metadata",
             Method::GET,
-            package::controller::metadata::show_group,
-        )
-        .route(
+            controller::packages::metadata::show_group,
+        ).route(
             "/packages/{group}/packages",
             Method::GET,
-            package::controller::metadata::list_packages,
-        )
-        .route(
+            controller::packages::metadata::list_packages,
+        ).route(
             "/packages/{group}/{package}/metadata",
             Method::GET,
-            package::controller::metadata::show_package,
-        )
-        .route(
+            controller::packages::metadata::show_package,
+        ).route(
             "/packages/{group}/{package}/versions",
             Method::GET,
-            package::controller::metadata::list_versions,
-        )
-        .route(
+            controller::packages::metadata::list_versions,
+        ).route(
             "/packages/{group}/{package}/owners",
             Method::GET,
-            package::controller::metadata::list_owners,
-        )
-        .route(
+            controller::packages::metadata::list_owners,
+        ).route(
             "/packages/{group}/{package}/{version}/metadata",
             Method::GET,
-            package::controller::metadata::show_version,
-        )
-        .route(
+            controller::packages::metadata::show_version,
+        ).route(
             "/packages/{group}/{package}/{version}/readme",
             Method::GET,
-            package::controller::metadata::show_readme,
-        )
-        .route(
+            controller::packages::metadata::show_readme,
+        ).route(
             "/packages/{group}/{package}/{version}/dependencies",
             Method::GET,
-            package::controller::metadata::list_dependencies,
-        )
-        .route(
+            controller::packages::metadata::list_dependencies,
+        ).route(
             "/packages/{group}/{package}/{version}/download",
             Method::GET,
-            package::controller::download,
-        )
-        .route(
+            controller::packages::download,
+        ).route(
             "/packages/{group}/{package}/{version}/yank",
             Method::PATCH,
-            package::controller::yank,
-        )
-        .route(
+            controller::packages::yank,
+        ).route(
             "/packages/{group}/{package}/{version}/publish",
             Method::PUT,
-            package::controller::publish,
+            controller::packages::publish,
         )
     // .route(
     //     "/packages/{group}/{package}/{version}/downloads",

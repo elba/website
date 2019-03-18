@@ -6,7 +6,7 @@ use chrono::offset::Utc;
 use failure::Error;
 use futures::prelude::*;
 
-use crate::user::model::{CreateUser, User};
+use crate::model::users::{CreateUser, User};
 use crate::util::error::{report_error, Reason};
 use crate::AppState;
 

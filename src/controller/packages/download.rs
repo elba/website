@@ -5,7 +5,7 @@ use failure::Error;
 use futures::{future, prelude::*};
 
 use crate::index::get_location;
-use crate::package::model::*;
+use crate::model::packages::*;
 use crate::util::error::report_error;
 use crate::AppState;
 

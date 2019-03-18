@@ -5,8 +5,8 @@ use elba::package::Name as PackageName;
 use failure::Error;
 use futures::{future, prelude::*};
 
-use crate::package::model::*;
-use crate::user::controller::UserMetadata;
+use crate::controller::users::UserMetadata;
+use crate::model::packages::*;
 use crate::util::error::report_error;
 use crate::AppState;
 

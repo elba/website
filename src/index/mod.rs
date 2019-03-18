@@ -11,7 +11,7 @@ use serde_json;
 use elba::remote::{resolution::DirectRes, TomlDep, TomlEntry};
 
 use self::repo::IndexRepo;
-use crate::package::model::{DependencyReq, PackageVersion};
+use crate::model::packages::{DependencyReq, PackageVersion};
 
 use crate::CONFIG;
 

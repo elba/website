@@ -4,7 +4,7 @@ mod login;
 
 pub use login::login;
 
-use crate::user::model::User;
+use crate::model::users::User;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct UserView {

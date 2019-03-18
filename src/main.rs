@@ -3,12 +3,12 @@
 
 #[macro_use]
 mod util;
+mod controller;
 mod database;
 mod index;
-mod package;
+mod model;
 mod router;
 mod schema;
-mod user;
 
 use std::env;
 
