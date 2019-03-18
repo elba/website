@@ -18,7 +18,13 @@ pub fn show_user((path, state): (Path<UserView>, State<AppState>)) -> impl Respo
     lookup_user
         .map(move |user| {
             let user_meta = UserMetadata::from(user);
-            Ok(HttpResponse::Ok().json(user_meta))
+
+            #[derive(Serialize)]
+            struct R {
+                user: UserMetadata,
+            }
+
+            Ok(HttpResponse::Ok().json(R { user: user_meta }))
         }).flatten()
         .or_else(report_error)
         .responder()

@@ -17,8 +17,14 @@ pub fn list_groups(state: State<AppState>) -> impl Responder {
 
     list_groups
         .map(|mut groups| {
-            let groups: Vec<_> = groups.drain(..).map(GroupView::from).collect();
-            HttpResponse::Ok().json(groups)
+            let groups = groups.drain(..).map(GroupView::from).collect();
+
+            #[derive(Serialize)]
+            struct R {
+                groups: Vec<GroupView>,
+            }
+
+            HttpResponse::Ok().json(R { groups })
         }).or_else(report_error)
         .responder()
 }
@@ -40,8 +46,14 @@ pub fn list_packages((path, state): (Path<GroupView>, State<AppState>)) -> impl 
 
     list_packages
         .map(|mut packages| {
-            let packages: Vec<_> = packages.drain(..).map(PackageView::from).collect();
-            HttpResponse::Ok().json(packages)
+            let packages = packages.drain(..).map(PackageView::from).collect();
+
+            #[derive(Serialize)]
+            struct R {
+                packages: Vec<PackageView>,
+            }
+
+            HttpResponse::Ok().json(R { packages })
         }).or_else(report_error)
         .responder()
 }
@@ -63,8 +75,14 @@ pub fn list_versions((path, state): (Path<PackageView>, State<AppState>)) -> imp
 
     list_versions
         .map(|mut versions| {
-            let versions: Vec<_> = versions.drain(..).map(PackageVersionView::from).collect();
-            HttpResponse::Ok().json(versions)
+            let versions = versions.drain(..).map(PackageVersionView::from).collect();
+
+            #[derive(Serialize)]
+            struct R {
+                versions: Vec<PackageVersionView>,
+            }
+
+            HttpResponse::Ok().json(R { versions })
         }).or_else(report_error)
         .responder()
 }
@@ -86,8 +104,14 @@ pub fn list_owners((path, state): (Path<PackageView>, State<AppState>)) -> impl 
 
     list_owners
         .map(|mut owners| {
-            let owners: Vec<_> = owners.drain(..).map(UserMetadata::from).collect();
-            HttpResponse::Ok().json(owners)
+            let owners = owners.drain(..).map(UserMetadata::from).collect();
+
+            #[derive(Serialize)]
+            struct R {
+                owners: Vec<UserMetadata>,
+            }
+
+            HttpResponse::Ok().json(R { owners })
         }).or_else(report_error)
         .responder()
 }
@@ -111,13 +135,17 @@ pub fn list_dependencies(
 
     list_dependencies
         .map(|mut dependencies| {
-            let versions: Vec<_> = dependencies
+            let dependencies: Vec<_> = dependencies
                 .drain(..)
-                .map(|dependency| DependencyMetadata {
-                    package: dependency.name.into(),
-                    version_req: dependency.version_req.to_string(),
-                }).collect();
-            HttpResponse::Ok().json(versions)
+                .map(DependencyMetadata::from)
+                .collect();
+
+            #[derive(Serialize)]
+            struct R {
+                dependencies: Vec<DependencyMetadata>,
+            }
+
+            HttpResponse::Ok().json(R { dependencies })
         }).or_else(report_error)
         .responder()
 }
@@ -144,7 +172,12 @@ pub fn show_group((path, state): (Path<GroupView>, State<AppState>)) -> impl Res
                 created_at: group.created_at,
             };
 
-            Ok(HttpResponse::Ok().json(group_meta))
+            #[derive(Serialize)]
+            struct R {
+                group: GroupMetadata,
+            }
+
+            Ok(HttpResponse::Ok().json(R { group: group_meta }))
         }).flatten()
         .or_else(report_error)
         .responder()
@@ -173,7 +206,14 @@ pub fn show_package((path, state): (Path<PackageView>, State<AppState>)) -> impl
                 created_at: package.created_at,
             };
 
-            Ok(HttpResponse::Ok().json(package_meta))
+            #[derive(Serialize)]
+            struct R {
+                package: PackageMetadata,
+            }
+
+            Ok(HttpResponse::Ok().json(R {
+                package: package_meta,
+            }))
         }).flatten()
         .or_else(report_error)
         .responder()
@@ -206,7 +246,14 @@ pub fn show_version((path, state): (Path<PackageVersionView>, State<AppState>)) 
                 created_at: version.created_at,
             };
 
-            Ok(HttpResponse::Ok().json(version_meta))
+            #[derive(Serialize)]
+            struct R {
+                version: VersionMetadata,
+            }
+
+            Ok(HttpResponse::Ok().json(R {
+                version: version_meta,
+            }))
         }).flatten()
         .or_else(report_error)
         .responder()
@@ -228,8 +275,14 @@ pub fn show_readme((path, state): (Path<PackageVersionView>, State<AppState>)) -
         .flatten();
 
     lookup_readme
-        .map(move |readme| Ok(HttpResponse::Ok().body(readme)))
-        .flatten()
+        .map(move |readme| {
+            #[derive(Serialize)]
+            struct R {
+                readme: String,
+            }
+
+            Ok(HttpResponse::Ok().json(R { readme }))
+        }).flatten()
         .or_else(report_error)
         .responder()
 }

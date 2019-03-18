@@ -16,7 +16,7 @@ use chrono::NaiveDateTime;
 use elba::package::Name as PackageName;
 use failure::{Error, ResultExt};
 
-use crate::model::packages::{GroupName, PackageVersion};
+use crate::model::packages::*;
 use crate::util::error::Reason;
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -130,6 +130,15 @@ impl From<PackageVersion> for PackageVersionView {
             group: package.name.group().to_owned(),
             package: package.name.name().to_owned(),
             version: package.semver.to_string(),
+        }
+    }
+}
+
+impl From<DependencyReq> for DependencyMetadata {
+    fn from(dependency: DependencyReq) -> DependencyMetadata {
+        DependencyMetadata {
+            package: dependency.name.into(),
+            version_req: dependency.version_req.to_string(),
         }
     }
 }
