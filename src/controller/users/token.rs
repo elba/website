@@ -9,21 +9,8 @@ use crate::model::users::{CreateUser, User};
 use crate::util::error::{report_error, Reason};
 use crate::AppState;
 
-#[derive(Deserialize)]
-pub struct LoginReq {
-    gh_name: String,
-    gh_access_token: String,
-}
-
-#[derive(Deserialize)]
-struct GithubRes {
-    id: i32,
-    email: Option<String>,
-    avatar_url: Option<String>,
-}
-
-// TODO: login token
-pub fn login((req, state): (Query<LoginReq>, State<AppState>)) -> impl Responder {
+// TODO: check login
+pub fn create_token((req, state): (Query<LoginReq>, State<AppState>)) -> impl Responder {
     let auth = base64::encode(&format!("{}:{}", req.gh_name, req.gh_access_token));
 
     let login_github = client::get("https://api.github.com/user")
