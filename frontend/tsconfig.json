@@ -1,0 +1,22 @@
+{
+    "compilerOptions": {
+        "target": "es6",
+        "module": "commonjs",
+        "allowSyntheticDefaultImports": true,
+        "strict": true,
+        "jsx": "react",
+        "baseUrl": ".",
+        "paths": {
+            "~*": ["./src/*"]
+        },
+        "plugins": [
+            {
+                "name": "typescript-plugin-css-modules",
+                "options": {
+                    "customMatcher": "\\.s?css$",
+                    "camelCase": false
+                }
+            }
+        ]
+    }
+}
