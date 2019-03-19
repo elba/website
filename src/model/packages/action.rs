@@ -209,7 +209,7 @@ pub fn publish_version(
     conn.build_transaction().serializable().run(|| {
         let user = lookup_user_by_token(
             LookupUserByToken {
-                token: msg.token.clone(),
+                access_token: msg.token.clone(),
             },
             conn,
         )?;
@@ -376,7 +376,7 @@ pub fn yank_version(msg: YankVersion, conn: &Connection, index: &Addr<Index>) ->
     conn.build_transaction().serializable().run(|| {
         let user = lookup_user_by_token(
             LookupUserByToken {
-                token: msg.token.clone(),
+                access_token: msg.token.clone(),
             },
             conn,
         )?;

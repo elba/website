@@ -1,10 +1,9 @@
 pub mod metadata;
+pub mod token;
 
 mod login;
-// mod token;
 
 pub use login::login;
-// pub use token::create_token;
 
 use crate::model::users::User;
 
@@ -19,6 +18,12 @@ pub struct UserMetadata {
     pub email: Option<String>,
     pub name: String,
     pub avatar: Option<String>,
+}
+
+#[derive(Serialize, Clone)]
+pub struct AccessTokenMetadata {
+    pub id: i32,
+    pub token: String,
 }
 
 impl From<User> for UserMetadata {

@@ -34,7 +34,7 @@ pub struct AccessToken {
 
 #[derive(Insertable, AsChangeset)]
 #[table_name = "users"]
-pub struct CreateUser {
+pub struct CreateUserOrLogin {
     pub email: Option<String>,
     pub gh_id: i32,
     pub gh_name: String,
@@ -62,10 +62,10 @@ pub struct LookupUser {
 }
 
 pub struct LookupUserByToken {
-    pub token: String,
+    pub access_token: String,
 }
 
-impl Message for CreateUser {
+impl Message for CreateUserOrLogin {
     type Result = Result<User, Error>;
 }
 
@@ -89,11 +89,11 @@ impl Message for LookupUserByToken {
     type Result = Result<User, Error>;
 }
 
-impl Handler<CreateUser> for Database {
+impl Handler<CreateUserOrLogin> for Database {
     type Result = Result<User, Error>;
 
-    fn handle(&mut self, msg: CreateUser, _: &mut Self::Context) -> Self::Result {
-        create_user(msg, &self.connection()?)
+    fn handle(&mut self, msg: CreateUserOrLogin, _: &mut Self::Context) -> Self::Result {
+        create_user_or_login(msg, &self.connection()?)
     }
 }
 
@@ -129,35 +129,13 @@ impl Handler<LookupUser> for Database {
     }
 }
 
-impl Handler<LookupUserByToken> for Database {
-    type Result = Result<User, Error>;
-
-    fn handle(&mut self, msg: LookupUserByToken, _: &mut Self::Context) -> Self::Result {
-        lookup_user_by_token(msg, &self.connection()?)
-    }
-}
-
-pub fn create_user(msg: CreateUser, conn: &Connection) -> Result<User, Error> {
+pub fn create_user_or_login(msg: CreateUserOrLogin, conn: &Connection) -> Result<User, Error> {
     use crate::schema::users::dsl::*;
-
-    let user = users
-        .filter(gh_id.eq(&msg.gh_id))
-        .first::<User>(conn)
-        .optional()?;
-
-    if user.is_some() {
-        return Err(human!(
-            Reason::NoPermission,
-            "User `{}: {}` already exists",
-            &msg.gh_id,
-            &msg.gh_name,
-        ));
-    }
-
     let user = diesel::insert_into(users)
         .values(&msg)
+        .on_conflict(gh_id)
+        .do_nothing()
         .get_result::<User>(conn)?;
-
     Ok(user)
 }
 
@@ -217,14 +195,14 @@ pub fn lookup_user_by_token(msg: LookupUserByToken, conn: &Connection) -> Result
     use crate::schema::users::dsl::*;
 
     let access_token = access_tokens
-        .filter(token.eq(&msg.token))
+        .filter(token.eq(&msg.access_token))
         .get_result::<AccessToken>(conn)
         .optional()?
         .ok_or_else(|| {
             human!(
                 Reason::UserNotFound,
-                "User not found to token `{}`",
-                &msg.token
+                "User not found to access token `{}`",
+                &msg.access_token
             )
         })?;
 

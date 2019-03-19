@@ -79,6 +79,7 @@ pub fn publish(
 
 fn read_manifest(bytes: &[u8]) -> Result<Manifest, Error> {
     let mut archive = Archive::new(bytes);
+    // TODO: Find manifest case-insensitively
     let mut entry = archive
         .entries()?
         .filter_map(Result::ok)
@@ -144,8 +145,6 @@ fn verify_manifest(req: &PackageVersion, manifest: &Manifest) -> Result<(), Erro
             "Package version mismatched"
         ));
     }
-
-    // TODO: check outer index reference
 
     Ok(())
 }

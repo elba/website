@@ -25,6 +25,7 @@ extern crate serde_derive;
 extern crate log;
 
 use actix::prelude::*;
+use actix_web::middleware::identity::{CookieIdentityPolicy, IdentityService};
 use actix_web::{middleware, server, App};
 
 use crate::database::Database;
@@ -61,7 +62,13 @@ fn main() {
     let app_state = AppState { db: db_actor };
 
     server::new(move || {
-        let app = App::with_state(app_state.clone()).middleware(middleware::Logger::default());
+        let app = App::with_state(app_state.clone())
+            .middleware(middleware::Logger::default())
+            .middleware(IdentityService::new(
+                CookieIdentityPolicy::new(&[0; 32])
+                    .name("user_token")
+                    .secure(false),
+            ));
         router::router(app)
     }).bind(&address)
     .expect(&format!("Can't bind to {}", &address))

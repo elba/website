@@ -1,51 +1,43 @@
-use actix_web::{
-    client, http::StatusCode, AsyncResponder, HttpMessage, HttpResponse, Query, Responder, State,
-};
-use base64;
+use actix_web::middleware::identity::RequestIdentity;
+use actix_web::{AsyncResponder, HttpRequest, HttpResponse, Responder, State};
 use failure::Error;
-use futures::prelude::*;
+use futures::{future, prelude::*};
 
-use crate::model::users::{CreateUser, User};
+use crate::model::users::*;
 use crate::util::error::{report_error, Reason};
 use crate::AppState;
 
-// TODO: check login
-pub fn create_token((req, state): (Query<LoginReq>, State<AppState>)) -> impl Responder {
-    let auth = base64::encode(&format!("{}:{}", req.gh_name, req.gh_access_token));
+use super::*;
 
-    let login_github = client::get("https://api.github.com/user")
-        .header("Authorization", format!("Basic {}", auth).as_str())
-        .finish()
-        .unwrap()
-        .send()
-        .from_err::<Error>();
+pub fn create_token((state, req): (State<AppState>, HttpRequest<AppState>)) -> impl Responder {
+    let user_id: i32 = match req.identity() {
+        Some(user_id) => user_id.parse().unwrap(),
+        None => {
+            let err = human!(Reason::InvalidManifest, "Please login first");
+            let error: Box<Future<Item = _, Error = _>> = Box::new(future::err(err));
+            return error;
+        }
+    };
 
-    let parse_response = login_github
-        .and_then(|res| {
-            if res.status() != StatusCode::OK {
-                return Err(human!(
-                    Reason::UserNotFound,
-                    "Bad username or access token to Github"
-                ));
+    let create_access_token = state
+        .db
+        .send(CreateAccessToken { user_id })
+        .from_err::<Error>()
+        .flatten();
+
+    create_access_token
+        .map(move |access_token: AccessToken| {
+            #[derive(Serialize)]
+            struct R {
+                token: AccessTokenMetadata,
             }
 
-            Ok(res.json().from_err())
-        }).flatten();
-
-    let create_user = parse_response.and_then(move |json: GithubRes| {
-        state
-            .db
-            .send(CreateUser {
-                email: json.email,
-                gh_id: json.id,
-                gh_name: req.gh_name.clone(),
-                gh_access_token: req.gh_access_token.clone(),
-                gh_avatar: json.avatar_url,
-            }).flatten()
-    });
-
-    create_user
-        .map(|_: User| HttpResponse::Ok().finish())
-        .or_else(report_error)
+            HttpResponse::Ok().json(R {
+                token: AccessTokenMetadata {
+                    id: access_token.id,
+                    token: access_token.token,
+                },
+            })
+        }).or_else(report_error)
         .responder()
 }
