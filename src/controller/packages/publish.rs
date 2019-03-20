@@ -128,6 +128,22 @@ fn verify_manifest(req: &PackageVersion, manifest: &Manifest) -> Result<(), Erro
         ));
     }
 
+    if let Some(license) = &manifest.package.license {
+        if license.len() > 10 {
+            return Err(human!(
+                Reason::InvalidManifest,
+                "License is over ten characters"
+            ));
+        }
+    }
+
+    if manifest.package.keywords.len() > 5 {
+        return Err(human!(
+            Reason::InvalidManifest,
+            "No more than five keywords"
+        ));
+    }
+
     Ok(())
 }
 
