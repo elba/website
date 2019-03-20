@@ -8,7 +8,7 @@ use crate::AppState;
 
 use super::*;
 
-pub fn show_user((path, state): (Path<UserView>, State<AppState>)) -> impl Responder {
+pub fn show_user((path, state): (Path<UserReq>, State<AppState>)) -> impl Responder {
     let lookup_user = state
         .db
         .send(LookupUser { id: path.id })
@@ -17,11 +17,11 @@ pub fn show_user((path, state): (Path<UserView>, State<AppState>)) -> impl Respo
 
     lookup_user
         .map(move |user| {
-            let user_meta = UserMetadata::from(user);
+            let user_meta = UserView::from(user);
 
             #[derive(Serialize)]
             struct R {
-                user: UserMetadata,
+                user: UserView,
             }
 
             Ok(HttpResponse::Ok().json(R { user: user_meta }))

@@ -6,7 +6,7 @@ use crate::model::packages::*;
 use crate::util::error::report_error;
 use crate::AppState;
 
-use super::PackageView;
+use super::PackageReq;
 
 #[derive(Deserialize, Clone)]
 pub struct SearchReq {
@@ -22,7 +22,7 @@ pub fn search((query, state): (Query<SearchReq>, State<AppState>)) -> impl Respo
 
     search_package
         .map(|packages| {
-            let packages: Vec<_> = packages.into_iter().map(PackageView::from).collect();
+            let packages: Vec<_> = packages.into_iter().map(PackageReq::from).collect();
             HttpResponse::Ok().json(packages)
         }).or_else(report_error)
         .responder()

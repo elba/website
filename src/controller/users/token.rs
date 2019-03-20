@@ -30,12 +30,12 @@ pub fn list_tokens((state, req): (State<AppState>, HttpRequest<AppState>)) -> im
             let tokens = access_tokens
                 .into_iter()
                 .map(|access_token| {
-                    AccessTokenMetadata::new(access_token.id, access_token.token).hide_token()
+                    AccessTokenView::new(access_token.id, access_token.token).hide_token()
                 }).collect();
 
             #[derive(Serialize)]
             struct R {
-                tokens: Vec<AccessTokenMetadata>,
+                tokens: Vec<AccessTokenView>,
             }
 
             HttpResponse::Ok().json(R { tokens })
@@ -63,23 +63,18 @@ pub fn create_token((state, req): (State<AppState>, HttpRequest<AppState>)) -> i
         .map(move |access_token: AccessToken| {
             #[derive(Serialize)]
             struct R {
-                token: AccessTokenMetadata,
+                token: AccessTokenView,
             }
 
             HttpResponse::Ok().json(R {
-                token: AccessTokenMetadata::new(access_token.id, access_token.token),
+                token: AccessTokenView::new(access_token.id, access_token.token),
             })
         }).or_else(report_error)
         .responder()
 }
 
-#[derive(Deserialize)]
-pub struct TokenReq {
-    token_id: i32,
-}
-
 pub fn remove_token(
-    (path, state, req): (Path<TokenReq>, State<AppState>, HttpRequest<AppState>),
+    (path, state, req): (Path<AccessTokenReq>, State<AppState>, HttpRequest<AppState>),
 ) -> impl Responder {
     let user_id: i32 = match req.identity() {
         Some(user_id) => user_id.parse().unwrap(),

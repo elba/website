@@ -14,7 +14,7 @@ use crate::model::packages::*;
 use crate::util::error::{report_error, Reason};
 use crate::{AppState, CONFIG};
 
-use super::PackageVersionView;
+use super::PackageVersionReq;
 
 #[derive(Deserialize, Clone)]
 pub struct PublishReq {
@@ -23,7 +23,7 @@ pub struct PublishReq {
 
 pub fn publish(
     (path, query, state, req): (
-        actix_web::Path<PackageVersionView>,
+        actix_web::Path<PackageVersionReq>,
         Query<PublishReq>,
         State<AppState>,
         HttpRequest<AppState>,

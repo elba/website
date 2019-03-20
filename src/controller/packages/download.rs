@@ -9,9 +9,9 @@ use crate::model::packages::*;
 use crate::util::error::report_error;
 use crate::AppState;
 
-use super::PackageVersionView;
+use super::PackageVersionReq;
 
-pub fn download((path, state): (Path<PackageVersionView>, State<AppState>)) -> impl Responder {
+pub fn download((path, state): (Path<PackageVersionReq>, State<AppState>)) -> impl Responder {
     let package_version = match PackageVersion::try_from(path.into_inner()) {
         Ok(package_version) => package_version,
         Err(err) => {

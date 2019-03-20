@@ -20,35 +20,35 @@ use crate::model::packages::*;
 use crate::util::error::Reason;
 
 #[derive(Serialize, Deserialize, Clone)]
-pub struct GroupView {
+pub struct GroupReq {
     pub group: String,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-pub struct PackageView {
+pub struct PackageReq {
     pub group: String,
     pub package: String,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-pub struct PackageVersionView {
+pub struct PackageVersionReq {
     pub group: String,
     pub package: String,
     pub version: String,
 }
 
 #[derive(Serialize, Clone)]
-pub struct GroupMetadata {
+pub struct GroupView {
     #[serde(flatten)]
-    pub group: GroupView,
+    pub group: GroupReq,
     #[serde(with = "crate::util::rfc3339")]
     pub created_at: NaiveDateTime,
 }
 
 #[derive(Serialize, Clone)]
-pub struct PackageMetadata {
+pub struct PackageView {
     #[serde(flatten)]
-    pub package: PackageView,
+    pub package: PackageReq,
     #[serde(with = "crate::util::rfc3339")]
     pub updated_at: NaiveDateTime,
     #[serde(with = "crate::util::rfc3339")]
@@ -56,9 +56,9 @@ pub struct PackageMetadata {
 }
 
 #[derive(Serialize, Clone)]
-pub struct VersionMetadata {
+pub struct VersionView {
     #[serde(flatten)]
-    pub package_version: PackageVersionView,
+    pub package_version: PackageVersionReq,
     pub yanked: bool,
     pub description: Option<String>,
     pub homepage: Option<String>,
@@ -70,52 +70,52 @@ pub struct VersionMetadata {
 }
 
 #[derive(Serialize, Clone)]
-pub struct DependencyMetadata {
+pub struct DependencyView {
     #[serde(flatten)]
-    pub package: PackageView,
+    pub package: PackageReq,
     pub version_req: String,
 }
 
-impl TryFrom<GroupView> for GroupName {
+impl TryFrom<GroupReq> for GroupName {
     type Error = Error;
 
-    fn try_from(req: GroupView) -> Result<GroupName, Self::Error> {
+    fn try_from(req: GroupReq) -> Result<GroupName, Self::Error> {
         Ok(GroupName::new(req.group)
             .with_context(|err| human!(Reason::InvalidFormat, "Invalid group name: {}", err))?)
     }
 }
 
-impl From<GroupName> for GroupView {
-    fn from(group: GroupName) -> GroupView {
-        GroupView {
+impl From<GroupName> for GroupReq {
+    fn from(group: GroupName) -> GroupReq {
+        GroupReq {
             group: group.group().to_owned(),
         }
     }
 }
 
-impl TryFrom<PackageView> for PackageName {
+impl TryFrom<PackageReq> for PackageName {
     type Error = Error;
 
-    fn try_from(req: PackageView) -> Result<PackageName, Self::Error> {
+    fn try_from(req: PackageReq) -> Result<PackageName, Self::Error> {
         let name = PackageName::new(req.group, req.package)
             .with_context(|err| human!(Reason::InvalidFormat, "Invalid package name: {}", err))?;
         Ok(name)
     }
 }
 
-impl From<PackageName> for PackageView {
-    fn from(name: PackageName) -> PackageView {
-        PackageView {
+impl From<PackageName> for PackageReq {
+    fn from(name: PackageName) -> PackageReq {
+        PackageReq {
             group: name.group().to_owned(),
             package: name.name().to_owned(),
         }
     }
 }
 
-impl TryFrom<PackageVersionView> for PackageVersion {
+impl TryFrom<PackageVersionReq> for PackageVersion {
     type Error = Error;
 
-    fn try_from(req: PackageVersionView) -> Result<PackageVersion, Self::Error> {
+    fn try_from(req: PackageVersionReq) -> Result<PackageVersion, Self::Error> {
         let name = PackageName::new(req.group, req.package)
             .with_context(|err| human!(Reason::InvalidFormat, "Invalid package name: {}", err))?;
         Ok(PackageVersion {
@@ -125,9 +125,9 @@ impl TryFrom<PackageVersionView> for PackageVersion {
     }
 }
 
-impl From<PackageVersion> for PackageVersionView {
-    fn from(package: PackageVersion) -> PackageVersionView {
-        PackageVersionView {
+impl From<PackageVersion> for PackageVersionReq {
+    fn from(package: PackageVersion) -> PackageVersionReq {
+        PackageVersionReq {
             group: package.name.group().to_owned(),
             package: package.name.name().to_owned(),
             version: package.semver.to_string(),
@@ -135,9 +135,9 @@ impl From<PackageVersion> for PackageVersionView {
     }
 }
 
-impl From<DependencyReq> for DependencyMetadata {
-    fn from(dependency: DependencyReq) -> DependencyMetadata {
-        DependencyMetadata {
+impl From<DependencyReq> for DependencyView {
+    fn from(dependency: DependencyReq) -> DependencyView {
+        DependencyView {
             package: dependency.name.into(),
             version_req: dependency.version_req.to_string(),
         }

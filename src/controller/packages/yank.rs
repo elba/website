@@ -8,7 +8,7 @@ use crate::model::packages::*;
 use crate::util::error::report_error;
 use crate::AppState;
 
-use super::PackageVersionView;
+use super::PackageVersionReq;
 
 #[derive(Deserialize, Clone)]
 pub struct YankReq {
@@ -17,7 +17,7 @@ pub struct YankReq {
 }
 
 pub fn yank(
-    (path, query, state): (Path<PackageVersionView>, Query<YankReq>, State<AppState>),
+    (path, query, state): (Path<PackageVersionReq>, Query<YankReq>, State<AppState>),
 ) -> impl Responder {
     let package_version = match PackageVersion::try_from(path.into_inner()) {
         Ok(package_version) => package_version,
