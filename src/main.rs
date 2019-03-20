@@ -1,4 +1,5 @@
 #![feature(nll)]
+#![feature(await_macro, futures_api, async_await)]
 #![allow(proc_macro_derive_resolution_fallback)]
 
 #[macro_use]

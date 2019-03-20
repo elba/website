@@ -1,14 +1,11 @@
 use actix_web::middleware::identity::RequestIdentity;
-use actix_web::{
-    client, http::StatusCode, AsyncResponder, HttpMessage, HttpRequest, HttpResponse, Query,
-    Responder, State,
-};
+use actix_web::{client, http::StatusCode, HttpMessage, HttpRequest, HttpResponse, Query, State};
 use base64;
 use failure::Error;
-use futures::prelude::*;
+use tokio_async_await::await;
 
-use crate::model::users::{CreateUserOrLogin, User};
-use crate::util::error::{report_error, Reason};
+use crate::model::users::CreateUserOrLogin;
+use crate::util::error::Reason;
 use crate::AppState;
 
 #[derive(Deserialize)]
@@ -24,47 +21,37 @@ struct GithubRes {
     avatar_url: Option<String>,
 }
 
-pub fn login(
+pub async fn login(
     (query, state, req): (Query<LoginReq>, State<AppState>, HttpRequest<AppState>),
-) -> impl Responder {
+) -> Result<HttpResponse, Error> {
     let auth = base64::encode(&format!("{}:{}", query.gh_name, query.gh_access_token));
 
-    let login_github = client::get("https://api.github.com/user")
-        .header("Authorization", format!("Basic {}", auth).as_str())
-        .finish()
-        .unwrap()
-        .send()
-        .from_err::<Error>();
+    let github_response = await!(
+        client::get("https://api.github.com/user")
+            .header("Authorization", format!("Basic {}", auth).as_str())
+            .finish()
+            .unwrap()
+            .send()
+    )?;
 
-    let parse_response = login_github
-        .and_then(|res| {
-            if res.status() != StatusCode::OK {
-                return Err(human!(
-                    Reason::UserNotFound,
-                    "Bad username or access token to Github"
-                ));
-            }
+    if github_response.status() != StatusCode::OK {
+        return Err(human!(
+            Reason::UserNotFound,
+            "Bad username or access token to Github"
+        ));
+    }
 
-            Ok(res.json().from_err())
-        }).flatten();
+    let response_json: GithubRes = await!(github_response.json())?;
 
-    let create_user_or_login = parse_response.and_then(move |json: GithubRes| {
-        state
-            .db
-            .send(CreateUserOrLogin {
-                email: json.email,
-                gh_id: json.id,
-                gh_name: query.gh_name.clone(),
-                gh_access_token: query.gh_access_token.clone(),
-                gh_avatar: json.avatar_url,
-            }).flatten()
-    });
+    let user = await!(state.db.send(CreateUserOrLogin {
+        email: response_json.email,
+        gh_id: response_json.id,
+        gh_name: query.gh_name.clone(),
+        gh_access_token: query.gh_access_token.clone(),
+        gh_avatar: response_json.avatar_url,
+    }))??;
 
-    create_user_or_login
-        .map(move |user: User| {
-            req.remember(user.id.to_string());
+    req.remember(user.id.to_string());
 
-            HttpResponse::Ok().finish()
-        }).or_else(report_error)
-        .responder()
+    Ok(HttpResponse::Ok().finish())
 }

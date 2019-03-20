@@ -4,14 +4,13 @@ use std::path::Path;
 use std::str::FromStr;
 
 use actix_web::*;
-use bytes::Bytes;
 use elba::package::manifest::{DepReq, Manifest};
 use failure::Error;
-use futures::{future, prelude::*};
 use tar::Archive;
+use tokio_async_await::await;
 
 use crate::model::packages::*;
-use crate::util::error::{report_error, Reason};
+use crate::util::error::Reason;
 use crate::{AppState, CONFIG};
 
 use super::PackageVersionReq;
@@ -21,60 +20,43 @@ pub struct PublishReq {
     pub token: String,
 }
 
-pub fn publish(
+pub async fn publish(
     (path, query, state, req): (
         actix_web::Path<PackageVersionReq>,
         Query<PublishReq>,
         State<AppState>,
         HttpRequest<AppState>,
     ),
-) -> impl Responder {
-    let package_version = match PackageVersion::try_from(path.into_inner()) {
-        Ok(package_version) => package_version,
-        Err(err) => {
-            let error: Box<Future<Item = _, Error = _>> = Box::new(future::err(err));
-            return error;
-        }
-    };
+) -> Result<HttpResponse, Error> {
+    let package_version = PackageVersion::try_from(path.into_inner())?;
 
     info!("Receiving tarball");
 
-    let receive_body = req.body().limit(CONFIG.max_upload_size).from_err::<Error>();
+    let body = await!(req.body().limit(CONFIG.max_upload_size))?;
 
-    let publish_and_save = receive_body
-        .and_then(move |bytes: Bytes| {
-            let manifest = read_manifest(&bytes)?;
-            verify_manifest(&package_version, &manifest)?;
+    let manifest = read_manifest(&body)?;
+    verify_manifest(&package_version, &manifest)?;
 
-            let deps = deps_in_manifest(&manifest)?;
-            let readme_file = read_readme(
-                &bytes,
-                manifest
-                    .package
-                    .readme
-                    .as_ref()
-                    .map(|subpath| subpath.0.as_path()),
-            )?;
+    let deps = deps_in_manifest(&manifest)?;
+    let readme_file = read_readme(
+        &body,
+        manifest
+            .package
+            .readme
+            .as_ref()
+            .map(|subpath| subpath.0.as_path()),
+    )?;
 
-            let publish = state
-                .db
-                .send(PublishVersion {
-                    package: package_version.clone(),
-                    package_info: manifest.package.clone(),
-                    readme_file,
-                    dependencies: deps.clone(),
-                    token: query.token.clone(),
-                    bytes,
-                }).from_err::<Error>()
-                .flatten();
+    await!(state.db.send(PublishVersion {
+        package: package_version.clone(),
+        package_info: manifest.package.clone(),
+        readme_file,
+        dependencies: deps.clone(),
+        token: query.token.clone(),
+        bytes: body,
+    }))??;
 
-            Ok(publish)
-        }).flatten();
-
-    publish_and_save
-        .map(|()| HttpResponse::Ok().finish())
-        .or_else(report_error)
-        .responder()
+    Ok(HttpResponse::Ok().finish())
 }
 
 fn read_manifest(bytes: &[u8]) -> Result<Manifest, Error> {

@@ -2,10 +2,9 @@ use std::convert::TryFrom;
 
 use actix_web::*;
 use failure::Error;
-use futures::{future, prelude::*};
+use tokio_async_await::await;
 
 use crate::model::packages::*;
-use crate::util::error::report_error;
 use crate::AppState;
 
 use super::PackageVersionReq;
@@ -16,28 +15,16 @@ pub struct YankReq {
     pub token: String,
 }
 
-pub fn yank(
+pub async fn yank(
     (path, query, state): (Path<PackageVersionReq>, Query<YankReq>, State<AppState>),
-) -> impl Responder {
-    let package_version = match PackageVersion::try_from(path.into_inner()) {
-        Ok(package_version) => package_version,
-        Err(err) => {
-            let error: Box<Future<Item = _, Error = _>> = Box::new(future::err(err));
-            return error;
-        }
-    };
+) -> Result<HttpResponse, Error> {
+    let package_version = PackageVersion::try_from(path.into_inner())?;
 
-    let yank_version = state
-        .db
-        .send(YankVersion {
-            package: package_version.clone(),
-            yanked: query.yanked,
-            token: query.token.clone(),
-        }).from_err::<Error>()
-        .flatten();
+    await!(state.db.send(YankVersion {
+        package: package_version.clone(),
+        yanked: query.yanked,
+        token: query.token.clone(),
+    }))??;
 
-    yank_version
-        .map(|()| HttpResponse::Ok().finish())
-        .or_else(report_error)
-        .responder()
+    Ok(HttpResponse::Ok().finish())
 }
