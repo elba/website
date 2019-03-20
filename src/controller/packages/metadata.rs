@@ -76,7 +76,7 @@ pub async fn list_dependencies(
 ) -> Result<HttpResponse, Error> {
     let package_version = PackageVersion::try_from(path.clone())?;
     let dependencies = await!(state.db.send(ListDependencies(package_version)))??;
-    let dependencies: Vec<_> = dependencies.into_iter().map(DependencyView::from).collect();
+    let dependencies = dependencies.into_iter().map(DependencyView::from).collect();
 
     #[derive(Serialize)]
     struct R {

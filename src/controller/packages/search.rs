@@ -16,7 +16,12 @@ pub async fn search(
     (query, state): (Query<SearchReq>, State<AppState>),
 ) -> Result<HttpResponse, Error> {
     let packages = await!(state.db.send(SearchPackage(query.into_inner().q)))??;
-    let packages: Vec<_> = packages.into_iter().map(PackageReq::from).collect();
+    let packages = packages.into_iter().map(PackageReq::from).collect();
 
-    Ok(HttpResponse::Ok().json(packages))
+    #[derive(Serialize)]
+    struct R {
+        packages: Vec<PackageReq>,
+    }
+
+    Ok(HttpResponse::Ok().json(R { packages }))
 }
