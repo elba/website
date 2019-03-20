@@ -426,14 +426,14 @@ pub fn yank_version(msg: YankVersion, conn: &Connection, index: &Addr<Index>) ->
 }
 
 pub fn list_groups(_: ListGroups, conn: &Connection) -> Result<Vec<GroupName>, Error> {
-    let mut group_names = {
+    let group_names = {
         use crate::schema::groups::dsl::*;
 
         groups.select(group_name).load::<String>(conn)?
     };
 
     let group_names: Vec<_> = group_names
-        .drain(..)
+        .into_iter()
         .filter_map(|group_name| GroupName::new(group_name).ok())
         .collect();
 
@@ -446,12 +446,12 @@ pub fn list_packages(msg: ListPackages, conn: &Connection) -> Result<Vec<Package
     let (group_name, group) =
         lookup_group(LookupGroup(GroupName::new(msg.0.group().to_owned())?), conn)?;
 
-    let mut package_names = Package::belonging_to(&group)
+    let package_names = Package::belonging_to(&group)
         .select(package_name)
         .load::<String>(conn)?;
 
     let package_names: Vec<_> = package_names
-        .drain(..)
+        .into_iter()
         .filter_map(|packages_name| {
             PackageName::new(group_name.group().to_owned(), packages_name).ok()
         }).collect();
@@ -464,12 +464,12 @@ pub fn list_versions(msg: ListVersions, conn: &Connection) -> Result<Vec<Package
 
     let (package_name, package) = lookup_package(LookupPackage(msg.0), conn)?;
 
-    let mut packages_versions = Version::belonging_to(&package)
+    let packages_versions = Version::belonging_to(&package)
         .select(semver)
         .load::<String>(conn)?;
 
     let packages_versions: Vec<_> = packages_versions
-        .drain(..)
+        .into_iter()
         .filter_map(|packages_version| {
             Some(PackageVersion {
                 name: package_name.clone(),
@@ -503,7 +503,7 @@ pub fn list_dependencies(
 
     let (_, version) = lookup_version(LookupVersion(msg.0), conn)?;
 
-    let mut result = Dependency::belonging_to(&version)
+    let result = Dependency::belonging_to(&version)
         .inner_join(packages.inner_join(groups))
         .select((
             group_name_origin,
@@ -512,7 +512,7 @@ pub fn list_dependencies(
         )).load::<((String, String, Dependency))>(conn)?;
 
     let package_dependencies: Vec<_> = result
-        .drain(..)
+        .into_iter()
         .filter_map(|(groups_name, packages_name, dependency)| {
             Some(DependencyReq {
                 name: PackageName::new(groups_name, packages_name).ok()?,
@@ -647,9 +647,9 @@ pub fn search_package(msg: SearchPackage, conn: &Connection) -> Result<Vec<Packa
         .order_by(max(rank).desc())
         .limit(50);
 
-    let mut results = query.load::<(String, String)>(conn)?;
+    let results = query.load::<(String, String)>(conn)?;
     let package_names: Vec<_> = results
-        .drain(..)
+        .into_iter()
         .filter_map(|(group, package)| PackageName::new(group, package).ok())
         .collect();
 

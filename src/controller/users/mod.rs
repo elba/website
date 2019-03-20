@@ -23,7 +23,28 @@ pub struct UserMetadata {
 #[derive(Serialize, Clone)]
 pub struct AccessTokenMetadata {
     pub id: i32,
-    pub token: String,
+    pub token: Option<String>,
+    pub token_partial: String,
+}
+
+impl AccessTokenMetadata {
+    pub fn new(id: i32, token: String) -> Self {
+        let mut token_partial = token.clone();
+        token_partial.replace_range(4..token.len() - 4, "********");
+
+        Self {
+            id,
+            token: Some(token),
+            token_partial,
+        }
+    }
+
+    pub fn hide_token(self) -> Self {
+        Self {
+            token: None,
+            ..self
+        }
+    }
 }
 
 impl From<User> for UserMetadata {

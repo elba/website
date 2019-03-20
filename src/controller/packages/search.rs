@@ -21,8 +21,8 @@ pub fn search((query, state): (Query<SearchReq>, State<AppState>)) -> impl Respo
         .flatten();
 
     search_package
-        .map(|mut packages| {
-            let packages: Vec<_> = packages.drain(..).map(PackageView::from).collect();
+        .map(|packages| {
+            let packages: Vec<_> = packages.into_iter().map(PackageView::from).collect();
             HttpResponse::Ok().json(packages)
         }).or_else(report_error)
         .responder()

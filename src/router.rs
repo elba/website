@@ -10,15 +10,18 @@ pub fn router(app: App<AppState>) -> App<AppState> {
             "/users/{id}/metadata",
             Method::GET,
             controller::users::metadata::show_user,
-        ).route("/users/tokens", Method::GET, controller::packages::search)
-        .route(
+        ).route(
+            "/users/tokens",
+            Method::GET,
+            controller::users::token::list_tokens,
+        ).route(
             "/users/tokens/create",
             Method::PUT,
             controller::users::token::create_token,
         ).route(
             "/users/tokens/{token_id}",
             Method::DELETE,
-            controller::packages::search,
+            controller::users::token::remove_token,
         ).route(
             "/packages/search",
             Method::GET,

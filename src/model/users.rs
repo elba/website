@@ -53,7 +53,7 @@ pub struct RemoveAccessToken {
     pub access_token_id: i32,
 }
 
-pub struct ListAccessToken {
+pub struct ListAccessTokens {
     pub user_id: i32,
 }
 
@@ -77,7 +77,7 @@ impl Message for RemoveAccessToken {
     type Result = Result<(), Error>;
 }
 
-impl Message for ListAccessToken {
+impl Message for ListAccessTokens {
     type Result = Result<Vec<AccessToken>, Error>;
 }
 
@@ -113,11 +113,11 @@ impl Handler<RemoveAccessToken> for Database {
     }
 }
 
-impl Handler<ListAccessToken> for Database {
+impl Handler<ListAccessTokens> for Database {
     type Result = Result<Vec<AccessToken>, Error>;
 
-    fn handle(&mut self, msg: ListAccessToken, _: &mut Self::Context) -> Self::Result {
-        list_access_token(msg, &self.connection()?)
+    fn handle(&mut self, msg: ListAccessTokens, _: &mut Self::Context) -> Self::Result {
+        list_access_tokens(msg, &self.connection()?)
     }
 }
 
@@ -169,8 +169,8 @@ pub fn remove_access_token(msg: RemoveAccessToken, conn: &Connection) -> Result<
     Ok(())
 }
 
-pub fn list_access_token(
-    msg: ListAccessToken,
+pub fn list_access_tokens(
+    msg: ListAccessTokens,
     conn: &Connection,
 ) -> Result<Vec<AccessToken>, Error> {
     use crate::schema::access_tokens::dsl::*;

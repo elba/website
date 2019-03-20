@@ -26,7 +26,7 @@ impl GroupName {
 
         let normalized = group
             .to_ascii_lowercase()
-            .drain(..)
+            .chars()
             .map(|c| if c == '_' { '-' } else { c })
             .collect::<String>();
         if normalized.is_empty() {

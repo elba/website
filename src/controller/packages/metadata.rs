@@ -16,8 +16,8 @@ pub fn list_groups(state: State<AppState>) -> impl Responder {
     let list_groups = state.db.send(ListGroups).from_err::<Error>().flatten();
 
     list_groups
-        .map(|mut groups| {
-            let groups = groups.drain(..).map(GroupView::from).collect();
+        .map(|groups| {
+            let groups = groups.into_iter().map(GroupView::from).collect();
 
             #[derive(Serialize)]
             struct R {
@@ -45,8 +45,8 @@ pub fn list_packages((path, state): (Path<GroupView>, State<AppState>)) -> impl 
         .flatten();
 
     list_packages
-        .map(|mut packages| {
-            let packages = packages.drain(..).map(PackageView::from).collect();
+        .map(|packages| {
+            let packages = packages.into_iter().map(PackageView::from).collect();
 
             #[derive(Serialize)]
             struct R {
@@ -74,8 +74,8 @@ pub fn list_versions((path, state): (Path<PackageView>, State<AppState>)) -> imp
         .flatten();
 
     list_versions
-        .map(|mut versions| {
-            let versions = versions.drain(..).map(PackageVersionView::from).collect();
+        .map(|versions| {
+            let versions = versions.into_iter().map(PackageVersionView::from).collect();
 
             #[derive(Serialize)]
             struct R {
@@ -103,8 +103,8 @@ pub fn list_owners((path, state): (Path<PackageView>, State<AppState>)) -> impl 
         .flatten();
 
     list_owners
-        .map(|mut owners| {
-            let owners = owners.drain(..).map(UserMetadata::from).collect();
+        .map(|owners| {
+            let owners = owners.into_iter().map(UserMetadata::from).collect();
 
             #[derive(Serialize)]
             struct R {
@@ -134,9 +134,9 @@ pub fn list_dependencies(
         .flatten();
 
     list_dependencies
-        .map(|mut dependencies| {
+        .map(|dependencies| {
             let dependencies: Vec<_> = dependencies
-                .drain(..)
+                .into_iter()
                 .map(DependencyMetadata::from)
                 .collect();
 
