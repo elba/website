@@ -36,6 +36,10 @@ pub struct ListVersions(pub PackageName);
 pub struct ListOwners(pub PackageName);
 pub struct ListDependencies(pub PackageVersion);
 
+pub struct ListKeywords {
+    pub version_id: i32,
+}
+
 pub struct LookupGroup(pub GroupName);
 pub struct LookupPackage(pub PackageName);
 pub struct LookupVersion(pub PackageVersion);
@@ -71,6 +75,10 @@ impl Message for ListOwners {
 
 impl Message for ListDependencies {
     type Result = Result<Vec<DependencyReq>, Error>;
+}
+
+impl Message for ListKeywords {
+    type Result = Result<Vec<String>, Error>;
 }
 
 impl Message for LookupGroup {
@@ -150,6 +158,14 @@ impl Handler<ListDependencies> for Database {
 
     fn handle(&mut self, msg: ListDependencies, _: &mut Self::Context) -> Self::Result {
         list_dependencies(msg, &self.connection()?)
+    }
+}
+
+impl Handler<ListKeywords> for Database {
+    type Result = Result<Vec<String>, Error>;
+
+    fn handle(&mut self, msg: ListKeywords, _: &mut Self::Context) -> Self::Result {
+        list_keywords(msg, &self.connection()?)
     }
 }
 
@@ -349,6 +365,19 @@ pub fn publish_version(
             .values(create_authors)
             .execute(conn)?;
 
+        let create_keywords: Vec<CreateKeyword> = msg
+            .package_info
+            .keywords
+            .iter()
+            .map(|keyword| CreateKeyword {
+                version_id: version.id,
+                keyword,
+            }).collect();
+
+        diesel::insert_into(version_keywords::table)
+            .values(create_keywords)
+            .execute(conn)?;
+
         if let Some(readme) = msg.readme_file {
             diesel::insert_into(readmes::table)
                 .values(CreateReadme {
@@ -521,6 +550,17 @@ pub fn list_dependencies(
         }).collect();
 
     Ok(package_dependencies)
+}
+
+pub fn list_keywords(msg: ListKeywords, conn: &Connection) -> Result<Vec<String>, Error> {
+    use crate::schema::version_keywords::dsl::*;
+
+    let keywords = version_keywords
+        .select(keyword)
+        .filter(version_id.eq(msg.version_id))
+        .load::<String>(conn)?;
+
+    Ok(keywords)
 }
 
 pub fn lookup_group(msg: LookupGroup, conn: &Connection) -> Result<(GroupName, Group), Error> {

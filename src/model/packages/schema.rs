@@ -112,6 +112,13 @@ pub struct CreateAuthor<'a> {
 }
 
 #[derive(Insertable)]
+#[table_name = "version_keywords"]
+pub struct CreateKeyword<'a> {
+    pub version_id: i32,
+    pub keyword: &'a str,
+}
+
+#[derive(Insertable)]
 #[table_name = "package_owners"]
 pub struct CreateOwner {
     pub package_id: i32,

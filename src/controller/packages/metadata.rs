@@ -234,8 +234,18 @@ pub fn show_version((path, state): (Path<PackageVersionView>, State<AppState>)) 
         .from_err::<Error>()
         .flatten();
 
-    lookup_version
-        .map(move |(package_version, version)| {
+    let loopup_keywords = lookup_version.and_then(move |(package_version, version)| {
+        state
+            .db
+            .send(ListKeywords {
+                version_id: version.id,
+            }).flatten()
+            .map(|keywords| (package_version, version, keywords))
+            .from_err::<Error>()
+    });
+
+    loopup_keywords
+        .map(move |(package_version, version, keywords)| {
             let version_meta = VersionMetadata {
                 package_version: package_version.into(),
                 yanked: version.yanked,
@@ -243,6 +253,7 @@ pub fn show_version((path, state): (Path<PackageVersionView>, State<AppState>)) 
                 homepage: version.homepage,
                 repository: version.repository,
                 license: version.license,
+                keywords: keywords,
                 created_at: version.created_at,
             };
 

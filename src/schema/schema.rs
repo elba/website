@@ -83,6 +83,14 @@ table! {
 }
 
 table! {
+    version_keywords (id) {
+        id -> Int4,
+        version_id -> Int4,
+        keyword -> Varchar,
+    }
+}
+
+table! {
     versions (id) {
         id -> Int4,
         package_id -> Int4,
@@ -106,6 +114,7 @@ joinable!(packages -> groups (group_id));
 joinable!(readmes -> versions (version_id));
 joinable!(version_authors -> versions (version_id));
 joinable!(version_downloads -> versions (version_id));
+joinable!(version_keywords -> versions (version_id));
 joinable!(versions -> packages (package_id));
 
 allow_tables_to_appear_in_same_query!(
@@ -118,5 +127,6 @@ allow_tables_to_appear_in_same_query!(
     users,
     version_authors,
     version_downloads,
+    version_keywords,
     versions,
 );

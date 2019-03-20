@@ -64,6 +64,7 @@ pub struct VersionMetadata {
     pub homepage: Option<String>,
     pub repository: Option<String>,
     pub license: Option<String>,
+    pub keywords: Vec<String>,
     #[serde(with = "crate::util::rfc3339")]
     pub created_at: NaiveDateTime,
 }
