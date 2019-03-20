@@ -83,8 +83,7 @@ table! {
 }
 
 table! {
-    version_keywords (id) {
-        id -> Int4,
+    version_keywords (version_id) {
         version_id -> Int4,
         keyword -> Varchar,
     }
