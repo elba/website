@@ -18,7 +18,6 @@ CREATE MATERIALIZED VIEW ts_vectors AS
         groups.id,
         packages.id,
         versions.id,
-        version_keywords.version_id,
         readmes.version_id;
         
 
