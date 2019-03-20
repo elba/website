@@ -42,7 +42,10 @@ pub async fn list_versions(
     (path, state): (Path<PackageReq>, State<AppState>),
 ) -> Result<HttpResponse, Error> {
     let package_name = PackageName::try_from(path.clone())?;
-    let versions = await!(state.db.send(ListVersions(package_name)))??;
+
+    let mut versions = await!(state.db.send(ListVersions(package_name)))??;
+    versions.sort_by(|lhs, rhs| rhs.semver.cmp(&lhs.semver));
+
     let versions = versions.into_iter().map(PackageVersionReq::from).collect();
 
     #[derive(Serialize)]
@@ -86,8 +89,8 @@ pub async fn list_dependencies(
 pub async fn show_group(
     (path, state): (Path<GroupReq>, State<AppState>),
 ) -> Result<HttpResponse, Error> {
-    let group = GroupName::try_from(path.clone())?;
-    let (group_name, group) = await!(state.db.send(LookupGroup(group.clone())))??;
+    let group_name = GroupName::try_from(path.clone())?;
+    let (group_name, group) = await!(state.db.send(LookupGroup(group_name.clone())))??;
     let group_meta = GroupView {
         group: group_name.into(),
         created_at: group.created_at,
@@ -106,8 +109,13 @@ pub async fn show_package(
 ) -> Result<HttpResponse, Error> {
     let package_name = PackageName::try_from(path.clone())?;
     let (package_name, package) = await!(state.db.send(LookupPackage(package_name.clone())))??;
+
+    let mut versions = await!(state.db.send(ListVersions(package_name.clone())))??;
+    versions.sort_by(|lhs, rhs| lhs.semver.cmp(&rhs.semver));
+
     let package_meta = PackageView {
         package: package_name.into(),
+        latest_version: versions.pop().unwrap().into(),
         updated_at: package.updated_at,
         created_at: package.created_at,
     };

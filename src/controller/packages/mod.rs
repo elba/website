@@ -49,6 +49,7 @@ pub struct GroupView {
 pub struct PackageView {
     #[serde(flatten)]
     pub package: PackageReq,
+    pub latest_version: PackageVersionReq,
     #[serde(with = "crate::util::rfc3339")]
     pub updated_at: NaiveDateTime,
     #[serde(with = "crate::util::rfc3339")]
