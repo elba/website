@@ -1,0 +1,32 @@
+@import "~/styles/variables.scss";
+@import "~/styles/layouts.scss";
+
+html,
+body {
+  font-family: $family-primary;
+
+  @include mobile {
+    font-size: 18px;
+  }
+  @include desktop {
+    font-size: 16px;
+  }
+}
+
+a {
+  text-decoration: none;
+}
+
+input,
+button {
+  border-color: transparent;
+
+  &:focus {
+    outline: 0;
+    border-color: transparent;
+  }
+}
+
+input {
+  font-family: $family-secondary;
+}
