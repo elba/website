@@ -1,0 +1,21 @@
+.footer {
+  padding-top: 50px;
+  padding-bottom: 50px;
+
+  .footer-section {
+    margin-bottom: 20px;
+  }
+
+  h2 {
+    margin-bottom: 1rem;
+    color: $magenta;
+    font-size: 1.25rem;
+    font-weight: 500;
+  }
+
+  a {
+    margin-bottom: 0.25rem;
+    display: block;
+    color: $grey-8;
+  }
+}

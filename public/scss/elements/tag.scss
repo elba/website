@@ -1,0 +1,19 @@
+.tags {
+  line-height: 2.25rem;
+}
+
+.tag {
+  padding: 5px;
+  border-radius: 2px;
+  font-size: 0.9rem;
+  color: $grey-8;
+  background-color: $grey-1;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  &:active {
+    background-color: $grey-2;
+  }
+}

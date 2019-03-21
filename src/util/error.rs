@@ -8,18 +8,18 @@ use std::fmt::{self, Display, Write};
 /// logs the error chain.
 /// Any error that does not have HumanError in its error chain
 /// is considered as an initernal error.
-pub fn report_error(error: Error) -> Result<HttpResponse, Error> {
+pub fn report_error(error: Error) -> HttpResponse {
     let human_error = error
         .iter_chain()
         .filter_map(|fail| fail.downcast_ref::<HumanError>())
         .nth(0);
 
     if let Some(human_error) = human_error {
-        Ok(HttpResponse::BadRequest().body(format!(
+        HttpResponse::BadRequest().body(format!(
             "{{error:\"{}\",description:\"{}\"}}",
             human_error.reason.tag(),
             human_error.message
-        )))
+        ))
     } else {
         let mut error_chain_str = String::new();
         error
@@ -27,7 +27,7 @@ pub fn report_error(error: Error) -> Result<HttpResponse, Error> {
             .for_each(|fail| write!(error_chain_str, "\n\t- {}", fail).unwrap());
         error!("Internal error:{}", error_chain_str);
 
-        Ok(HttpResponse::InternalServerError().finish())
+        HttpResponse::InternalServerError().finish()
     }
 }
 
@@ -41,12 +41,6 @@ pub enum Reason {
     DependencyNotFound,
 }
 
-#[derive(Debug)]
-pub struct HumanError {
-    pub reason: Reason,
-    pub message: String,
-}
-
 impl Reason {
     pub fn tag(&self) -> &'static str {
         match self {
@@ -58,6 +52,12 @@ impl Reason {
             Reason::DependencyNotFound => "dependency_not_found",
         }
     }
+}
+
+#[derive(Debug)]
+pub struct HumanError {
+    pub reason: Reason,
+    pub message: String,
 }
 
 impl HumanError {

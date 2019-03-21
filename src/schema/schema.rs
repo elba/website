@@ -1,4 +1,14 @@
 table! {
+    access_tokens (id) {
+        id -> Int4,
+        user_id -> Int4,
+        token -> Varchar,
+        created_at -> Timestamp,
+        last_used_at -> Nullable<Timestamp>,
+    }
+}
+
+table! {
     dependencies (id) {
         id -> Int4,
         version_id -> Int4,
@@ -51,9 +61,7 @@ table! {
         gh_name -> Varchar,
         gh_access_token -> Varchar,
         gh_avatar -> Nullable<Varchar>,
-        token -> Varchar,
         created_at -> Timestamp,
-        last_used_at -> Timestamp,
     }
 }
 
@@ -75,6 +83,14 @@ table! {
 }
 
 table! {
+    version_keywords (id) {
+        id -> Int4,
+        version_id -> Int4,
+        keyword -> Varchar,
+    }
+}
+
+table! {
     versions (id) {
         id -> Int4,
         package_id -> Int4,
@@ -88,6 +104,7 @@ table! {
     }
 }
 
+joinable!(access_tokens -> users (user_id));
 joinable!(dependencies -> packages (package_id));
 joinable!(dependencies -> versions (version_id));
 joinable!(groups -> users (user_id));
@@ -97,9 +114,11 @@ joinable!(packages -> groups (group_id));
 joinable!(readmes -> versions (version_id));
 joinable!(version_authors -> versions (version_id));
 joinable!(version_downloads -> versions (version_id));
+joinable!(version_keywords -> versions (version_id));
 joinable!(versions -> packages (package_id));
 
 allow_tables_to_appear_in_same_query!(
+    access_tokens,
     dependencies,
     groups,
     package_owners,
@@ -108,5 +127,6 @@ allow_tables_to_appear_in_same_query!(
     users,
     version_authors,
     version_downloads,
+    version_keywords,
     versions,
 );
