@@ -41,19 +41,18 @@ export const SearchResultsPage: React.FunctionComponent = () => (
             <div className={s.listing}>
                 {testResults.map((r, idx) => (
                     <div key={idx} className={s["listing-item"]}>
-                        <span className={s["listing-item__title"]}>
-                            {r.group} / {r.name}
-                        </span>
-                        <span className={s["listing-item__version"]}>
-                            {r.version}
-                        </span>
-                        <span className={s["listing-item__downloads_counter"]}>
-                            {r.downloads} downloads
-                        </span>
+                        <div className={s["listing-item__title-row"]}>
+                            <span className={s["listing-item__title"]}>
+                                {r.group} / {r.name}
+                            </span>
+                            <span className={s["listing-item__version"]}>
+                                {r.version}
+                            </span>
+                        </div>
                         <span className={s["listing-item__description"]}>
                             {r.description}
                         </span>
-                        <div className={s["listing-item__tag_container"]}>
+                        <div className={s["listing-item__tag-container"]}>
                             {r.tags.map((t, idx) => (
                                 <span
                                     key={idx}
@@ -63,8 +62,14 @@ export const SearchResultsPage: React.FunctionComponent = () => (
                                 </span>
                             ))}
                         </div>
-                        <span className={s["listing-item__last-updated"]}>
-                            {r.updated_at.toDateString()}
+                        <div className={s["listing-item__bottom-row"]}>
+                            <span className={s["listing-item__last-updated"]}>
+                                {r.updated_at.toDateString()}
+                            </span>
+                        </div>
+                        <span className={s["listing-item__downloads-counter"]}>
+                            <b>{r.downloads}</b>
+                            <p>downloads</p>
                         </span>
                     </div>
                 ))}
