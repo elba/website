@@ -1,0 +1,36 @@
+@import "~/styles/variables.scss";
+@import "~/styles/layouts.scss";
+
+.footer {
+  @include container;
+
+  padding-top: 50px;
+  padding-bottom: 50px;
+
+  .items {
+    @include desktop {
+      display: flex;
+    }
+  }
+
+  *:not(:last-child) {
+    margin-bottom: 35px;
+  }
+
+  .item {
+    flex-grow: 1;
+
+    h2 {
+      margin-bottom: 1rem;
+      color: $magenta;
+      font-size: 1.25rem;
+      font-weight: 500;
+    }
+
+    a {
+      margin-bottom: 0.25rem;
+      display: block;
+      color: $grey-8;
+    }
+  }
+}
