@@ -1,0 +1,26 @@
+@import "~/styles/variables.scss";
+
+$desktop: 1024px;
+
+@mixin mobile {
+  @media screen and (max-width: $desktop - 1px) {
+    @content;
+  }
+}
+
+@mixin desktop {
+  @media screen and (min-width: $desktop) {
+    @content;
+  }
+}
+
+@mixin container {
+  margin: 0 auto;
+  padding-left: 20px;
+  padding-right: 20px;
+
+  @include desktop {
+    max-width: 960px;
+    width: 960px;
+  }
+}
