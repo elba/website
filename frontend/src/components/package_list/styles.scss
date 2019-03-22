@@ -1,0 +1,138 @@
+@import "~/styles/variables.scss";
+
+.listing {
+  display: flex;
+  flex-direction: column;
+
+  .listing-item {
+    padding: 12px 0;
+    border-bottom: 1px solid $grey-2;
+
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 1fr);
+    grid-template-rows: repeat(4, auto-fill);
+    grid-template-areas:
+      "title-row     downloads-counter"
+      "description   downloads-counter"
+      "tag-container downloads-counter"
+      "bottom-row    downloads-counter";
+    grid-gap: 5px;
+
+    .title-row {
+      grid-area: title-row;
+
+      display: flex;
+      align-items: flex-end;
+
+      *:not(:first-child) {
+        margin-left: 5px;
+      }
+
+      .title {
+        font-size: 1.2rem;
+        font-weight: bold;
+        font-family: $family-secondary;
+      }
+
+      .version {
+        font-size: 1rem;
+        font-family: $family-code;
+        color: $grey-6;
+      }
+    }
+
+    .description {
+      grid-area: description;
+      font-size: 1rem;
+      font-family: $family-secondary;
+      color: $grey-6;
+    }
+
+    .tag-container {
+      grid-area: tag-container;
+
+      display: flex;
+      flex-wrap: wrap;
+
+      .tag {
+        padding: 5px;
+        border-radius: 2px;
+        line-height: 14px;
+        font-size: 0.9rem;
+        color: $grey-8;
+        background-color: $grey-1;
+
+        &:not(:first-child) {
+          margin-left: 8px;
+        }
+
+        &:hover {
+          text-decoration: underline;
+        }
+
+        &:active {
+          background-color: $grey-2;
+        }
+      }
+    }
+
+    .bottom-row {
+      grid-area: bottom-row;
+
+      display: flex;
+      align-items: baseline;
+      justify-items: center;
+      flex-wrap: wrap;
+
+      .avatar {
+        align-self: center;
+        width: 25px;
+        height: 25px;
+        border-radius: 2px;
+      }
+
+      .author {
+        margin-left: 0.6rem;
+        font-size: 1rem;
+        font-weight: bold;
+        font-family: $family-secondary;
+        color: $grey-7;
+      }
+
+      .separator {
+        margin: 0 0.6rem;
+        font-size: 0.9rem;
+        color: $grey-5;
+      }
+
+      .last-updated {
+        font-size: 0.9rem;
+        font-family: $family-code;
+        color: $grey-5;
+      }
+    }
+
+    .downloads-counter {
+      grid-area: downloads-counter;
+      justify-self: right;
+      max-width: 130px;
+      text-align: right;
+      font-family: $family-secondary;
+
+      display: flex;
+      flex-direction: column;
+
+      b {
+        font-size: 1.125rem;
+        font-weight: bold;
+        color: $grey-6;
+      }
+
+      p {
+        margin: 5px 0;
+        font-size: 0.9rem;
+        color: $grey-5;
+      }
+    }
+  }
+}

@@ -19,13 +19,13 @@ export const Navbar: React.FunctionComponent = () => (
         </div>
         <div className={style["search-bar"]}>
             <form className={style["search-form"]} method="GET" action="/search">
-                <div className={style["search-form__input-container"]}>
-                    <input className={style["search-form__input-input"]} type="search" name="q" placeholder="search packages"></input>
-                    <span className={style["search-form__input-icon"]}>
+                <div className={style["input-container"]}>
+                    <input className={style["input-input"]} type="search" name="q" placeholder="search packages"></input>
+                    <span className={style["input-icon"]}>
                         <i className="fas fa-search"></i>
                     </span>
                 </div>
-                <button className={style["search-form__button"]} type="submit">Search</button>
+                <button className={style["search-button"]} type="submit">Search</button>
             </form>
         </div>
     </nav>

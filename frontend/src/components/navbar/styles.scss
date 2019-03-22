@@ -42,11 +42,11 @@
 
     display: flex;
     align-items: center;
-  }
-
-  .navbar-menu-item {
-    padding: 0.5rem;
-    color: $grey-8;
+    
+    .navbar-menu-item {
+      padding: 0.5rem;
+      color: $grey-8;
+    }
   }
 
   .search-bar {
@@ -62,71 +62,75 @@
 
     display: flex;
     align-items: center;
-  }
 
-  .search-form {
-    display: flex;
-    width: 100%;
-    height: 95%;
+    .search-form {
+      display: flex;
+      width: 100%;
+      height: 95%;
 
-    @include desktop {
-      max-height: 35px;
-    }
-  }
+      @include desktop {
+        max-height: 35px;
+      }
 
-  .search-form__input-container {
-    display: flex;
-    width: 100%;
-  }
+      .input-container {
+        display: flex;
+        width: 100%;
+      }
 
-  .search-form__input-input {
-    width: 100%;
-    padding: 0 0.75em 0.15em 2.75em;
-    color: $grey-8;
-    background-color: $grey-2;
-    font-size: 1rem;
+      .input-input {
+        width: 100%;
+        padding: 0 0.75em 0.15em 2.75em;
+        color: $grey-8;
+        background-color: $grey-2;
+        font-size: 1rem;
 
-    &:focus {
-      background-color: $grey-3;
-    }
+        &:focus {
+          background-color: $grey-3;
+        }
 
-    &::placeholder {
-      color: $grey-4;
-    }
-  }
+        &::placeholder {
+          color: $grey-4;
+        }
+      }
 
-  .search-form__input-icon {
-    position: absolute;
-    padding-left: 0.75em;
-    align-self: center;
-    color: $grey-3;
-    font-weight: 900;
+      .input-icon {
+        position: absolute;
+        padding-left: 0.75em;
+        align-self: center;
+        color: $grey-3;
+        font-weight: 900;
 
-    @include mobile {
-      font-size: 24px;
-    }
-    @include desktop {
-      font-size: 18px;
-    }
+        @include mobile {
+          font-size: 24px;
+        }
+        @include desktop {
+          font-size: 18px;
+        }
 
-    &:focus {
-      color: $grey-7;
-    }
-  }
+        &:focus {
+          color: $grey-7;
+        }
+      }
 
-  .search-form__button {
-    padding: 0.375em 0.75rem;
-    font-size: 1rem;
-    font-weight: bold;
-    color: black;
-    background-color: $yellow;
+      .input-input:focus + .input-icon {
+        color: $grey-5;
+      }
 
-    @include mobile {
-      margin-left: 0.75rem;
-    }
+      .search-button {
+        padding: 0.375em 0.75rem;
+        font-size: 1rem;
+        font-weight: bold;
+        color: black;
+        background-color: $yellow;
 
-    &:active {
-      background-color: darken($yellow, 30%);
+        @include mobile {
+          margin-left: 0.75rem;
+        }
+
+        &:active {
+          background-color: darken($yellow, 30%);
+        }
+      }
     }
   }
 }
