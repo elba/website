@@ -11,10 +11,12 @@
     "devDependencies": {
         "@types/react": "^16.8.8",
         "@types/react-dom": "^16.8.2",
+        "@types/react-router-dom": "^4.3.1",
         "autoprefixer": "^9.5.0",
         "modules": "^0.4.0",
         "parcel-bundler": "^1.12.2",
         "postcss-modules": "^1.4.1",
+        "react-router-dom": "^5.0.0",
         "sass": "^1.17.3",
         "typescript": "^3.3.3333",
         "typescript-plugin-css-modules": "^1.0.5"

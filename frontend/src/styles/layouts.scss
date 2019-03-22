@@ -14,10 +14,8 @@ $desktop: 800px;
   }
 }
 
-@mixin container {
+@mixin content-center {
   margin: 0 auto;
-  padding-left: 20px;
-  padding-right: 20px;
 
   @media screen and (min-width: 800px) and (max-width: 1200px) {
     max-width: 760px;
@@ -28,4 +26,12 @@ $desktop: 800px;
     max-width: 1000px;
     width: 1000px;
   }
+}
+
+$content-padding-gap: 20px;
+
+@mixin content-padding {
+  @include content-center;
+  padding-left: $content-padding-gap;
+  padding-right: $content-padding-gap;
 }

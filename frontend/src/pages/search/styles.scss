@@ -2,12 +2,12 @@
 @import "~/styles/layouts.scss";
 
 .page {
-  @include container;
-
   margin-top: 30px;
 }
 
 .header {
+  @include content-padding;
+
   font-size: 1.5rem;
   .search-term {
     color: $purple;
@@ -25,5 +25,7 @@
 }
 
 .listing-top-bar {
+  @include content-padding;
+  
   display: flex;
 }

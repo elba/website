@@ -1,0 +1,46 @@
+@import "~/styles/variables.scss";
+@import "~/styles/layouts.scss";
+
+.page {
+
+  margin-top: 30px;
+}
+
+.section {
+  padding: 32px 0;
+
+  .section-title {
+    @include content-padding;
+
+    margin-bottom: 48px;
+    font-size: 1.7rem;
+    font-weight: bold;
+  }
+}
+
+.statistics {
+  width: 100%;
+  background-color: $grey-1;
+
+  .statistics-item-container {
+    @include content-padding;
+    display: flex;
+  }
+
+  .statistics-item {
+    flex-grow: 1;
+
+    .statistics-value {
+      font-size: 2.25rem;
+      font-weight: bold;
+      line-height: 0.9em;
+      color: $purple;
+    }
+
+    .statistics-title {
+      font-size: 1.25rem;
+      font-family: $family-secondary;
+      color: $grey-5;
+    }
+  }
+}
