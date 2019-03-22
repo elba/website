@@ -8,8 +8,12 @@
   flex-direction: column;
 
   .listing-item {
-    padding: 16px 0 18px 0;
     border-bottom: 1px solid $grey-2;
+    padding-bottom: 18px;
+
+    &:not(:first-child) {
+      padding-top: 14px;
+    }
 
     display: grid;
     grid-template-columns: repeat(auto-fill, 1fr);

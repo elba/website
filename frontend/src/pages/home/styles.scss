@@ -1,11 +1,6 @@
 @import "~/styles/variables.scss";
 @import "~/styles/layouts.scss";
 
-.page {
-
-  margin-top: 30px;
-}
-
 .section {
   padding: 32px 0;
 
@@ -15,6 +10,65 @@
     margin-bottom: 48px;
     font-size: 1.7rem;
     font-weight: bold;
+  }
+}
+
+.hero {
+  @include content-padding;
+
+  margin: 2rem auto;
+  max-width: 720px !important;
+
+  .hero-text {
+    padding-top: 56px;
+    padding-bottom: 80px;
+
+    h1 {
+      white-space: pre-line;
+      font-weight: bold;
+      line-height: 1.25em;
+      color: $grey-8;
+
+      @include mobile {
+        font-size: 2rem;
+      }
+      @include desktop {
+        font-size: 3rem;
+      }
+
+      .highlight {
+        display: inline-block;
+        white-space: normal;
+        font-weight: inherit;
+        color: $magenta;
+        border-bottom: 3px dotted black;
+
+        &:active {
+          color: white;
+          background-color: $magenta;
+        }
+      }
+    }
+  }
+
+  .hero-buttons {
+    padding-bottom: 70px;
+
+    display: flex;
+    align-items: center;
+
+    .hero-button-container {
+      flex-grow: 1;
+    }
+
+    .hero-button {
+      width: 125px;
+      height: 55px;
+
+      font-size: 1rem;
+      font-weight: bold;
+      text-align: center;
+    }
   }
 }
 
@@ -42,5 +96,75 @@
       font-family: $family-secondary;
       color: $grey-5;
     }
+  }
+}
+
+.features {
+  width: 100%;
+  color: white;
+  background-color: $magenta;
+
+  .features-item-container {
+    @include content-padding;
+    @include desktop {
+      display: flex;
+    }
+  }
+
+  .features-item {
+    flex-grow: 1;
+    padding-right: 16px;
+
+    @include mobile {
+      &:not(:last-child) {
+        margin-bottom: 60px;
+      }
+      &:last-child {
+        margin-bottom: 40px;
+      }
+    }
+    @include desktop {
+      padding: 12px;
+    }
+
+    // TODO: pseudo feautre icon
+    div {
+      width: 5rem;
+      height: 5rem;
+      margin-bottom: 0.5rem;
+      border-radius: 20px;
+      background-color: $yellow;
+    }
+
+    h2 {
+      padding: 1rem 0 0.2rem 0;
+      font-size: 1.35rem;
+      font-weight: bold;
+    }
+
+    p {
+      font-size: 0.85rem;
+      // line-height: 1.25em;
+    }
+  }
+}
+
+.question {
+  @include content-padding;
+
+  padding-top: 40px;
+  padding-bottom: 40px;
+
+  .question-title {
+    font-size: 2rem;
+    font-weight: bold;
+    text-align: center;
+  }
+
+  .question-button {
+    width: 16rem;
+    height: 3.5rem;
+    margin: 3rem auto;
+    font-size: 1.25rem;
   }
 }

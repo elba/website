@@ -1,0 +1,21 @@
+:global .button {
+  text-align: center;
+  padding: 0.375em 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &.is-purple {
+    color: white;
+    background-color: $purple;
+
+    &:active {
+      color: $grey-8;
+      background-color: $yellow;
+    }
+  }
+
+  &.has-shadow {
+    box-shadow: 0.25rem 0.25rem 0 $grey-2;
+  }
+}
