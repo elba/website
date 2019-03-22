@@ -79,7 +79,7 @@
 
       .input-input {
         width: 100%;
-        padding: 0 0.75em 0.15em 2.75em;
+        padding: 0 0.75em 0 2.75em;
         color: $grey-8;
         background-color: $grey-2;
         font-size: 1rem;
@@ -101,7 +101,7 @@
         font-weight: 900;
 
         @include mobile {
-          font-size: 24px;
+          font-size: 20px;
         }
         @include desktop {
           font-size: 18px;

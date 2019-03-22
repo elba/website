@@ -1,6 +1,6 @@
 @import "~/styles/variables.scss";
 
-$desktop: 1024px;
+$desktop: 800px;
 
 @mixin mobile {
   @media screen and (max-width: $desktop - 1px) {
@@ -19,12 +19,12 @@ $desktop: 1024px;
   padding-left: 20px;
   padding-right: 20px;
 
-  @media screen and (min-width: 800px) and (max-width: $desktop - 1) {
+  @media screen and (min-width: 800px) and (max-width: 1200px) {
     max-width: 760px;
     width: 760px;
   }
 
-  @include desktop {
+  @media screen and (min-width: 1200px) {
     max-width: 1000px;
     width: 1000px;
   }
