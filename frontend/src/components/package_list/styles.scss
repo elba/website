@@ -2,7 +2,7 @@
 @import "~/styles/layouts.scss";
 
 .listing {
-  @include content-center;
+  @include content-padding;
 
   display: flex;
   flex-direction: column;
