@@ -2,10 +2,11 @@
 @import "~/styles/layouts.scss";
 
 .page {
-  @include content-padding;
 }
 
 .header {
+  @include content-center;
+
   margin-top: 30px;
   margin-bottom: 30px;
 
@@ -26,6 +27,8 @@
 }
 
 .listing-top-bar {
+  @include content-center;
+
   display: flex;
   justify-content: space-between;
 }
