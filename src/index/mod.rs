@@ -69,9 +69,7 @@ impl Handler<SaveAndUpdate> for Index {
         );
 
         // git fetch
-        if !CONFIG.index_no_sync {
-            self.repo.fetch_and_reset()?;
-        }
+        self.repo.fetch_and_reset()?;
 
         // create metadata entry
         let mut metadata = TomlEntry::from(msg.package.clone());
@@ -92,9 +90,9 @@ impl Handler<SaveAndUpdate> for Index {
         buf.push('\n');
         file.write_all(&buf.as_bytes())?;
 
-        // git commit
+        // git commit && git push
         self.repo
-            .commit(
+            .commit_and_push(
                 &format!(
                     "Updating package `{}|{}`",
                     &msg.package.name.as_str(),
@@ -102,13 +100,6 @@ impl Handler<SaveAndUpdate> for Index {
                 ),
                 &meta_path,
             ).context("Failed to push index to remote repo")?;
-
-        // git push
-        if !CONFIG.index_no_sync {
-            self.repo
-                .push()
-                .context("Failed to push index to remote repo")?;
-        }
 
         Ok(())
     }
@@ -126,9 +117,7 @@ impl Handler<YankAndUpdate> for Index {
         );
 
         // git fetch
-        if !CONFIG.index_no_sync {
-            self.repo.fetch_and_reset()?;
-        }
+        self.repo.fetch_and_reset()?;
 
         let group_path = CONFIG.index_path.join(&msg.package.name.group());
         let meta_path = group_path.join(&msg.package.name.name());
@@ -163,23 +152,16 @@ impl Handler<YankAndUpdate> for Index {
             .open(&meta_path)?;
         file.write_all(&new_buf.as_bytes())?;
 
-        // git commit
+        // git commit && git push
         self.repo
-            .commit(
+            .commit_and_push(
                 &format!(
                     "Updating package `{}|{}`",
                     &msg.package.name.as_str(),
                     &msg.package.semver
                 ),
                 &meta_path,
-            ).context("Failed to commit")?;
-
-        // git push
-        if !CONFIG.index_no_sync {
-            self.repo
-                .push()
-                .context("Failed to push index to remote repo")?;
-        }
+            ).context("Failed to push index to remote repo")?;
 
         Ok(())
     }

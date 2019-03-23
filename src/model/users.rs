@@ -131,11 +131,15 @@ impl Handler<LookupUser> for Database {
 
 pub fn create_user_or_login(msg: CreateUserOrLogin, conn: &Connection) -> Result<User, Error> {
     use crate::schema::users::dsl::*;
-    let user = diesel::insert_into(users)
+
+    diesel::insert_into(users)
         .values(&msg)
         .on_conflict(gh_id)
         .do_nothing()
-        .get_result::<User>(conn)?;
+        .execute(conn)?;
+
+    let user = users.filter(gh_id.eq(msg.gh_id)).get_result::<User>(conn)?;
+
     Ok(user)
 }
 
@@ -155,7 +159,13 @@ pub fn remove_access_token(msg: RemoveAccessToken, conn: &Connection) -> Result<
 
     let access_token = access_tokens
         .find(msg.access_token_id)
-        .get_result::<AccessToken>(conn)?;
+        .get_result::<AccessToken>(conn)
+        .optional()?;
+
+    let access_token = match access_token {
+        Some(access_token) => access_token,
+        None => return Err(human!(Reason::TokenNotFound, "Access token not found")),
+    };
 
     if access_token.user_id != msg.user_id {
         return Err(human!(

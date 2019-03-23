@@ -15,6 +15,7 @@ use std::convert::TryFrom;
 use chrono::NaiveDateTime;
 use elba::package::Name as PackageName;
 use failure::{Error, ResultExt};
+use semver;
 
 use crate::model::packages::*;
 use crate::util::error::Reason;
@@ -121,7 +122,10 @@ impl TryFrom<PackageVersionReq> for PackageVersion {
             .with_context(|err| human!(Reason::InvalidFormat, "Invalid package name: {}", err))?;
         Ok(PackageVersion {
             name,
-            semver: req.version.parse()?,
+            semver: req
+                .version
+                .parse::<semver::Version>()
+                .with_context(|err| human!(Reason::InvalidFormat, "Invalid version: {}", err))?,
         })
     }
 }

@@ -1,6 +1,6 @@
 use actix_web::HttpResponse;
-use failure::{Error, Fail};
-use std::fmt::{self, Display, Write};
+use failure::{Context, Error, Fail};
+use std::fmt::{self, Display};
 
 /// For user error, this responds `400 Bad Request` along with
 /// an error description in json.
@@ -9,24 +9,27 @@ use std::fmt::{self, Display, Write};
 /// Any error that does not have HumanError in its error chain
 /// is considered as an initernal error.
 pub fn report_error(error: Error) -> HttpResponse {
-    let human_error = error
-        .iter_chain()
-        .filter_map(|fail| fail.downcast_ref::<HumanError>())
-        .nth(0);
+    fn find_human_error(error: &Error) -> Option<&HumanError> {
+        let mut human_error = None;
+        for fail in error.iter_chain() {
+            if let Some(error) = fail.downcast_ref::<HumanError>() {
+                human_error = Some(error);
+                break;
+            } else if let Some(error) = fail.downcast_ref::<Context<Error>>() {
+                return find_human_error(error.get_context());
+            }
+        }
+        human_error
+    }
 
-    if let Some(human_error) = human_error {
+    if let Some(human_error) = find_human_error(&error) {
         HttpResponse::BadRequest().body(format!(
             "{{error:\"{}\",description:\"{}\"}}",
             human_error.reason.tag(),
             human_error.message
         ))
     } else {
-        let mut error_chain_str = String::new();
-        error
-            .iter_chain()
-            .for_each(|fail| write!(error_chain_str, "\n\t- {}", fail).unwrap());
-        error!("Internal error:{}", error_chain_str);
-
+        error!("Internal error: {:?}", error);
         HttpResponse::InternalServerError().finish()
     }
 }
@@ -37,6 +40,7 @@ pub enum Reason {
     InvalidManifest,
     NoPermission,
     UserNotFound,
+    TokenNotFound,
     PackageNotFound,
     DependencyNotFound,
 }
@@ -48,6 +52,7 @@ impl Reason {
             Reason::InvalidManifest => "invalid_manifest",
             Reason::NoPermission => "no_permission",
             Reason::UserNotFound => "user_not_found",
+            Reason::TokenNotFound => "token_not_found",
             Reason::PackageNotFound => "package_not_found",
             Reason::DependencyNotFound => "dependency_not_found",
         }

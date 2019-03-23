@@ -44,9 +44,9 @@ pub struct AppState {
 
 fn main() {
     dotenv::dotenv().ok();
-    // env::set_var("RUST_BACKTRACE", "1");
-    // env::set_var("RUST_LOG", "actix_web=debug,info,warn");
-    env::set_var("RUST_LOG", "info");
+    env::set_var("RUST_BACKTRACE", "1");
+    env::set_var("RUST_LOG", "actix_web=debug,info,warn");
+    env::set_var("RUST_LOG", "debug");
     env_logger::init();
 
     let address = env::var("BIND_TO").expect("BIND_TO not set!");
