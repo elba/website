@@ -12,6 +12,7 @@ pub struct Config {
     pub remote_index_url: String,
     pub remote_index_user: String,
     pub remote_index_pwd: String,
+    pub index_no_sync: bool,
 }
 
 impl Config {
@@ -19,7 +20,7 @@ impl Config {
         Config {
             max_upload_size: read_env("MAX_UPLOAD_SIZE")
                 .parse()
-                .expect("MAX_UPLOAD_SIZE is not a number!"),
+                .expect("MAX_UPLOAD_SIZE is expected to be number."),
             storage_path: read_env_path("STORAGE_PATH"),
             backend_url: read_env("BACKEND_URL"),
             cdn_url: read_env("CDN_URL"),
@@ -27,12 +28,15 @@ impl Config {
             remote_index_url: read_env("REMOTE_INDEX_URL"),
             remote_index_user: read_env("REMOTE_INDEX_USER"),
             remote_index_pwd: read_env("REMOTE_INDEX_PWD"),
+            index_no_sync: read_env("INDEX_NO_SYNC")
+                .parse()
+                .expect("INDEX_NO_SYNC is expected to be a boolean!"),
         }
     }
 }
 
 fn read_env(env_name: &str) -> String {
-    env::var(env_name).expect(&format!("Environment variable `{}` not set!", env_name))
+    env::var(env_name).expect(&format!("Environment variable `{}` not set.", env_name))
 }
 
 fn read_env_path(env_name: &str) -> PathBuf {

@@ -33,7 +33,7 @@ impl IndexRepo {
         Ok(index_repo)
     }
 
-    pub fn commit_and_push(&self, msg: &str, file: &Path) -> Result<(), Error> {
+    pub fn commit(&self, msg: &str, file: &Path) -> Result<(), Error> {
         // git add
         let mut index = self.repo.index()?;
         index.add_path(&file.strip_prefix(&CONFIG.index_path)?)?;
@@ -50,6 +50,10 @@ impl IndexRepo {
         self.repo
             .commit(Some("HEAD"), &sig, &sig, msg, &tree, &[&parent])?;
 
+        Ok(())
+    }
+
+    pub fn push(&self) -> Result<(), Error> {
         let mut remote = self.repo.find_remote("origin")?;
 
         let mut push_err_msg = None;
