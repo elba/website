@@ -24,13 +24,7 @@ export const Navbar: React.FunctionComponent = () => (
         className={style["search-form"]}
         method="GET"
         action="/search"
-        onSubmit={ev => {
-          ev.preventDefault()
-          history.push({
-            pathname: "/search",
-            search: `?q=${(ev.target as any).q.value}`,
-          })
-        }}
+        onSubmit={onSearch}
       >
         <div className={style["input-container"]}>
           <input
@@ -51,3 +45,11 @@ export const Navbar: React.FunctionComponent = () => (
     </div>
   </nav>
 )
+
+function onSearch(ev: React.FormEvent<HTMLFormElement>) {
+  ev.preventDefault()
+  history.push({
+    pathname: "/search",
+    search: `?q=${(ev.target as any).q.value}`,
+  })
+}

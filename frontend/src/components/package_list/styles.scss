@@ -2,8 +2,6 @@
 @import "~/styles/layouts.scss";
 
 .listing {
-  @include content-padding;
-
   display: flex;
   flex-direction: column;
 

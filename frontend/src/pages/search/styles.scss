@@ -2,11 +2,12 @@
 @import "~/styles/layouts.scss";
 
 .page {
-  margin-top: 30px;
+  @include content-padding;
 }
 
 .header {
-  @include content-padding;
+  margin-top: 30px;
+  margin-bottom: 30px;
 
   font-size: 1.5rem;
   .search-term {
@@ -25,7 +26,6 @@
 }
 
 .listing-top-bar {
-  @include content-padding;
-  
   display: flex;
+  justify-content: space-between;
 }
