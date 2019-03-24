@@ -4,7 +4,7 @@ RUN apt-get update \
     && apt-get install -y postgresql cmake \
     && rm -rf /var/lib/apt/lists/*
 
-RUN cargo install diesel_cli --no-default-features --features postgres --release
+RUN cargo install diesel_cli --no-default-features --features postgres
 
 WORKDIR /app
 COPY . /app
