@@ -10,7 +10,9 @@ services:
     volumes:
       - /var/run/docker.sock:/tmp/docker.sock:ro
       - ./deploy/nginx-conf.conf:/etc/nginx/conf.d/nginx-conf.conf:ro
-      - /var/lib/nginx/certs:/etc/nginx/certs
+      - /var/lib/nginx/certs:/etc/nginx/certs:ro
+      - ./public:/app/public:ro
+      - storage:/app/storage:ro
 
   postgres:
     image: postgres:9.6
@@ -23,19 +25,6 @@ services:
       - 127.0.0.1:5432:5432
     volumes:
       - postgres-data:/var/lib/postgresql/data
-
-  static:
-    image: nginx
-    container_name: static
-    environment:
-      - VIRTUAL_HOST=~^dl\\..*
-      - VIRTUAL_PORT=19000
-      - CERT_NAME=cert
-    ports:
-      - 127.0.0.1:19000:80
-    volumes:
-      - ./deploy/static-conf.conf:/etc/nginx/nginx.conf:ro
-      - storage:/app/storage
 
   backend:
     build:
@@ -54,7 +43,7 @@ services:
       - REMOTE_INDEX_URL=https://github.com/andylokandy/index.git
       - REMOTE_INDEX_USER=
       - REMOTE_INDEX_PWD=
-      - VIRTUAL_HOST=~^elba\..*
+      - VIRTUAL_HOST=~^elba\.[^/]*\/api\/?.*$
       - VIRTUAL_PORT=17000
       - CERT_NAME=cert
     ports:
@@ -63,7 +52,6 @@ services:
       # Mount the src/ directory so we don't have to rebuild the Docker image
       # when we want to change some code
       - ./src:/app/src:ro
-      - ./public:/app/public:ro
       - index:/app/tmp/index
       - storage:/app/tmp/storage
 
