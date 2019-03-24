@@ -14,7 +14,7 @@ services:
 
   postgres:
     image: postgres:9.6
-    container_name: postgress
+    container_name: postgres
     environment:
       - POSTGRES_DB=elba
       - POSTRES_USER=postgres
