@@ -69,7 +69,7 @@ pub fn router(app: App<AppState>) -> App<AppState> {
         ).route(
             "/packages/{group}/{package}/{version}/download",
             Method::GET,
-            compat(controller::packages::download),
+            compat(controller::packages::download::download),
         ).route(
             "/packages/{group}/{package}/{version}/yank",
             Method::PATCH,
@@ -78,9 +78,13 @@ pub fn router(app: App<AppState>) -> App<AppState> {
             "/packages/{group}/{package}/{version}/publish",
             Method::PUT,
             compat(controller::packages::publish),
+        ).route(
+            "/packages/{group}/{package}/{version}/download_stats",
+            Method::GET,
+            compat(controller::packages::download::download_stats),
+        ).route(
+            "/packages/{group}/{package}/{version}/download_graph",
+            Method::GET,
+            compat(controller::packages::download::download_graph),
         )
-    // .route(
-    //     "/packages/{group}/{package}/{version}/downloads",
-    //     Method::GET,
-    //     package::controller::download,
 }

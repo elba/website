@@ -9,10 +9,10 @@ pub struct Config {
     pub backend_url: String,
     pub cdn_url: String,
     pub index_path: PathBuf,
+    pub index_no_sync: bool,
     pub remote_index_url: String,
     pub remote_index_user: String,
     pub remote_index_pwd: String,
-    pub index_no_sync: bool,
 }
 
 impl Config {
@@ -25,12 +25,12 @@ impl Config {
             backend_url: read_env("BACKEND_URL"),
             cdn_url: read_env("CDN_URL"),
             index_path: read_env_path("INDEX_PATH"),
-            remote_index_url: read_env("REMOTE_INDEX_URL"),
-            remote_index_user: read_env("REMOTE_INDEX_USER"),
-            remote_index_pwd: read_env("REMOTE_INDEX_PWD"),
             index_no_sync: read_env("INDEX_NO_SYNC")
                 .parse()
                 .expect("INDEX_NO_SYNC is expected to be a boolean!"),
+            remote_index_url: read_env("REMOTE_INDEX_URL"),
+            remote_index_user: read_env("REMOTE_INDEX_USER"),
+            remote_index_pwd: read_env("REMOTE_INDEX_PWD"),
         }
     }
 }

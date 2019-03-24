@@ -1,6 +1,7 @@
 mod action;
 mod schema;
 
+use chrono::NaiveDate;
 use elba::package::{version::Constraint, Name as PackageName};
 use failure::Error;
 use semver;
@@ -62,4 +63,16 @@ pub struct PackageVersion {
 pub struct DependencyReq {
     pub name: PackageName,
     pub version_req: Constraint,
+}
+
+#[derive(Clone)]
+pub struct DownloadStats {
+    pub downloads_total: i64,
+    pub downloads_season: i64,
+}
+
+#[derive(Queryable, Clone)]
+pub struct DownloadGraph {
+    pub date: NaiveDate,
+    pub downloads: i32,
 }

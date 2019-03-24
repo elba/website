@@ -48,6 +48,8 @@ pub struct LookupReadme(pub PackageVersion);
 pub struct SearchPackage(pub String);
 
 pub struct IncreaseDownload(pub PackageVersion);
+pub struct LookupDownloadStats(pub PackageVersion);
+pub struct LookupDownloadGraph(pub PackageVersion);
 
 impl Message for PublishVersion {
     type Result = Result<(), Error>;
@@ -103,6 +105,14 @@ impl Message for SearchPackage {
 
 impl Message for IncreaseDownload {
     type Result = Result<(), Error>;
+}
+
+impl Message for LookupDownloadStats {
+    type Result = Result<DownloadStats, Error>;
+}
+
+impl Message for LookupDownloadGraph {
+    type Result = Result<Vec<DownloadGraph>, Error>;
 }
 
 impl Handler<PublishVersion> for Database {
@@ -214,6 +224,22 @@ impl Handler<IncreaseDownload> for Database {
 
     fn handle(&mut self, msg: IncreaseDownload, _: &mut Self::Context) -> Self::Result {
         increase_download(msg, &self.connection()?)
+    }
+}
+
+impl Handler<LookupDownloadStats> for Database {
+    type Result = Result<DownloadStats, Error>;
+
+    fn handle(&mut self, msg: LookupDownloadStats, _: &mut Self::Context) -> Self::Result {
+        lookup_download_stats(msg, &self.connection()?)
+    }
+}
+
+impl Handler<LookupDownloadGraph> for Database {
+    type Result = Result<Vec<DownloadGraph>, Error>;
+
+    fn handle(&mut self, msg: LookupDownloadGraph, _: &mut Self::Context) -> Self::Result {
+        lookup_download_graph(msg, &self.connection()?)
     }
 }
 
@@ -670,6 +696,51 @@ pub fn increase_download(msg: IncreaseDownload, conn: &Connection) -> Result<(),
         .execute(conn)?;
 
     Ok(())
+}
+
+pub fn lookup_download_stats(
+    msg: LookupDownloadStats,
+    conn: &Connection,
+) -> Result<DownloadStats, Error> {
+    use crate::schema::version_downloads::dsl::*;
+    use diesel::dsl::sum;
+
+    let (_, version) = lookup_version(LookupVersion(msg.0), conn)?;
+
+    let query = version_downloads
+        .filter(version_id.eq(version.id))
+        .order_by(date.desc());
+
+    let downloads_season = query
+        .limit(90)
+        .select(sum(downloads))
+        .get_result::<Option<i64>>(conn)?;
+    let downloads_total = query
+        .select(sum(downloads))
+        .get_result::<Option<i64>>(conn)?;
+
+    Ok(DownloadStats {
+        downloads_season: downloads_season.unwrap_or(0),
+        downloads_total: downloads_total.unwrap_or(0),
+    })
+}
+
+pub fn lookup_download_graph(
+    msg: LookupDownloadGraph,
+    conn: &Connection,
+) -> Result<Vec<DownloadGraph>, Error> {
+    use crate::schema::version_downloads::dsl::*;
+
+    let (_, version) = lookup_version(LookupVersion(msg.0), conn)?;
+
+    let downloads_graph = version_downloads
+        .filter(version_id.eq(version.id))
+        .select((date, downloads))
+        .order_by(date.desc())
+        .limit(90)
+        .load::<DownloadGraph>(conn)?;
+
+    Ok(downloads_graph)
 }
 
 pub fn search_package(msg: SearchPackage, conn: &Connection) -> Result<Vec<PackageName>, Error> {
