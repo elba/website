@@ -6,7 +6,7 @@
   "scripts": {
     "start": "yarn dev",
     "dev": "parcel src/index.html",
-    "build": "parcel build src/index.html"
+    "build": "parcel build src/index.html --out-dir ../public"
   },
   "license": "MIT",
   "devDependencies": {
