@@ -1,12 +1,10 @@
-FROM rust:latest
+FROM rustlang/rust:nightly
 
 RUN apt-get update \
     && apt-get install -y postgresql cmake \
     && rm -rf /var/lib/apt/lists/*
 
-RUN rustup default nightly-2019-03-05
-
-RUN cargo install diesel_cli --no-default-features --features postgres
+RUN cargo install diesel_cli --no-default-features --features postgres --release
 
 WORKDIR /app
 COPY . /app
