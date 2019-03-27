@@ -25,10 +25,14 @@ export const SearchResultsPage: React.FunctionComponent = () => (
     </header>
     <main>
       <div className={style["listing-top-bar"]}>
-        <span>100 packages found</span>
-        <div>
+        <span className={style["packages-found-label"]}>
+          100 packages found
+        </span>
+        <div className={style["listing-top-bar__pagination-button-container"]}>
           {[1, 2, 3, 4, 5, 200].map(pageNumber => (
-            <button key={pageNumber}>{pageNumber}</button>
+            <a className={style["pagination-button"]} key={pageNumber}>
+              {pageNumber}
+            </a>
           ))}
         </div>
       </div>
