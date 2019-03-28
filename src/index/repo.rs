@@ -13,13 +13,13 @@ pub struct IndexRepo {
 impl IndexRepo {
     pub fn init() -> Result<Self, Error> {
         // git clone
-        let repo = match Repository::open(&CONFIG.index_path) {
+        let repo = match Repository::open(&CONFIG.local_index_path) {
             Ok(repo) => repo,
             Err(_) => {
-                fs::remove_dir_all(&CONFIG.index_path)?;
+                fs::remove_dir_all(&CONFIG.local_index_path)?;
 
-                if !CONFIG.index_no_sync {
-                    Repository::clone(&CONFIG.remote_index_url, &CONFIG.index_path)?
+                if !CONFIG.local_index_no_sync {
+                    Repository::clone(&CONFIG.remote_index_url, &CONFIG.local_index_path)?
                 } else {
                     return Err(format_err!(
                         "Please provide a local repo if `INDEX_NO_SYNC` is set"
@@ -42,7 +42,7 @@ impl IndexRepo {
 
     pub fn fetch_and_reset(&self) -> Result<(), Error> {
         // git pull origin
-        if !CONFIG.index_no_sync {
+        if !CONFIG.local_index_no_sync {
             let mut remote = self.repo.find_remote("origin")?;
             remote.fetch(&["refs/heads/master:refs/heads/master"], None, None)?;
         }
@@ -58,7 +58,7 @@ impl IndexRepo {
     pub fn commit_and_push(&self, msg: &str, file: &Path) -> Result<(), Error> {
         // git add
         let mut index = self.repo.index()?;
-        index.add_path(&file.strip_prefix(&CONFIG.index_path)?)?;
+        index.add_path(&file.strip_prefix(&CONFIG.local_index_path)?)?;
         index.write()?;
 
         let tree_id = index.write_tree()?;
@@ -73,7 +73,7 @@ impl IndexRepo {
             .commit(Some("HEAD"), &sig, &sig, msg, &tree, &[&parent])?;
 
         // git push
-        if !CONFIG.index_no_sync {
+        if !CONFIG.local_index_no_sync {
             let mut remote = self.repo.find_remote("origin")?;
 
             let mut push_err_msg = None;

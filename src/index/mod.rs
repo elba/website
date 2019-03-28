@@ -77,7 +77,7 @@ impl Handler<SaveAndUpdate> for Index {
             metadata.dependencies.push(TomlDep::from(dep));
         }
 
-        let group_path = CONFIG.index_path.join(&msg.package.name.group());
+        let group_path = CONFIG.local_index_path.join(&msg.package.name.group());
         let meta_path = group_path.join(&msg.package.name.name());
 
         create_dir_all(&group_path)?;
@@ -99,7 +99,8 @@ impl Handler<SaveAndUpdate> for Index {
                     &msg.package.semver
                 ),
                 &meta_path,
-            ).context("Failed to push index to remote repo")?;
+            )
+            .context("Failed to push index to remote repo")?;
 
         Ok(())
     }
@@ -119,7 +120,7 @@ impl Handler<YankAndUpdate> for Index {
         // git fetch
         self.repo.fetch_and_reset()?;
 
-        let group_path = CONFIG.index_path.join(&msg.package.name.group());
+        let group_path = CONFIG.local_index_path.join(&msg.package.name.group());
         let meta_path = group_path.join(&msg.package.name.name());
 
         if !meta_path.exists() {
@@ -161,7 +162,8 @@ impl Handler<YankAndUpdate> for Index {
                     &msg.package.semver
                 ),
                 &meta_path,
-            ).context("Failed to push index to remote repo")?;
+            )
+            .context("Failed to push index to remote repo")?;
 
         Ok(())
     }
@@ -178,7 +180,8 @@ impl From<PackageVersion> for TomlEntry {
                     &package.name.group(),
                     &package.name.name(),
                     &package.semver
-                ).parse()
+                )
+                .parse()
                 .unwrap(),
                 cksum: None,
             },

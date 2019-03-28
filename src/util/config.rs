@@ -8,8 +8,9 @@ pub struct Config {
     pub storage_path: PathBuf,
     pub backend_url: String,
     pub cdn_url: String,
-    pub index_path: PathBuf,
-    pub index_no_sync: bool,
+    pub search_engine_path: PathBuf,
+    pub local_index_path: PathBuf,
+    pub local_index_no_sync: bool,
     pub remote_index_url: String,
     pub remote_index_user: String,
     pub remote_index_pwd: String,
@@ -24,8 +25,9 @@ impl Config {
             storage_path: read_env_path("STORAGE_PATH"),
             backend_url: read_env("BACKEND_URL"),
             cdn_url: read_env("CDN_URL"),
-            index_path: read_env_path("INDEX_PATH"),
-            index_no_sync: read_env("INDEX_NO_SYNC")
+            search_engine_path: read_env_path("SEARCH_ENGINE_PATH"),
+            local_index_path: read_env_path("LOCAL_INDEX_PATH"),
+            local_index_no_sync: read_env("LOCAL_INDEX_NO_SYNC")
                 .parse()
                 .expect("INDEX_NO_SYNC is expected to be a boolean!"),
             remote_index_url: read_env("REMOTE_INDEX_URL"),

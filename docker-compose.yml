@@ -37,8 +37,9 @@ services:
       - STORAGE_PATH=./tmp/storage
       - BACKEND_URL=https://elba.chaos.tk
       - CDN_URL=https://dl.chaos.tk
-      - INDEX_PATH=./tmp/index
-      - INDEX_NO_SYNC=false
+      - SEARCH_ENGINE_PATH=./tmp/search
+      - LOCAL_INDEX_PATH=./tmp/index
+      - LOCAL_INDEX_NO_SYNC=false
       - REMOTE_INDEX_URL=https://github.com/andylokandy/index.git
       - REMOTE_INDEX_USER=
       - REMOTE_INDEX_PWD=
