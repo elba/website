@@ -62,15 +62,13 @@ pub async fn publish(
 
 fn read_manifest(bytes: &[u8]) -> Result<Manifest, Error> {
     let mut archive = Archive::new(GzDecoder::new(bytes));
-    // TODO: Find manifest case-insensitively
     let mut entry = archive
         .entries()?
         .filter_map(Result::ok)
         .find(|entry| match entry.path() {
-            Ok(ref path) if *path == Path::new("elba.toml") => true,
+            Ok(ref path) if path.to_string_lossy().to_uppercase() == "elba.toml" => true,
             _ => false,
-        })
-        .ok_or_else(|| human!(Reason::InvalidManifest, "Manifest not found in archive"))?;
+        }).ok_or_else(|| human!(Reason::InvalidManifest, "Manifest not found in archive"))?;
 
     let mut buffer = String::new();
     entry.read_to_string(&mut buffer)?;
