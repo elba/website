@@ -6,6 +6,7 @@ use std::str::FromStr;
 use actix_web::*;
 use elba::package::manifest::{DepReq, Manifest};
 use failure::Error;
+use flate2::read::GzDecoder;
 use tar::Archive;
 use tokio_async_await::await;
 
@@ -60,7 +61,7 @@ pub async fn publish(
 }
 
 fn read_manifest(bytes: &[u8]) -> Result<Manifest, Error> {
-    let mut archive = Archive::new(bytes);
+    let mut archive = Archive::new(GzDecoder::new(bytes));
     // TODO: Find manifest case-insensitively
     let mut entry = archive
         .entries()?
@@ -68,7 +69,8 @@ fn read_manifest(bytes: &[u8]) -> Result<Manifest, Error> {
         .find(|entry| match entry.path() {
             Ok(ref path) if *path == Path::new("elba.toml") => true,
             _ => false,
-        }).ok_or_else(|| human!(Reason::InvalidManifest, "Manifest not found in archive"))?;
+        })
+        .ok_or_else(|| human!(Reason::InvalidManifest, "Manifest not found in archive"))?;
 
     let mut buffer = String::new();
     entry.read_to_string(&mut buffer)?;
@@ -78,7 +80,7 @@ fn read_manifest(bytes: &[u8]) -> Result<Manifest, Error> {
 }
 
 fn read_readme(bytes: &[u8], subpath: Option<&Path>) -> Result<Option<String>, Error> {
-    let mut archive = Archive::new(bytes);
+    let mut archive = Archive::new(GzDecoder::new(bytes));
     let entry = archive.entries()?.filter_map(Result::ok).find(|entry| {
         if let Ok(path) = entry.path() {
             if let Some(subpath) = subpath {

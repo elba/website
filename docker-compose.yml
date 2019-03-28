@@ -48,6 +48,7 @@ services:
       # Mount the src/ directory so we don't have to rebuild the Docker image
       # when we want to change some code
       - ./src:/app/src:ro
+      - ./Cargo.toml:/app/Cargo.toml:ro
       - index:/app/tmp/index
       - storage:/app/tmp/storage
 
