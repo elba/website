@@ -99,8 +99,7 @@ impl Handler<SaveAndUpdate> for Index {
                     &msg.package.semver
                 ),
                 &meta_path,
-            )
-            .context("Failed to push index to remote repo")?;
+            ).context("Failed to push index to remote repo")?;
 
         Ok(())
     }
@@ -162,8 +161,7 @@ impl Handler<YankAndUpdate> for Index {
                     &msg.package.semver
                 ),
                 &meta_path,
-            )
-            .context("Failed to push index to remote repo")?;
+            ).context("Failed to push index to remote repo")?;
 
         Ok(())
     }
@@ -180,8 +178,7 @@ impl From<PackageVersion> for TomlEntry {
                     &package.name.group(),
                     &package.name.name(),
                     &package.semver
-                )
-                .parse()
+                ).parse()
                 .unwrap(),
                 cksum: None,
             },
@@ -208,7 +205,7 @@ pub fn get_location(package: &PackageVersion) -> String {
 
 fn tar_name(package: &PackageVersion) -> String {
     format!(
-        "{}_{}_{}.tar",
+        "{}_{}_{}.tar.gz",
         &package.name.normalized_group(),
         &package.name.normalized_name(),
         &package.semver

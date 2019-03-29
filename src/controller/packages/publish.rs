@@ -66,7 +66,7 @@ fn read_manifest(bytes: &[u8]) -> Result<Manifest, Error> {
         .entries()?
         .filter_map(Result::ok)
         .find(|entry| match entry.path() {
-            Ok(ref path) if path.to_string_lossy().to_uppercase() == "elba.toml" => true,
+            Ok(ref path) if path.to_string_lossy().to_lowercase() == "elba.toml" => true,
             _ => false,
         }).ok_or_else(|| human!(Reason::InvalidManifest, "Manifest not found in archive"))?;
 
