@@ -1,7 +1,0 @@
-[package]
-name = "lightyear/lightyear"
-version = "0.1.0"
-authors = ["ziman <ziman@example.com>"]
-keywords = ["parser", "combinator", "functional", "lightweight", "ast"]
-description = "Lightweight parser combinator library for Idris, inspired by Parsec."
-license = "MIT"
