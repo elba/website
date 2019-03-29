@@ -10,13 +10,13 @@ use crate::database::{Connection, Database};
 use crate::index::{Index, SaveAndUpdate, YankAndUpdate};
 use crate::model::users::{lookup_user_by_token, LookupUserByToken, User};
 use crate::schema::*;
+use crate::search::{SearchEngine, UpdatePackage};
 use crate::util::error::Reason;
 
 use super::schema::*;
 use super::*;
 
 pub struct PublishVersion {
-    pub package: PackageVersion,
     pub package_info: PackageInfo,
     pub readme_file: Option<String>,
     pub dependencies: Vec<(DependencyReq)>,
@@ -44,8 +44,6 @@ pub struct LookupGroup(pub GroupName);
 pub struct LookupPackage(pub PackageName);
 pub struct LookupVersion(pub PackageVersion);
 pub struct LookupReadme(pub PackageVersion);
-
-pub struct SearchPackage(pub String);
 
 pub struct IncreaseDownload(pub PackageVersion);
 pub struct LookupDownloadStats(pub PackageVersion);
@@ -99,10 +97,6 @@ impl Message for LookupReadme {
     type Result = Result<String, Error>;
 }
 
-impl Message for SearchPackage {
-    type Result = Result<Vec<PackageName>, Error>;
-}
-
 impl Message for IncreaseDownload {
     type Result = Result<(), Error>;
 }
@@ -119,7 +113,7 @@ impl Handler<PublishVersion> for Database {
     type Result = Result<(), Error>;
 
     fn handle(&mut self, msg: PublishVersion, _: &mut Self::Context) -> Self::Result {
-        publish_version(msg, &self.connection()?, &self.index)
+        publish_version(msg, &self.connection()?, &self.index, &self.search_engine)
     }
 }
 
@@ -211,14 +205,6 @@ impl Handler<LookupReadme> for Database {
     }
 }
 
-impl Handler<SearchPackage> for Database {
-    type Result = Result<Vec<PackageName>, Error>;
-
-    fn handle(&mut self, msg: SearchPackage, _: &mut Self::Context) -> Self::Result {
-        search_package(msg, &self.connection()?)
-    }
-}
-
 impl Handler<IncreaseDownload> for Database {
     type Result = Result<(), Error>;
 
@@ -247,6 +233,7 @@ pub fn publish_version(
     msg: PublishVersion,
     conn: &Connection,
     index: &Addr<Index>,
+    search_engine: &Addr<SearchEngine>,
 ) -> Result<(), Error> {
     conn.build_transaction().serializable().run(|| {
         let user = lookup_user_by_token(
@@ -257,7 +244,7 @@ pub fn publish_version(
         )?;
 
         let group = groups::table
-            .filter(groups::columns::group_name.eq(&msg.package.name.normalized_group()))
+            .filter(groups::columns::group_name.eq(&msg.package_info.name.normalized_group()))
             .first::<Group>(conn)
             .optional()?;
 
@@ -265,14 +252,14 @@ pub fn publish_version(
             Some(group) => group,
             None => diesel::insert_into(groups::table)
                 .values(CreateGroup {
-                    group_name: &msg.package.name.normalized_group(),
-                    group_name_origin: &msg.package.name.group(),
+                    group_name: &msg.package_info.name.normalized_group(),
+                    group_name_origin: &msg.package_info.name.group(),
                     user_id: user.id,
                 }).get_result(conn)?,
         };
 
         let package = Package::belonging_to(&group)
-            .filter(packages::columns::package_name.eq(&msg.package.name.normalized_name()))
+            .filter(packages::columns::package_name.eq(&msg.package_info.name.normalized_name()))
             .first::<Package>(conn)
             .optional()?;
 
@@ -285,7 +272,7 @@ pub fn publish_version(
                     return Err(human!(
                         Reason::NoPermission,
                         "You have no access permission to package `{}`",
-                        &msg.package.name.as_str()
+                        &msg.package_info.name.as_str()
                     ));
                 }
 
@@ -296,15 +283,15 @@ pub fn publish_version(
                     return Err(human!(
                         Reason::NoPermission,
                         "You have no permission to create package under group `{}`",
-                        &msg.package.name.group()
+                        &msg.package_info.name.group()
                     ));
                 }
 
                 let package = diesel::insert_into(packages::table)
                     .values(CreatePackage {
                         group_id: group.id,
-                        package_name: &msg.package.name.normalized_name(),
-                        package_name_origin: &msg.package.name.name(),
+                        package_name: &msg.package_info.name.normalized_name(),
+                        package_name_origin: &msg.package_info.name.name(),
                     }).get_result::<Package>(conn)?;
 
                 diesel::insert_into(package_owners::table)
@@ -322,7 +309,7 @@ pub fn publish_version(
         let package: Package = package.save_changes(connection)?;
 
         let version = Version::belonging_to(&package)
-            .filter(versions::columns::semver.eq(msg.package.semver.to_string()))
+            .filter(versions::columns::semver.eq(msg.package_info.version.to_string()))
             .first::<Version>(conn)
             .optional()?;
 
@@ -330,15 +317,15 @@ pub fn publish_version(
             return Err(human!(
                 Reason::NoPermission,
                 "Package `{} {}` already exists",
-                &msg.package.name.as_str(),
-                &msg.package.semver,
+                &msg.package_info.name.as_str(),
+                &msg.package_info.version,
             ));
         }
 
         let version = diesel::insert_into(versions::table)
             .values(CreateVersion {
                 package_id: package.id,
-                semver: &msg.package.semver.to_string(),
+                semver: &msg.package_info.version.to_string(),
                 description: msg.package_info.description.as_ref().map(|s| s.as_str()),
                 homepage: msg.package_info.homepage.as_ref().map(|s| s.as_str()),
                 repository: msg.package_info.repository.as_ref().map(|s| s.as_str()),
@@ -412,16 +399,24 @@ pub fn publish_version(
                 }).execute(conn)?;
         }
 
-        diesel::sql_query("REFRESH MATERIALIZED VIEW ts_vectors;").execute(conn)?;
-
         index
             .send(SaveAndUpdate {
-                package: msg.package,
+                package: PackageVersion {
+                    name: msg.package_info.name.clone(),
+                    semver: msg.package_info.version.clone(),
+                },
                 dependencies: msg.dependencies,
                 bytes: msg.bytes,
             }).from_err::<Error>()
             .wait()?
             .context("Failed to update index")?;
+
+        search_engine
+            .send(UpdatePackage {
+                package_info: msg.package_info,
+            }).from_err::<Error>()
+            .wait()?
+            .context("Failed to update search index")?;
 
         Ok(())
     })
@@ -741,28 +736,4 @@ pub fn lookup_download_graph(
         .load::<DownloadGraph>(conn)?;
 
     Ok(downloads_graph)
-}
-
-pub fn search_package(msg: SearchPackage, conn: &Connection) -> Result<Vec<PackageName>, Error> {
-    use crate::schema::ts_vectors::dsl::*;
-    use diesel::dsl::*;
-    use diesel_full_text_search::*;
-
-    let tsquery = plainto_tsquery(msg.0);
-    let rank = ts_rank_cd(document, tsquery.clone());
-
-    let query = ts_vectors
-        .select((group_name, package_name))
-        .filter(tsquery.matches(document))
-        .group_by((group_name, package_name))
-        .order_by(max(rank).desc())
-        .limit(50);
-
-    let results = query.load::<(String, String)>(conn)?;
-    let package_names: Vec<_> = results
-        .into_iter()
-        .filter_map(|(group, package)| PackageName::new(group, package).ok())
-        .collect();
-
-    Ok(package_names)
 }

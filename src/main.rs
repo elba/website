@@ -10,6 +10,7 @@ mod index;
 mod model;
 mod router;
 mod schema;
+mod search;
 
 use std::env;
 
@@ -31,6 +32,7 @@ use actix_web::{middleware, server, App};
 
 use crate::database::Database;
 use crate::index::Index;
+use crate::search::SearchEngine;
 use crate::util::Config;
 
 lazy_static! {
@@ -40,6 +42,7 @@ lazy_static! {
 #[derive(Clone)]
 pub struct AppState {
     pub db: Addr<Database>,
+    pub search_engine: Addr<SearchEngine>,
 }
 
 fn main() {
@@ -57,10 +60,14 @@ fn main() {
     // We would want only one actor to operate the index repo
     let index = SyncArbiter::start(1, move || Index::new());
 
-    let db = Database::new(db_pool, index);
-    let db_actor = SyncArbiter::start(num_cpus::get() * 4, move || db.clone());
+    let search_engine = SyncArbiter::start(1, move || {
+        SearchEngine::init().expect("Faild to initialize search engine")
+    });
 
-    let app_state = AppState { db: db_actor };
+    let db = Database::new(db_pool, index, search_engine.clone());
+    let db = SyncArbiter::start(num_cpus::get() * 4, move || db.clone());
+
+    let app_state = AppState { db, search_engine };
 
     server::new(move || {
         let app = App::with_state(app_state.clone())

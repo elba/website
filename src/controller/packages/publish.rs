@@ -49,7 +49,6 @@ pub async fn publish(
     )?;
 
     await!(state.db.send(PublishVersion {
-        package: package_version.clone(),
         package_info: manifest.package.clone(),
         readme_file,
         dependencies: deps.clone(),
@@ -128,6 +127,15 @@ fn verify_manifest(req: &PackageVersion, manifest: &Manifest) -> Result<(), Erro
         ));
     }
 
+    if let Some(description) = &manifest.package.description {
+        if description.len() > 244 {
+            return Err(human!(
+                Reason::InvalidManifest,
+                "Descrption is over 244 characters"
+            ));
+        }
+    }
+
     if let Some(license) = &manifest.package.license {
         if license.len() > 10 {
             return Err(human!(
@@ -141,6 +149,30 @@ fn verify_manifest(req: &PackageVersion, manifest: &Manifest) -> Result<(), Erro
         return Err(human!(
             Reason::InvalidManifest,
             "No more than five keywords"
+        ));
+    }
+
+    if manifest
+        .package
+        .keywords
+        .iter()
+        .any(|keyword| keyword.trim().is_empty())
+    {
+        return Err(human!(
+            Reason::InvalidManifest,
+            "One of the keywords is empty"
+        ));
+    }
+
+    if manifest
+        .package
+        .keywords
+        .iter()
+        .any(|keyword| keyword.split_whitespace().skip(1).next().is_some())
+    {
+        return Err(human!(
+            Reason::InvalidManifest,
+            "One of the keywords contains whitespace"
         ));
     }
 

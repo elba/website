@@ -50,10 +50,12 @@ services:
       # when we want to change some code
       - ./src:/app/src:ro
       - ./Cargo.toml:/app/Cargo.toml:ro
-      - index:/app/tmp/index
+      - local-index:/app/tmp/index
+      - search-index:/app/tmp/search
       - storage:/app/tmp/storage
 
 volumes:
   postgres-data:
-  index:
+  local-index:
+  search-index:
   storage:

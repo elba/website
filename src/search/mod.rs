@@ -1,0 +1,155 @@
+use actix::prelude::*;
+use elba::package::{manifest::PackageInfo, Name as PackageName};
+use failure::Error;
+use tantivy::collector::TopDocs;
+use tantivy::directory::MmapDirectory;
+use tantivy::query::QueryParser;
+use tantivy::schema::*;
+use tantivy::{DocAddress, Score};
+use tantivy::{Index, IndexReader};
+
+use crate::util::error::Reason;
+use crate::CONFIG;
+
+pub struct SearchEngine {
+    index: Index,
+    fields: Fields,
+    reader: IndexReader,
+    query_parser: QueryParser,
+}
+
+pub struct Fields {
+    pub group_package: Field,
+    pub group: Field,
+    pub pacakge: Field,
+    pub description: Field,
+    pub keywords: Field,
+}
+
+impl SearchEngine {
+    pub fn init() -> Result<Self, Error> {
+        let mut schema_builder = SchemaBuilder::default();
+
+        let group_package = schema_builder.add_text_field("group_package", TEXT | STORED);
+        let group = schema_builder.add_text_field("group", TEXT | STORED);
+        let pacakge = schema_builder.add_text_field("pacakge", TEXT | STORED);
+        let description = schema_builder.add_text_field("description", TEXT | STORED);
+        let keywords = schema_builder.add_text_field("keywords", TEXT | STORED);
+
+        let fields = Fields {
+            group_package,
+            group,
+            pacakge,
+            description,
+            keywords,
+        };
+
+        let schema = schema_builder.build();
+
+        let index = Index::open_or_create(
+            MmapDirectory::open(&CONFIG.search_engine_path)?,
+            schema.clone(),
+        )?;
+
+        let reader = index.reader()?;
+
+        let query_parser = QueryParser::for_index(
+            &index,
+            vec![
+                fields.group_package,
+                fields.group,
+                fields.pacakge,
+                fields.description,
+                fields.keywords,
+            ],
+        );
+
+        Ok(SearchEngine {
+            index,
+            fields,
+            reader,
+            query_parser,
+        })
+    }
+}
+
+impl Actor for SearchEngine {
+    type Context = SyncContext<Self>;
+}
+
+pub struct UpdatePackage {
+    pub package_info: PackageInfo,
+}
+
+pub struct SearchPackage {
+    pub query: String,
+}
+
+impl Message for UpdatePackage {
+    type Result = Result<(), Error>;
+}
+
+impl Message for SearchPackage {
+    type Result = Result<Vec<PackageName>, Error>;
+}
+
+impl Handler<UpdatePackage> for SearchEngine {
+    type Result = Result<(), Error>;
+
+    fn handle(&mut self, msg: UpdatePackage, _: &mut Self::Context) -> Self::Result {
+        let mut writer = self.index.writer_with_num_threads(1, 10 * 1024 * 1024)?;
+
+        // remove previous document of this package
+        writer.delete_term(Term::from_field_text(
+            self.fields.group_package,
+            msg.package_info.name.as_normalized(),
+        ));
+
+        let mut document = Document::default();
+        document.add_text(
+            self.fields.group_package,
+            msg.package_info.name.as_normalized(),
+        );
+        document.add_text(self.fields.group, msg.package_info.name.group());
+        document.add_text(self.fields.pacakge, msg.package_info.name.name());
+        if let Some(description) = msg.package_info.description {
+            document.add_text(self.fields.description, &description);
+        }
+        for keyword in msg.package_info.keywords {
+            document.add_text(self.fields.keywords, &keyword);
+        }
+
+        writer.add_document(document);
+        writer.commit()?;
+
+        Ok(())
+    }
+}
+
+impl Handler<SearchPackage> for SearchEngine {
+    type Result = Result<Vec<PackageName>, Error>;
+
+    fn handle(&mut self, msg: SearchPackage, _: &mut Self::Context) -> Self::Result {
+        let searcher = self.reader.searcher();
+
+        let query = self
+            .query_parser
+            .parse_query(&msg.query)
+            .map_err(|err| human!(Reason::InvalidFormat, "Invalid query: {:?}", err))?;
+
+        let top_docs: Vec<(Score, DocAddress)> =
+            searcher.search(&query, &TopDocs::with_limit(50))?;
+
+        let results = top_docs
+            .into_iter()
+            .filter_map(|(_score, doc_address)| -> Option<PackageName> {
+                let retrieved_doc = searcher.doc(doc_address).ok()?;
+                let group = retrieved_doc.get_first(self.fields.group)?.text()?;
+                let name = retrieved_doc.get_first(self.fields.pacakge)?.text()?;
+                let package_name = PackageName::new(group.to_string(), name.to_string()).ok()?;
+                Some(package_name)
+            }).collect();
+
+        Ok(results)
+    }
+}
