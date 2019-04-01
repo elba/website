@@ -2,7 +2,7 @@ version: '2'
 
 services:
   nginx:
-    image: nginx:latest
+    image: nginx:1.15.10-alpine
     container_name: nginx
     ports:
       - "80:80"
@@ -14,7 +14,7 @@ services:
       - storage:/app/storage:ro
 
   postgres:
-    image: postgres:9.6
+    image: postgres:10.7-alpine
     container_name: postgres
     environment:
       - POSTGRES_DB=elba
@@ -26,9 +26,7 @@ services:
       - postgres-data:/var/lib/postgresql/data
 
   backend:
-    build:
-      context: .
-      dockerfile: ./deploy/backend.Dockerfile
+    image: elba/backend:latest
     container_name: backend
     environment:
       - DATABASE_URL=postgres://postgres:postgres@postgres:5432/elba
@@ -46,10 +44,6 @@ services:
     expose:
       - 17000
     volumes:
-      # Mount the src/ directory so we don't have to rebuild the Docker image
-      # when we want to change some code
-      - ./src:/app/src:ro
-      - ./Cargo.toml:/app/Cargo.toml:ro
       - local-index:/app/tmp/index
       - search-index:/app/tmp/search
       - storage:/app/tmp/storage

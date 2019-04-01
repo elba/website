@@ -1,0 +1,9 @@
+FROM alpine:latest  
+
+WORKDIR /app
+
+COPY ["./tmp/build/.", "../migrations", "backend_entrypoint.sh"] .
+
+RUN chmod 777 -R ./backend_entrypoint.sh
+
+ENTRYPOINT ["backend_entrypoint.sh"]

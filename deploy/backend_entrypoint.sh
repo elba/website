@@ -6,4 +6,4 @@ until diesel database setup; do
   sleep 5
 done
 
-cargo run --release
+exec elba-backend
