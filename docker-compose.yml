@@ -20,8 +20,8 @@ services:
       - POSTGRES_DB=elba
       - POSTRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-    expose:
-      - 5432
+    ports:
+      - 127.0.0.1:5432:5432
     volumes:
       - postgres-data:/var/lib/postgresql/data
 
@@ -41,8 +41,8 @@ services:
       - REMOTE_INDEX_URL=https://github.com/andylokandy/index.git
       - REMOTE_INDEX_USER=
       - REMOTE_INDEX_PWD=
-    expose:
-      - 17000
+    ports:
+      - 127.0.0.1:17000:17000
     volumes:
       - local-index:/app/tmp/index
       - search-index:/app/tmp/search

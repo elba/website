@@ -5,9 +5,16 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.build
+    image: elba/backend:builder
     container_name: backend-builder
     volumes:
       # Mount the src/ directory so we don't have to rebuild the Docker image
       # when we want to change some code
       - ../src:/app/src:ro
       - ../Cargo.toml:/app/Cargo.toml:ro
+      - cargo-cache:/root/.cargo/registry
+      - target-cache:/app/target
+
+volumes:
+  cargo-cache:
+  target-cache:

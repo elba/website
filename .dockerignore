@@ -1,5 +1,4 @@
 /.git
-/deploy
 /target
 /tmp
 **/*.rs.bk

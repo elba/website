@@ -16,8 +16,6 @@ impl IndexRepo {
         let repo = match Repository::open(&CONFIG.local_index_path) {
             Ok(repo) => repo,
             Err(_) => {
-                fs::remove_dir_all(&CONFIG.local_index_path)?;
-
                 if !CONFIG.local_index_no_sync {
                     Repository::clone(&CONFIG.remote_index_url, &CONFIG.local_index_path)?
                 } else {

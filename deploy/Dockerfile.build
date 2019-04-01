@@ -1,6 +1,6 @@
-FROM rustlang/rust:nightly
+FROM clux/muslrust:nightly
 
-RUN apt-get update \
+RUN apt-get update --fix-missing  \
     && apt-get install -y postgresql cmake \
     && rm -rf /var/lib/apt/lists/*
 
