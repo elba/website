@@ -1,4 +1,5 @@
 pub mod repo;
+pub mod storage;
 
 use std::fs::{create_dir_all, File, OpenOptions};
 use std::io::{Read, Write};
@@ -10,19 +11,22 @@ use serde_json;
 
 use elba::remote::{resolution::DirectRes, TomlDep, TomlEntry};
 
-use self::repo::IndexRepo;
 use crate::model::packages::{DependencyReq, PackageVersion};
-
 use crate::CONFIG;
+
+use self::repo::IndexRepo;
+use self::storage::Storage;
 
 pub struct Index {
     pub repo: IndexRepo,
+    pub storage: Storage,
 }
 
 impl Index {
     pub fn new() -> Self {
         Index {
             repo: IndexRepo::init().expect("Failed to init index repo"),
+            storage: Storage::new(),
         }
     }
 }
@@ -54,13 +58,7 @@ impl Handler<SaveAndUpdate> for Index {
     type Result = Result<(), Error>;
 
     fn handle(&mut self, msg: SaveAndUpdate, _: &mut Self::Context) -> Self::Result {
-        // store tarball
-        let tar_path = CONFIG.storage_path.join(tar_name(&msg.package));
-
-        info!("Saving tarball to `{:?}`", &tar_path);
-
-        let mut file = File::create(&tar_path)?;
-        file.write_all(&msg.bytes)?;
+        self.storage.store_archive(&msg.package, &msg.bytes)?;
 
         info!(
             "Updating index for publishing `{} {}`",
@@ -197,17 +195,4 @@ impl From<DependencyReq> for TomlDep {
             req: req.version_req,
         }
     }
-}
-
-pub fn get_location(package: &PackageVersion) -> String {
-    format!("{}/{}", &CONFIG.cdn_url, &tar_name(package))
-}
-
-fn tar_name(package: &PackageVersion) -> String {
-    format!(
-        "{}_{}_{}.tar.gz",
-        &package.name.normalized_group(),
-        &package.name.normalized_name(),
-        &package.semver
-    )
 }
