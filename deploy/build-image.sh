@@ -2,7 +2,7 @@
 set -e
 
 # Build backend bianry
-docker-compose -f docker-compose-build.yml up
+docker-compose -f docker-compose-build.yml up --exit-code-from backend-builder
 
 mkdir -p .tmp/build/
 

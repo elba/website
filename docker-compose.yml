@@ -37,7 +37,7 @@ services:
       - CDN_URL=https://dl.chaos.tk
       - SEARCH_ENGINE_PATH=./tmp/search
       - LOCAL_INDEX_PATH=./tmp/index
-      - LOCAL_INDEX_NO_SYNC=false
+      - LOCAL_INDEX_NO_SYNC=true
       - REMOTE_INDEX_URL=https://github.com/andylokandy/index.git
       - REMOTE_INDEX_USER=
       - REMOTE_INDEX_PWD=
