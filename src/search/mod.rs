@@ -3,19 +3,17 @@ use elba::package::{manifest::PackageInfo, Name as PackageName};
 use failure::Error;
 use tantivy::collector::TopDocs;
 use tantivy::directory::MmapDirectory;
-use tantivy::query::QueryParser;
+use tantivy::query::{BooleanQuery, FuzzyTermQuery, Occur, Query, TermQuery};
 use tantivy::schema::*;
 use tantivy::{DocAddress, Score};
 use tantivy::{Index, IndexReader};
 
-use crate::util::error::Reason;
 use crate::CONFIG;
 
 pub struct SearchEngine {
     index: Index,
     fields: Fields,
     reader: IndexReader,
-    query_parser: QueryParser,
 }
 
 pub struct Fields {
@@ -53,22 +51,10 @@ impl SearchEngine {
 
         let reader = index.reader()?;
 
-        let query_parser = QueryParser::for_index(
-            &index,
-            vec![
-                fields.group_package,
-                fields.group,
-                fields.pacakge,
-                fields.description,
-                fields.keywords,
-            ],
-        );
-
         Ok(SearchEngine {
             index,
             fields,
             reader,
-            query_parser,
         })
     }
 }
@@ -132,10 +118,35 @@ impl Handler<SearchPackage> for SearchEngine {
     fn handle(&mut self, msg: SearchPackage, _: &mut Self::Context) -> Self::Result {
         let searcher = self.reader.searcher();
 
-        let query = self
-            .query_parser
-            .parse_query(&msg.query)
-            .map_err(|err| human!(Reason::InvalidFormat, "Invalid query: {:?}", err))?;
+        let query_words: Vec<&str> = msg.query.split_whitespace().collect();
+
+        let query_terms: Vec<_> = query_words
+            .into_iter()
+            .flat_map(|word| -> Vec<Box<dyn Query>> {
+                vec![
+                    Box::new(FuzzyTermQuery::new(
+                        Term::from_field_text(self.fields.group, word),
+                        2,
+                        true,
+                    )),
+                    Box::new(FuzzyTermQuery::new(
+                        Term::from_field_text(self.fields.pacakge, word),
+                        2,
+                        true,
+                    )),
+                    Box::new(TermQuery::new(
+                        Term::from_field_text(self.fields.keywords, word),
+                        IndexRecordOption::Basic,
+                    )),
+                    Box::new(TermQuery::new(
+                        Term::from_field_text(self.fields.description, word),
+                        IndexRecordOption::Basic,
+                    )),
+                ]
+            }).map(|term| (Occur::Should, term))
+            .collect();
+
+        let query = BooleanQuery::from(query_terms);
 
         let top_docs: Vec<(Score, DocAddress)> =
             searcher.search(&query, &TopDocs::with_limit(50))?;
