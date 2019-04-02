@@ -2,7 +2,7 @@ FROM alpine:latest
 
 WORKDIR /app
 
-COPY ./.tmp/build/ ./backend_entrypoint.sh ./
+COPY ./.build/ ./
 
 RUN chmod 777 -R ./backend_entrypoint.sh
 

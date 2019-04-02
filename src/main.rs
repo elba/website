@@ -12,8 +12,6 @@ mod router;
 mod schema;
 mod search;
 
-use std::env;
-
 extern crate actix;
 #[macro_use]
 extern crate diesel;
@@ -47,12 +45,10 @@ pub struct AppState {
 
 fn main() {
     dotenv::dotenv().ok();
-    env::set_var("RUST_BACKTRACE", "1");
-    env::set_var("RUST_LOG", "actix_web=debug,info,warn");
-    env::set_var("RUST_LOG", "debug");
+    dotenv::from_filename(".env.override").ok();
+
     env_logger::init();
 
-    let address = env::var("BIND_TO").expect("BIND_TO not set!");
     let sys = System::new("elba-backaned");
 
     let db_pool = database::connect();
@@ -78,8 +74,8 @@ fn main() {
                     .secure(false),
             ));
         router::router(app)
-    }).bind(&address)
-    .expect(&format!("Can't bind to {}", &address))
+    }).bind(&CONFIG.bind_to)
+    .expect(&format!("Can't bind to {}", &CONFIG.bind_to))
     .start();
 
     sys.run();

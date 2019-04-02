@@ -1,7 +1,7 @@
 pub mod repo;
 pub mod storage;
 
-use std::fs::{create_dir_all, File, OpenOptions};
+use std::fs::{create_dir_all, OpenOptions};
 use std::io::{Read, Write};
 
 use actix::prelude::*;

@@ -14,15 +14,7 @@ impl IndexRepo {
         // git clone
         let repo = match Repository::open(&CONFIG.local_index_path) {
             Ok(repo) => repo,
-            Err(_) => {
-                if !CONFIG.local_index_no_sync {
-                    Repository::clone(&CONFIG.remote_index_url, &CONFIG.local_index_path)?
-                } else {
-                    return Err(format_err!(
-                        "Please provide a local repo if `INDEX_NO_SYNC` is set"
-                    ));
-                }
-            }
+            Err(_) => Repository::clone(&CONFIG.remote_index_url, &CONFIG.local_index_path)?,
         };
 
         // git config
@@ -39,10 +31,8 @@ impl IndexRepo {
 
     pub fn fetch_and_reset(&self) -> Result<(), Error> {
         // git pull origin
-        if !CONFIG.local_index_no_sync {
-            let mut remote = self.repo.find_remote("origin")?;
-            remote.fetch(&["refs/heads/master:refs/heads/master"], None, None)?;
-        }
+        let mut remote = self.repo.find_remote("origin")?;
+        remote.fetch(&["refs/heads/master:refs/heads/master"], None, None)?;
 
         // git checkout HEAD -f
         self.repo.set_head("refs/heads/master")?;
@@ -70,26 +60,24 @@ impl IndexRepo {
             .commit(Some("HEAD"), &sig, &sig, msg, &tree, &[&parent])?;
 
         // git push
-        if !CONFIG.local_index_no_sync {
-            let mut remote = self.repo.find_remote("origin")?;
+        let mut remote = self.repo.find_remote("origin")?;
 
-            let mut push_err_msg = None;
-            let mut callbacks = git2::RemoteCallbacks::new();
-            callbacks.credentials(credentials);
-            callbacks.push_update_reference(|refname, status| {
-                assert_eq!(refname, "refs/heads/master");
-                push_err_msg = status.map(|s| s.to_string());
-                Ok(())
-            });
+        let mut push_err_msg = None;
+        let mut callbacks = git2::RemoteCallbacks::new();
+        callbacks.credentials(credentials);
+        callbacks.push_update_reference(|refname, status| {
+            assert_eq!(refname, "refs/heads/master");
+            push_err_msg = status.map(|s| s.to_string());
+            Ok(())
+        });
 
-            remote.push(
-                &["refs/heads/master"],
-                Some(PushOptions::new().remote_callbacks(callbacks)),
-            )?;
+        remote.push(
+            &["refs/heads/master"],
+            Some(PushOptions::new().remote_callbacks(callbacks)),
+        )?;
 
-            if let Some(push_err_msg) = push_err_msg {
-                return Err(format_err!("Failed to push ref `{}`", &push_err_msg));
-            }
+        if let Some(push_err_msg) = push_err_msg {
+            return Err(format_err!("Failed to push ref `{}`", &push_err_msg));
         }
 
         Ok(())
@@ -101,5 +89,16 @@ fn credentials(
     _user_from_url: Option<&str>,
     _cred: CredentialType,
 ) -> Result<Cred, git2::Error> {
-    Cred::userpass_plaintext(&CONFIG.remote_index_user, &CONFIG.remote_index_pwd)
+    Cred::userpass_plaintext(
+        CONFIG
+            .remote_index_user
+            .as_ref()
+            .map(|str| str.as_str())
+            .unwrap_or(""),
+        CONFIG
+            .remote_index_pwd
+            .as_ref()
+            .map(|str| str.as_str())
+            .unwrap_or(""),
+    )
 }
