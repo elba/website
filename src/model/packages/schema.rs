@@ -54,14 +54,6 @@ pub struct PackageOwner {
     pub user_id: i32,
 }
 
-#[derive(Identifiable, Queryable, Associations)]
-#[primary_key(version_id)]
-#[belongs_to(Version)]
-pub struct Readme {
-    pub version_id: i32,
-    pub textfile: String,
-}
-
 #[derive(Insertable)]
 #[table_name = "groups"]
 pub struct CreateGroup<'a> {
@@ -87,13 +79,6 @@ pub struct CreateVersion<'a> {
     pub homepage: Option<&'a str>,
     pub repository: Option<&'a str>,
     pub license: Option<&'a str>,
-}
-
-#[derive(Insertable)]
-#[table_name = "readmes"]
-pub struct CreateReadme<'a> {
-    pub version_id: i32,
-    pub textfile: &'a str,
 }
 
 #[derive(Insertable)]

@@ -43,7 +43,6 @@ pub struct ListKeywords {
 pub struct LookupGroup(pub GroupName);
 pub struct LookupPackage(pub PackageName);
 pub struct LookupVersion(pub PackageVersion);
-pub struct LookupReadme(pub PackageVersion);
 
 pub struct IncreaseDownload(pub PackageVersion);
 pub struct LookupDownloadStats(pub PackageVersion);
@@ -91,10 +90,6 @@ impl Message for LookupPackage {
 
 impl Message for LookupVersion {
     type Result = Result<(PackageVersion, Version), Error>;
-}
-
-impl Message for LookupReadme {
-    type Result = Result<String, Error>;
 }
 
 impl Message for IncreaseDownload {
@@ -194,14 +189,6 @@ impl Handler<LookupVersion> for Database {
 
     fn handle(&mut self, msg: LookupVersion, _: &mut Self::Context) -> Self::Result {
         lookup_version(msg, &self.connection()?)
-    }
-}
-
-impl Handler<LookupReadme> for Database {
-    type Result = Result<String, Error>;
-
-    fn handle(&mut self, msg: LookupReadme, _: &mut Self::Context) -> Self::Result {
-        lookup_readme(msg, &self.connection()?)
     }
 }
 
@@ -391,14 +378,6 @@ pub fn publish_version(
             .values(create_keywords)
             .execute(conn)?;
 
-        if let Some(readme) = msg.readme_file {
-            diesel::insert_into(readmes::table)
-                .values(CreateReadme {
-                    version_id: version.id,
-                    textfile: &readme,
-                }).execute(conn)?;
-        }
-
         index
             .send(SaveAndUpdate {
                 package: PackageVersion {
@@ -407,6 +386,7 @@ pub fn publish_version(
                 },
                 dependencies: msg.dependencies,
                 bytes: msg.bytes,
+                readme: msg.readme_file,
             }).from_err::<Error>()
             .wait()?
             .context("Failed to update index")?;
@@ -657,24 +637,6 @@ pub fn lookup_version(
         },
         version,
     ))
-}
-
-pub fn lookup_readme(msg: LookupReadme, conn: &Connection) -> Result<String, Error> {
-    let (_, version) = lookup_version(LookupVersion(msg.0.clone()), conn)?;
-
-    let readme = Readme::belonging_to(&version)
-        .first::<Readme>(conn)
-        .optional()?
-        .ok_or_else(|| {
-            human!(
-                Reason::PackageNotFound,
-                "Package readme for `{} {}` not found",
-                msg.0.name.as_str(),
-                msg.0.semver
-            )
-        })?;
-
-    Ok(readme.textfile)
 }
 
 pub fn increase_download(msg: IncreaseDownload, conn: &Connection) -> Result<(), Error> {

@@ -10,7 +10,6 @@ pub struct Config {
     pub max_upload_size: usize,
     pub storage_config: StorageConfig,
     pub backend_url: String,
-    pub cdn_url: String,
     pub search_engine_path: PathBuf,
     pub local_index_path: PathBuf,
     pub remote_index_url: String,
@@ -23,6 +22,7 @@ impl Config {
         let storage_config = match read_env("STORAGE_STRATEGY").to_uppercase().as_str() {
             "LOCAL" => StorageConfig::Local {
                 path: read_env_path("STORAGE_LOCAL_PATH"),
+                url: read_env("STORAGE_LOCAL_URL"),
             },
             "S3" => StorageConfig::S3 {
                 bucket: read_env("STORAGE_S3_BUCKET"),
@@ -40,7 +40,6 @@ impl Config {
                 .expect("MAX_UPLOAD_SIZE is expected to be number."),
             storage_config,
             backend_url: read_env("BACKEND_URL"),
-            cdn_url: read_env("CDN_URL"),
             search_engine_path: read_env_path("SEARCH_ENGINE_PATH"),
             local_index_path: read_env_path("LOCAL_INDEX_PATH"),
             remote_index_url: read_env("REMOTE_INDEX_URL"),

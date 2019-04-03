@@ -1,4 +1,4 @@
-/deploy/.tmp
+/deploy/.build
 /rls
 /target
 /tmp

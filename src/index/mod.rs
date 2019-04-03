@@ -39,6 +39,7 @@ pub struct SaveAndUpdate {
     pub package: PackageVersion,
     pub dependencies: Vec<(DependencyReq)>,
     pub bytes: Bytes,
+    pub readme: Option<String>,
 }
 
 pub struct YankAndUpdate {
@@ -58,7 +59,8 @@ impl Handler<SaveAndUpdate> for Index {
     type Result = Result<(), Error>;
 
     fn handle(&mut self, msg: SaveAndUpdate, _: &mut Self::Context) -> Self::Result {
-        self.storage.store_archive(&msg.package, &msg.bytes)?;
+        self.storage
+            .store_package(&msg.package, msg.bytes, msg.readme)?;
 
         info!(
             "Updating index for publishing `{} {}`",

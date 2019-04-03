@@ -44,8 +44,8 @@ pub struct AppState {
 }
 
 fn main() {
-    dotenv::dotenv().ok();
     dotenv::from_filename(".env.override").ok();
+    dotenv::dotenv().ok();
 
     env_logger::init();
 

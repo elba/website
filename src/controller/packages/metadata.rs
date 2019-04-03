@@ -6,6 +6,7 @@ use failure::Error;
 use tokio_async_await::await;
 
 use crate::controller::users::UserView;
+use crate::index::storage;
 use crate::model::packages::*;
 use crate::AppState;
 
@@ -163,16 +164,10 @@ pub async fn show_version(
     }))
 }
 
-pub async fn show_readme(
-    (path, state): (Path<PackageVersionReq>, State<AppState>),
-) -> Result<HttpResponse, Error> {
+pub async fn show_readme(path: Path<PackageVersionReq>) -> Result<HttpResponse, Error> {
     let package_version = PackageVersion::try_from(path.clone())?;
-    let readme = await!(state.db.send(LookupReadme(package_version.clone())))??;
 
-    #[derive(Serialize)]
-    struct R {
-        readme: String,
-    }
-
-    Ok(HttpResponse::Ok().json(R { readme }))
+    Ok(HttpResponse::TemporaryRedirect()
+        .header("Location", storage::get_readme_location(&package_version))
+        .finish())
 }

@@ -12,25 +12,24 @@ chrono = "0.4.6"
 dotenv = "0.13.0"
 env_logger = "0.5"
 failure = "0.1.2"
-flate2 = "1.0"
 failure_derive = "0.1"
+flate2 = "1.0"
 futures = "0.1"
 git2 = "0.7.5"
 lazy_static = "1"
 log = "0.4"
 num_cpus = "1.0"
+rusoto_core = "0.37"
+rusoto_credential = "0.16.0"
+rusoto_s3 = "0.37"
 semver = "0.9.0"
 serde = "1.0.78"
 serde_derive = "1.0"
 serde_json = "1.0"
-tar = "0.4"
 tantivy = "0.9"
+tar = "0.4"
 tokio = "0.1"
 url = "1.7"
-
-[dependencies.tokio-async-await]
-features = ["async-await-preview"]
-version = "0.1.6"
 
 [dependencies.actix-web]
 features = ["tls"]
@@ -47,3 +46,7 @@ version = "1.4"
 
 [dependencies.elba]
 git = "https://github.com/elba/elba.git"
+
+[dependencies.tokio-async-await]
+features = ["async-await-preview"]
+version = "0.1.6"

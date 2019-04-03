@@ -4,7 +4,7 @@ use actix_web::*;
 use failure::Error;
 use tokio_async_await::await;
 
-use crate::index::storage::get_location;
+use crate::index::storage;
 use crate::model::packages::*;
 use crate::AppState;
 
@@ -31,7 +31,7 @@ pub async fn download(
     await!(state.db.send(IncreaseDownload(package_version.clone())))??;
 
     Ok(HttpResponse::TemporaryRedirect()
-        .header("Location", get_location(&package_version))
+        .header("Location", storage::get_tarball_location(&package_version))
         .finish())
 }
 

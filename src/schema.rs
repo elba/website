@@ -47,13 +47,6 @@ table! {
 }
 
 table! {
-    readmes (version_id) {
-        version_id -> Int4,
-        textfile -> Varchar,
-    }
-}
-
-table! {
     users (id) {
         id -> Int4,
         email -> Nullable<Varchar>,
@@ -111,7 +104,6 @@ joinable!(groups -> users (user_id));
 joinable!(package_owners -> packages (package_id));
 joinable!(package_owners -> users (user_id));
 joinable!(packages -> groups (group_id));
-joinable!(readmes -> versions (version_id));
 joinable!(version_authors -> versions (version_id));
 joinable!(version_downloads -> versions (version_id));
 joinable!(version_keywords -> versions (version_id));
@@ -123,7 +115,6 @@ allow_tables_to_appear_in_same_query!(
     groups,
     package_owners,
     packages,
-    readmes,
     users,
     version_authors,
     version_downloads,

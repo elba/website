@@ -16,6 +16,10 @@ cp -r ../.env ./.build
 cp -r ../.env.override ./.build
 cp -r ./backend_entrypoint.sh ./.build
 
+# Prepare an initial local index
+mkdir ./.build/tmp
+tar -xf ../index-bare-initial.tar -C ./.build/tmp
+
 # Build production image
 docker build --no-cache -t elba/backend:latest . -f Dockerfile.run
 
