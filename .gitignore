@@ -1,5 +1,8 @@
-/deploy/.build
-/rls
+.terraform
+.env.override
+.build
+*.tfvars
+*.tfstate
+*.tfstate.backup
 /target
 /tmp
-**/*.rs.bk

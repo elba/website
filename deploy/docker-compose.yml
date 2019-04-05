@@ -1,0 +1,57 @@
+version: '2'
+
+services:
+  # nginx:
+  #   image: nginx:1.15.10-alpine
+  #   container_name: nginx
+  #   restart: unless-stopped
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./nginx-conf.conf:/etc/nginx/conf.d/nginx-conf.conf:ro
+  #     - /etc/letsencrypt:/etc/letsencrypt:ro
+  #     - certbot-www:/var/www/certbot:ro
+  #     - storage:/app/storage:ro
+  #     # - ./public:/app/public:ro
+  #   command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
+
+  # certbot:
+  #   image: certbot/certbot
+  #   container_name: certbot
+  #   restart: unless-stopped
+  #   volumes:
+  #     - /etc/letsencrypt:/etc/letsencrypt
+  #     - certbot-www:/var/www/certbot
+  #   entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+
+  postgres:
+    image: postgres:10.7-alpine
+    container_name: postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=elba
+      - POSTRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - 127.0.0.1:5432:5432
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  backend:
+    image: elba/backend:latest
+    container_name: backend
+    ports:
+      - 127.0.0.1:17000:17000
+    volumes:
+      - local-index:/app/tmp/index
+      - search-index:/app/tmp/search
+      - storage:/app/tmp/storage
+
+volumes:
+  postgres-data:
+  local-index:
+  search-index:
+  certbot-conf:
+  certbot-www:
+  storage:

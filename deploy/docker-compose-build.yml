@@ -8,7 +8,7 @@ services:
     image: elba/backend:builder
     container_name: backend-builder
     volumes:
-      - ../:/app:ro
+      - ../:/app
       - cargo-cache:/root/.cargo/registry
       - target-cache:/app/target
 
