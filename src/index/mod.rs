@@ -171,18 +171,12 @@ impl From<PackageVersion> for TomlEntry {
     fn from(package: PackageVersion) -> Self {
         TomlEntry {
             name: package.name.clone(),
-            location: DirectRes::Tar {
-                url: format!(
-                    "{}/api/v1/packages/{}/{}/{}/download",
-                    &CONFIG.backend_url,
-                    &package.name.group(),
-                    &package.name.name(),
-                    &package.semver
-                ).parse()
-                .unwrap(),
-                cksum: None,
-            },
-            version: package.semver,
+            version: package.semver.clone(),
+            location: Some(DirectRes::Registry {
+                registry: CONFIG.registry.clone(),
+                name: package.name,
+                version: package.semver,
+            }),
             dependencies: Vec::new(),
             yanked: false,
         }

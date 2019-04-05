@@ -2,6 +2,8 @@ use std::env;
 use std::fs;
 use std::path::PathBuf;
 
+use elba::remote::Registry;
+
 use crate::index::storage::StorageConfig;
 
 #[derive(Clone)]
@@ -9,7 +11,7 @@ pub struct Config {
     pub bind_to: String,
     pub max_upload_size: usize,
     pub storage_config: StorageConfig,
-    pub backend_url: String,
+    pub registry: Registry,
     pub search_engine_path: PathBuf,
     pub local_index_path: PathBuf,
     pub remote_index_url: String,
@@ -39,7 +41,11 @@ impl Config {
                 .parse()
                 .expect("MAX_UPLOAD_SIZE is expected to be number."),
             storage_config,
-            backend_url: read_env("BACKEND_URL"),
+            registry: Registry {
+                url: read_env("REGISTRY_URL")
+                    .parse()
+                    .expect("REGISTRY_URL is not a valid url."),
+            },
             search_engine_path: read_env_path("SEARCH_ENGINE_PATH"),
             local_index_path: read_env_path("LOCAL_INDEX_PATH"),
             remote_index_url: read_env("REMOTE_INDEX_URL"),

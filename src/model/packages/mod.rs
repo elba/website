@@ -2,9 +2,10 @@ mod action;
 mod schema;
 
 use chrono::NaiveDate;
-use elba::package::{version::Constraint, Name as PackageName};
+use elba::package::Name as PackageName;
 use failure::Error;
 use semver;
+use semver_constraints::Constraint;
 
 pub use self::action::*;
 pub use self::schema::*;
