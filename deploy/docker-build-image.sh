@@ -13,7 +13,7 @@ docker container cp registry-builder:/root/.cargo/bin/diesel .build/diesel
 
 # Include files for production image
 cp -r ../migrations .build
-cp -r ./registry_entrypoint.sh .build
+cp -r ./registry-entrypoint.sh .build
 # Suppress error message if file doesn't exist
 cp -r ../.env .build || :
 
