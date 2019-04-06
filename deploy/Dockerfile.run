@@ -6,4 +6,4 @@ COPY . .
 
 RUN chmod 777 -R ./registry_entrypoint.sh
 
-ENTRYPOINT ["sh", "registry_entrypoint.sh"]
+ENTRYPOINT ["sh", "registry-entrypoint.sh"]
