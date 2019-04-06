@@ -1,8 +1,2 @@
-.terraform
-.build
-*.tfvars
-*.tfstate
-*.tfstate.backup
-docker-compose.prod.yml
 /target
 /tmp

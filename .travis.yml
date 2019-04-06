@@ -17,11 +17,13 @@ env:
 before_install:
   - docker --version
   - pip install awscli
-  - openssl aes-256-cbc -K $encrypted_6154f6f18afb_key -iv $encrypted_6154f6f18afb_iv
-    -in deploy/docker-compose.prod.yml.enc -out deploy/docker-compose.prod.yml -d
+  - pip install ansible
+  - openssl enc -d -des-ecb -k $ENCRYPT_KEY
+    -in deploy/docker-compose.prod.yml.enc -out deploy/docker-compose.prod.yml 
+  - cd deploy
 
 script:
-  - cd deploy && bash ./docker-build-image.sh
+  - bash ./docker-build-image.sh
 
 deploy:
   # Push elba/registry image to aws ecr
@@ -42,10 +44,9 @@ deploy:
     on:
       branch: master
 
-  # Pull and run registry by ansible
-  # - provider: script
-  #   script: 
-  #     - cd deploy
-  #     - ansible-playbook playbook.yml
-  #   on:
-  #     branch: master
+  # Pull and run registry image by ansible
+  - provider: script
+    script: 
+      - ansible-playbook -i ${REGISTRY_DOMAIN} -u ${REGISTRY_USER} playbook.yml
+    on:
+      branch: master

@@ -1,0 +1,42 @@
+- hosts: all
+  gather_facts: false
+  become: true
+  
+  tasks:
+    - name: Install Python 2
+      raw: bash -c "test -e /usr/bin/python || (apt -qqy update && apt install -qqy python-minimal)"
+      register: output
+      changed_when: output.stdout != ""
+    - name: Install Docker
+      shell: test /usr/bin/docker || (curl -sSL https://get.docker.com | sh)
+      register: output
+      changed_when: output.stdout != ""
+    - name: Install docker-compose
+      apt: name=docker-compose state=present
+    - name: Install pip
+      apt: name=python-pip state=present
+    - name: Install docker-py
+      pip: name=docker-py state=present
+    - name: Install awscli
+      pip: name=awscli state=present
+    - name: Setup application directory (/app)
+      file: path=/app state=directory
+    - name: Copy files
+      copy: src={{ item.src }} dest={{ item.dest }} mode={{ item.mode }}
+      with_items:
+      - { src: 'docker-pull-image.sh', dest: '/app/docker-pull-image.sh', mode: 'u+rwx,g-rx,o-rx' }
+      - { src: 'docker-compose.yml', dest: '/app/docker-compose.yml', mode: 'u+rw,g-rw,o-rw' }
+      - { src: 'docker-compose.prod.yml', dest: '/app/docker-compose.prod.yml', mode: 'u+rw,g-rw,o-rw' }
+    - name: Pull 'elba/registry' image
+      environment: 
+        AWS_ACCOUNT_ID: "{{ lookup('env', 'AWS_ACCOUNT_ID') }}"
+        AWS_ACCESS_KEY: "{{ lookup('env', 'AWS_ACCESS_KEY') }}"
+        AWS_SECRET_KEY: "{{ lookup('env', 'AWS_SECRET_KEY') }}"
+        AWS_REGION: "{{ lookup('env', 'AWS_REGION') }}"
+      shell: cd /app && bash ./docker-pull-image.sh
+      register: output
+      changed_when: "'Image is up to date' not in output.stdout"
+    - name: Start services
+      shell: cd /app && docker-compose -f ./docker-compose.yml -f ./docker-compose.prod.yml up -d
+      register: output
+      changed_when: "'up-to-date' not in output.stdout"
