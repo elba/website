@@ -19,13 +19,13 @@ before_install:
   - pip install awscli
 
 script:
-  - cd deploy && sh ./docker-build-image.sh
+  - cd deploy && bash ./docker-build-image.sh
 
 deploy:
   # Push elba/registry image to aws ecr
   - provider: script
     script: 
-      - cd deploy && sh ./docker-push-image.sh
+      - bash ./docker-push-image.sh
     on:
       branch: master
 
