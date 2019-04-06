@@ -1,4 +1,7 @@
 # website
+
+[![Build Status](https://travis-ci.com/elba/website.svg?branch=master)](https://travis-ci.com/elba/website)
+
 elba's (currently non-existent) presence on the world wide web
 
 ## Install (Development)
