@@ -4,6 +4,6 @@ WORKDIR /app
 
 COPY . .
 
-RUN chmod 777 -R ./backend_entrypoint.sh
+RUN chmod 777 -R ./registry_entrypoint.sh
 
-ENTRYPOINT ["sh", "backend_entrypoint.sh"]
+ENTRYPOINT ["sh", "registry_entrypoint.sh"]

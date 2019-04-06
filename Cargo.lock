@@ -800,7 +800,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "elba-backend"
+name = "elba-registry"
 version = "0.1.0"
 dependencies = [
  "actix 0.7.9 (registry+https://github.com/rust-lang/crates.io-index)",

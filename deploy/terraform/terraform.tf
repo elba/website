@@ -96,5 +96,5 @@ data "aws_iam_policy_document" "s3-elba-registry-policy" {
 }
 
 resource "aws_ecr_repository" "elba-registry" {
-  name = "elba-registry"
+  name = "elba/registry"
 }

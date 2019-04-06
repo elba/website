@@ -1,8 +1,8 @@
 .terraform
-.env.override
 .build
 *.tfvars
 *.tfstate
 *.tfstate.backup
+docker-compose.prod.yml
 /target
 /tmp

@@ -2,10 +2,10 @@
 set -ev
 
 REGISTRY_URL=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
-SOURCE_IMAGE="elba-registry"
-TARGET_IMAGE="${REGISTRY_URL}/elba-registry"
+SOURCE_IMAGE="elba/registry"
+TARGET_IMAGE="${REGISTRY_URL}/elba/registry"
 # lets make sure we always have access to latest image
-TARGET_IMAGE_LATEST="elba-registry:latest"
+TARGET_IMAGE_LATEST="${TARGET_IMAGE}:latest"
 TIMESTAMP=$(date '+%Y%m%d%H%M%S')
 # using datetime as part of a version for versioned image
 VERSION="${TIMESTAMP}-${TRAVIS_COMMIT}"
@@ -13,12 +13,11 @@ VERSION="${TIMESTAMP}-${TRAVIS_COMMIT}"
 # it is useful if you want to reference this particular version
 TARGET_IMAGE_VERSIONED="${TARGET_IMAGE}:${VERSION}"
 
-# making sure correct region is set
-aws configure set default.region ${AWS_REGION}
-
 # Push image to ECR
 ###################
-
+export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY}
+export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_KEY}
+export AWS_DEFAULT_REGION=${AWS_REGION}
 $(aws ecr get-login --no-include-email)
 
 # update latest version

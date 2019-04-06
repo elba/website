@@ -4,30 +4,25 @@ language: python
 services:
   - docker
 
-# addons:
-#   apt:
-#     packages:
-#       - docker-ce
-
 env:
   global:
   - AWS_S3_BUCKET_NAME=elba-registry
-  - AWS_REGION="ap-northeast-1"
+  - AWS_REGION=ap-northeast-1
 
 before_install:
   - pip install awscli
-  - docker --version
 
 script:
-  - cd deploy && sh ./build-image.sh
+  - cd deploy && sh ./docker-build-image.sh
 
 deploy:
-  # Push elba registry image to aws ecr
+  # Push elba/registry image to aws ecr
   - provider: script
     script: 
-      - cd deploy && sh ./push-image.sh
+      - cd deploy && sh ./docker-push-image.sh
     on:
       branch: master
+
   # Deploy frontend public to s3 bucket
   - provider: s3
     access_key_id: "${AWS_ACCESS_KEY}"
@@ -38,6 +33,7 @@ deploy:
     upload-dir: public
     on:
       branch: master
+
   # Pull and run registry by ansible
   # - provider: script
   #   script: 

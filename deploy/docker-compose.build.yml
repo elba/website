@@ -1,12 +1,12 @@
 version: '2'
 
 services:
-  backend-builder:
+  registry-builder:
     build:
       context: .
       dockerfile: Dockerfile.build
-    image: elba/backend:builder
-    container_name: backend-builder
+    image: elba/registry:builder
+    container_name: registry-builder
     volumes:
       - ../:/app
       - cargo-cache:/root/.cargo/registry

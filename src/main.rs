@@ -44,7 +44,6 @@ pub struct AppState {
 }
 
 fn main() {
-    dotenv::from_filename(".env.override").ok();
     dotenv::dotenv().ok();
 
     env_logger::init();
@@ -74,7 +73,8 @@ fn main() {
                     .secure(false),
             ));
         router::router(app)
-    }).bind(&CONFIG.bind_to)
+    })
+    .bind(&CONFIG.bind_to)
     .expect(&format!("Can't bind to {}", &CONFIG.bind_to))
     .start();
 
