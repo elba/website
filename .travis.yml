@@ -17,6 +17,8 @@ env:
 before_install:
   - docker --version
   - pip install awscli
+  - openssl aes-256-cbc -K $encrypted_6154f6f18afb_key -iv $encrypted_6154f6f18afb_iv
+    -in deploy/docker-compose.prod.yml.enc -out deploy/docker-compose.prod.yml -d
 
 script:
   - cd deploy && bash ./docker-build-image.sh

@@ -1,12 +1,12 @@
-#!/bin/sh
+#!/bin/bash
 set -ev
 
-REGISTRY_URL=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
+REGISTRY_URL="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
 SOURCE_IMAGE="elba/registry"
 TARGET_IMAGE="${REGISTRY_URL}/elba/registry"
 # lets make sure we always have access to latest image
 TARGET_IMAGE_LATEST="${TARGET_IMAGE}:latest"
-TIMESTAMP=$(date '+%Y%m%d%H%M%S')
+TIMESTAMP="$(date '+%Y%m%d%H%M%S')"
 # using datetime as part of a version for versioned image
 VERSION="${TIMESTAMP}-${TRAVIS_COMMIT}"
 # using specific version as well

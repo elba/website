@@ -54,7 +54,7 @@ resource "aws_key_pair" "key-pair" {
 resource "aws_s3_bucket" "elba-registry" {
   bucket = "${var.s3_bucket_name}"
   region = "${var.region}"
-  acl    = "public-read"
+  acl    = "private"
   policy = "${data.aws_iam_policy_document.s3-elba-registry-policy.json}"
 }
 
@@ -68,7 +68,7 @@ data "aws_iam_policy_document" "s3-elba-registry-policy" {
 
     resources = [
       "arn:aws:s3:::${var.s3_bucket_name}/tarballs/*",
-      "arn:aws:s3:::${var.s3_bucket_name}/readme/*",
+      "arn:aws:s3:::${var.s3_bucket_name}/readmes/*",
     ]
 
     principals {
@@ -91,6 +91,23 @@ data "aws_iam_policy_document" "s3-elba-registry-policy" {
     principals {
       type        = "AWS"
       identifiers = ["${var.arn_user_registry_deployer}"]
+    }
+  }
+
+  statement {
+    actions = [
+      "s3:GetObject",
+    ]
+
+    resources = [
+      "arn:aws:s3:::${var.s3_bucket_name}/tarballs/*",
+      "arn:aws:s3:::${var.s3_bucket_name}/readmes/*",
+      "arn:aws:s3:::${var.s3_bucket_name}/public/*",
+    ]
+
+    principals {
+      type        = "*"
+      identifiers = ["*"]
     }
   }
 }
