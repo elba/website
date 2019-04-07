@@ -1,3 +1,4 @@
 .build
 docker-compose.prod.yml
 playbook.retry
+key.pem

@@ -23,6 +23,8 @@ before_install:
   - pip install ansible
   - openssl enc -d -des-ecb -k $ENCRYPT_KEY
     -in deploy/docker-compose.prod.yml.enc -out deploy/docker-compose.prod.yml 
+  - openssl enc -d -des-ecb -k $ENCRYPT_KEY
+    -in deploy/key.pem.enc -out deploy/key.pem
   - cd deploy
 
 script:
@@ -50,7 +52,7 @@ deploy:
   # Pull and run registry image remotely by ansible
   - provider: script
     script: 
-      - bash -c "echo '${REGISTRY_DOMAIN} ansible_ssh_user=${REGISTRY_USER}' > inventory && 
-        ansible-playbook -i inventory playbook.yml"
+      - echo "$REGISTRY_DOMAIN ansible_ssh_user=$REGISTRY_USER" > inventory && 
+        ansible-playbook -i inventory --private-key key.pem playbook.yml
     on:
       branch: master
