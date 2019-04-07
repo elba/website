@@ -1,0 +1,40 @@
+version: '2'
+
+services:
+  nginx:
+    image: jwilder/nginx-proxy
+    container_name: nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /etc/nginx/certs
+      - /etc/nginx/vhost.d
+      - /usr/share/nginx/html
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+
+  nginx-letsencrypt:
+    image: jrcs/letsencrypt-nginx-proxy-companion
+    container_name: nginx-letsencrypt
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro 
+    volumes_from:
+      - nginx
+
+  registry:
+    environment:
+      - REGISTRY_URL=https://api.elba.chaos.tk
+      - REMOTE_INDEX_URL=https://github.com/andylokandy/index.git
+      - REMOTE_INDEX_USER=github_account@example.com
+      - REMOTE_INDEX_PWD=ABCDEFGHIJ
+      - STORAGE_STRATEGY=S3
+      - STORAGE_S3_BUCKET=elba-registry
+      - STORAGE_S3_ACCESS_KEY=ABCDEFGHIJKLMN
+      - STORAGE_S3_SECRET_KEY=ABCDEFGHIJKLMN1234567
+      - STORAGE_S3_REGION=ap-northeast-1
+      - VIRTUAL_HOST=api.elba.chaos.tk
+      - VIRTUAL_PORT=17000
+      - LETSENCRYPT_HOST=api.elba.chaos.tk
+      - LETSENCRYPT_EMAIL=your_email@hotmail.com

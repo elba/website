@@ -2,11 +2,13 @@
 
 [![Build Status](https://travis-ci.com/elba/website.svg?branch=master)](https://travis-ci.com/elba/website)
 
-elba's (currently non-existent) presence on the world wide web
+elba's website and registry backend is growing here. It's now under heavy development.
 
 ## Install (Development)
 
-elba's backend requires `PostgreSQL`. It can be installed through the your preferred package manager or an installer provided by the `PostgreSQL` project.
+elba's registry backend requires `PostgreSQL` to build. You can install it via your package manager or an installer provided by the `PostgreSQL` project. Read more in the [Offcial Guild](https://www.postgresql.org/download/).
+
+Also, elba's registry backend is written in Rust, thus you need to install the rust nightly toolchain, and to run commands below to install diesel_cli, setup database schema and then you can start the backend.
 
 ```
 $ cargo install diesel_cli --no-default-features --features postgres
@@ -14,56 +16,48 @@ $ diesel setup
 $ cargo run
 ```
 
+Note that all of the configruations of registry backend is passed in by environment variables. When it starts it reads `.env` file and then mash it with the existing environment variables. You would like to change something in that file rather than in the shell enviroment when you are in development.
+
+You may want to build frontend project as well, run the following commands, and it will output targets to `/public` :
+
+```
+cd frontend
+yarn build
+```
+
+## Architecture
+
+The website project consists of a frontend project (lives in `/frontend`) and a registry api backend. The registry backend only exposes restful apis that serves package upload/downloading and package searching for elba cli programe, and also provides metadata endpoints for frontend app to show package information. 
+
+In current design, the registry backend is not responsible for hosting frontend static files. Instead, the frontend static files is hosted on AWS S3 server and is behind CloudFront CDN to improve access quality.
+
 ## Deploy
+
+A simplified way of deploying the website would be like:
+
 1. Clone this repo into your server.
-2. Edit `docker-compose.yml`: fill in enviroment varibles.
-3. Place your ssl certs to `/var/lib/nginx/certs/cert.csr` and 
-`/var/lib/nginx/certs/cert.key`.
-4. Make sure you exposed port 80 and port 443 if you have a firewall.
-5. Run `docker-compose up`
+2. Install Docker-ce and docker-compose.
+3. Edit `docker-compose.yml` or `.env` (suit yourself) to fill in enviroment varibles.
+4. Run '`cd deploy && bash ./docker-build-image.sh`', then you will have a local docker image with tag `elba/registry:latest`.
+5. (Optional) setup a reverse proxy (e.g nginx) to enable `https` access as well as to serve static files in `/public`.
+6. Run `docker-compose up`.
+7. Setup remote index repo. You can start from the example `deploy/index-bare-example.tar`, remember to change the registry url to your real domain.
 
 ## Usage
-1. Create a access token from [Github](https://github.com/settings/tokens), with `read:user` and `user:email` permissions. 
 
-2.
-```
-$ curl -v -L "http://localhost:17000/api/v1/users/login?gh_name=your_account_name&gh_access_token=your_access_token"
-```
+Add remote index url into elba config file (`~/.elba/config.toml`). For example:
 
-Response:
 ```
-{"token":"ihP2qJEETheAS7Gx0TuzrmcWs5uh6bFZ"}
+[indices]
+official = "index+git+https://github.com/andylokandy/index.git#master"
 ```
 
-3.
-Prepare a tar file with proper `elba.toml` in it, and then:
+or use local an index for testing:
+
 ```
-$ curl -v -L --request PUT --data-binary "@your_project.tar" "http://localhost:17000/api/v1/packages/publish?group=group_name&package=package_name&version=version&token=your_token"
+[indices]
+test = "index+dir+/etc/elba-registry/index.git#master"
 ```
 
-and then responses 200 OK.
 
-## Backend Roadmap
-- [x] Login
-- [x] Publish package
-- [x] Store tarballs
-- [x] Fetch index
-- [x] Update index
-- [x] Push index
-- [x] Error handling middleware (currently any error represents as 500 Internal Error)
-- [x] Rollback publish transcaton when fs error occured
-- [x] Setup nginx as TLS front-end and static server (hosts static assets and tarballs).
-- [x] Dockerfile
-- [x] Yank support
-- [x] Add description/readme/homepage
-- [x] Add authors
-- [x] Improve `PackageName` / `PackageVersion` consistency
-- [x] Error reason
-- [ ] Forced gzip compression
-- [x] Basic search support
-
-### Frontend Roadmap
-
-- [ ] Initially implement front-end
-- [ ] Github OAuth
-- [ ] Display token
+And then you are free to play!
