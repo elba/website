@@ -47,10 +47,10 @@ deploy:
     on:
       branch: master
 
-  # Pull and run registry image by ansible
+  # Pull and run registry image remotely by ansible
   - provider: script
     script: 
-      - echo "${REGISTRY_DOMAIN} ansible_ssh_user=${REGISTRY_USER}" > /etc/ansible/hosts
-      - ansible-playbook playbook.yml
+      - echo "${REGISTRY_DOMAIN} ansible_ssh_user=${REGISTRY_USER}" > inventory
+      - ansible-playbook -i inventory playbook.yml
     on:
       branch: master

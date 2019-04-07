@@ -126,12 +126,15 @@ impl Handler<SearchPackage> for SearchEngine {
                 vec![
                     Box::new(FuzzyTermQuery::new(
                         Term::from_field_text(self.fields.group, word),
-                        2,
+                        // tantivy now restricts the lev length to 0 or 1,
+                        // but now we are using a forked version which lifts this
+                        // to 4 or 5.
+                        5,
                         true,
                     )),
                     Box::new(FuzzyTermQuery::new(
                         Term::from_field_text(self.fields.pacakge, word),
-                        2,
+                        5,
                         true,
                     )),
                     Box::new(TermQuery::new(

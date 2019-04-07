@@ -828,7 +828,7 @@ dependencies = [
  "serde 1.0.90 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 1.0.90 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.39 (registry+https://github.com/rust-lang/crates.io-index)",
- "tantivy 0.9.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tantivy 0.10.0-dev (git+https://github.com/andylokandy/tantivy.git)",
  "tar 0.4.22 (registry+https://github.com/rust-lang/crates.io-index)",
  "tokio 0.1.18 (registry+https://github.com/rust-lang/crates.io-index)",
  "tokio-async-await 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2547,8 +2547,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "tantivy"
-version = "0.9.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
+version = "0.10.0-dev"
+source = "git+https://github.com/andylokandy/tantivy.git#e9c659319f81d215c201ee2736bda1babe736d79"
 dependencies = [
  "atomicwrites 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "base64 0.10.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -3557,7 +3557,7 @@ dependencies = [
 "checksum syn 0.15.30 (registry+https://github.com/rust-lang/crates.io-index)" = "66c8865bf5a7cbb662d8b011950060b3c8743dca141b054bf7195b20d314d8e2"
 "checksum synstructure 0.10.1 (registry+https://github.com/rust-lang/crates.io-index)" = "73687139bf99285483c96ac0add482c3776528beac1d97d444f6e91f203a2015"
 "checksum take_mut 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)" = "f764005d11ee5f36500a149ace24e00e3da98b0158b3e2d53a7495660d3f4d60"
-"checksum tantivy 0.9.1 (registry+https://github.com/rust-lang/crates.io-index)" = "67a63475a55950ad47573f881d912b8fab7f1f53a9cc2e036185efc92b471402"
+"checksum tantivy 0.10.0-dev (git+https://github.com/andylokandy/tantivy.git)" = "<none>"
 "checksum tantivy-fst 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "16b22af5ff09b8897093287642a5aaee6f30eb496526ef83a8dd0f4c636ac367"
 "checksum tar 0.4.22 (registry+https://github.com/rust-lang/crates.io-index)" = "c2167ff53da2a661702b3299f71a91b61b1dffef36b4b2884b1f9c67254c0133"
 "checksum tempdir 0.3.7 (registry+https://github.com/rust-lang/crates.io-index)" = "15f2b5fb00ccdf689e0149d1b1b3c03fead81c2b37735d812fa8bddbbf41b6d8"
