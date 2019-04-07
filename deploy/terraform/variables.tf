@@ -14,3 +14,15 @@ variable "arn_user_registry_deployer" {}
 variable "s3_bucket_name" {
   default = "elba-registry"
 }
+
+variable "domain_zone" {
+  default = "chaos.tk"
+}
+
+variable "domain_public" {
+  default = "elba.chaos.tk"
+}
+
+variable "domain_registry" {
+  default = "api.elba.chaos.tk"
+}

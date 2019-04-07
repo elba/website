@@ -50,6 +50,7 @@ deploy:
   # Pull and run registry image by ansible
   - provider: script
     script: 
-      - ansible-playbook -i ${REGISTRY_DOMAIN} -u ${REGISTRY_USER} playbook.yml
+      - echo "${REGISTRY_DOMAIN} ansible_ssh_user=${REGISTRY_USER}" > /etc/ansible/hosts
+      - ansible-playbook playbook.yml
     on:
       branch: master
