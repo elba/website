@@ -830,6 +830,7 @@ dependencies = [
  "serde_json 1.0.39 (registry+https://github.com/rust-lang/crates.io-index)",
  "tantivy 0.10.0-dev (git+https://github.com/andylokandy/tantivy.git)",
  "tar 0.4.22 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tempdir 0.3.7 (registry+https://github.com/rust-lang/crates.io-index)",
  "tokio 0.1.18 (registry+https://github.com/rust-lang/crates.io-index)",
  "tokio-async-await 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "url 1.7.2 (registry+https://github.com/rust-lang/crates.io-index)",

@@ -23,12 +23,10 @@ services:
     environment:
       - DATABASE_URL=postgres://postgres:postgres@postgres:5432/elba
     volumes:
-      - local-index:/app/tmp/index
       - search-index:/app/tmp/search
       - storage:/app/tmp/storage
 
 volumes:
   postgres-data:
-  local-index:
   search-index:
   storage:

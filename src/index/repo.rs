@@ -2,20 +2,21 @@ use std::path::Path;
 
 use failure::Error;
 use git2::{self, build::CheckoutBuilder, Cred, CredentialType, PushOptions, Repository};
+use tempdir::TempDir;
 
 use crate::CONFIG;
 
 pub struct IndexRepo {
     repo: Repository,
+    pub index_dir: TempDir,
 }
 
 impl IndexRepo {
     pub fn init() -> Result<Self, Error> {
         // git clone
-        let repo = match Repository::open(&CONFIG.local_index_path) {
-            Ok(repo) => repo,
-            Err(_) => Repository::clone(&CONFIG.remote_index_url, &CONFIG.local_index_path)?,
-        };
+        let index_dir = TempDir::new("elba_index")?;
+        info!("cloning index repo to {:?}", index_dir.path());
+        let repo = Repository::clone(&CONFIG.remote_index_url, index_dir.path())?;
 
         // git config
         let mut repo_cfg = repo.config().unwrap();
@@ -24,7 +25,7 @@ impl IndexRepo {
             .set_str("user.email", "elba-bot@none.exist")
             .unwrap();
 
-        let index_repo = IndexRepo { repo };
+        let index_repo = IndexRepo { repo, index_dir };
 
         Ok(index_repo)
     }
@@ -45,7 +46,7 @@ impl IndexRepo {
     pub fn commit_and_push(&self, msg: &str, file: &Path) -> Result<(), Error> {
         // git add
         let mut index = self.repo.index()?;
-        index.add_path(&file.strip_prefix(&CONFIG.local_index_path)?)?;
+        index.add_path(&file.strip_prefix(self.index_dir.path())?)?;
         index.write()?;
 
         let tree_id = index.write_tree()?;

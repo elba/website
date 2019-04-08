@@ -66,7 +66,7 @@ impl Handler<UpdatePackage> for Index {
             metadata.dependencies.push(TomlDep::from(dep));
         }
 
-        let group_path = CONFIG.local_index_path.join(&msg.package.name.group());
+        let group_path = self.repo.index_dir.path().join(&msg.package.name.group());
         let meta_path = group_path.join(&msg.package.name.name());
 
         create_dir_all(&group_path)?;
@@ -108,7 +108,7 @@ impl Handler<YankPackage> for Index {
         // git fetch
         self.repo.fetch_and_reset()?;
 
-        let group_path = CONFIG.local_index_path.join(&msg.package.name.group());
+        let group_path = self.repo.index_dir.path().join(&msg.package.name.group());
         let meta_path = group_path.join(&msg.package.name.name());
 
         if !meta_path.exists() {
