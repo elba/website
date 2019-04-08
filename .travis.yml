@@ -21,10 +21,6 @@ before_install:
   - docker --version
   - pip install awscli
   - pip install ansible
-  - openssl enc -d -des-ecb -k $ENCRYPT_KEY
-    -in deploy/docker-compose.prod.yml.enc -out deploy/docker-compose.prod.yml 
-  - openssl enc -d -des-ecb -k $ENCRYPT_KEY
-    -in deploy/key.pem.enc -out deploy/key.pem
   - cd deploy
 
 script:
@@ -52,7 +48,12 @@ deploy:
   # Pull and run registry image remotely by ansible
   - provider: script
     script: 
-      - echo "$REGISTRY_DOMAIN ansible_ssh_user=$REGISTRY_USER" > inventory && 
-        ansible-playbook -i inventory --private-key key.pem playbook.yml
+      - openssl enc -d -des-ecb -k $ENCRYPT_KEY
+        -in ./deploy/docker-compose.prod.yml.enc -out deploy/docker-compose.prod.yml &&
+        openssl enc -d -des-ecb -k $ENCRYPT_KEY
+        -in ./deploy/key.pem.enc -out deploy/key.pem &&
+        echo "$REGISTRY_DOMAIN" > inventory && 
+        export ANSIBLE_HOST_KEY_CHECKING=false &&
+        ansible-playbook -i inventory -u $REGISTRY_USER --private-key key.pem playbook.yml
     on:
       branch: master
