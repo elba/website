@@ -7,10 +7,11 @@ use failure::{Error, ResultExt};
 use futures::Future;
 
 use crate::database::{Connection, Database};
-use crate::index::{Index, SaveAndUpdate, YankAndUpdate};
+use crate::index::{Index, UpdatePackage, YankPackage};
 use crate::model::users::{lookup_user_by_token, LookupUserByToken, User};
 use crate::schema::*;
-use crate::search::{SearchEngine, UpdatePackage};
+use crate::search::{SearchEngine, UpdateSearch};
+use crate::storage::{Storage, StorePackage};
 use crate::util::error::Reason;
 
 use super::schema::*;
@@ -108,7 +109,13 @@ impl Handler<PublishVersion> for Database {
     type Result = Result<(), Error>;
 
     fn handle(&mut self, msg: PublishVersion, _: &mut Self::Context) -> Self::Result {
-        publish_version(msg, &self.connection()?, &self.index, &self.search_engine)
+        publish_version(
+            msg,
+            &self.connection()?,
+            &self.index,
+            &self.storage,
+            &self.search_engine,
+        )
     }
 }
 
@@ -220,6 +227,7 @@ pub fn publish_version(
     msg: PublishVersion,
     conn: &Connection,
     index: &Addr<Index>,
+    storage: &Addr<Storage>,
     search_engine: &Addr<SearchEngine>,
 ) -> Result<(), Error> {
     conn.build_transaction().serializable().run(|| {
@@ -378,25 +386,38 @@ pub fn publish_version(
             .values(create_keywords)
             .execute(conn)?;
 
-        index
-            .send(SaveAndUpdate {
+        let storage_transaction = storage
+            .send(StorePackage {
                 package: PackageVersion {
                     name: msg.package_info.name.clone(),
                     semver: msg.package_info.version.clone(),
                 },
-                dependencies: msg.dependencies,
                 bytes: msg.bytes,
                 readme: msg.readme_file,
             }).from_err::<Error>()
             .wait()?
-            .context("Failed to update index")?;
+            .with_context(|_| "failed to store package")?;
 
-        search_engine
-            .send(UpdatePackage {
-                package_info: msg.package_info,
+        let search_update_transaction = search_engine
+            .send(UpdateSearch {
+                package_info: msg.package_info.clone(),
             }).from_err::<Error>()
             .wait()?
-            .context("Failed to update search index")?;
+            .with_context(|_| "failed to update search index")?;
+
+        index
+            .send(UpdatePackage {
+                package: PackageVersion {
+                    name: msg.package_info.name,
+                    semver: msg.package_info.version,
+                },
+                dependencies: msg.dependencies,
+            }).from_err::<Error>()
+            .wait()?
+            .with_context(|_| "failed to update index")?;
+
+        storage_transaction.commit()?;
+        search_update_transaction.commit()?;
 
         Ok(())
     })
@@ -444,12 +465,12 @@ pub fn yank_version(msg: YankVersion, conn: &Connection, index: &Addr<Index>) ->
             .execute(conn)?;
 
         index
-            .send(YankAndUpdate {
+            .send(YankPackage {
                 package: msg.package,
                 yanked: msg.yanked,
             }).from_err::<Error>()
             .wait()?
-            .context("Failed to yank/unyank version")?;
+            .with_context(|_| "failed to yank/unyank version")?;
 
         Ok(())
     })

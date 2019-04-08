@@ -11,6 +11,7 @@ mod model;
 mod router;
 mod schema;
 mod search;
+mod storage;
 
 extern crate actix;
 #[macro_use]
@@ -31,6 +32,7 @@ use actix_web::{middleware, server, App};
 use crate::database::Database;
 use crate::index::Index;
 use crate::search::SearchEngine;
+use crate::storage::Storage;
 use crate::util::Config;
 
 lazy_static! {
@@ -50,16 +52,20 @@ fn main() {
 
     let sys = System::new("elba-backaned");
 
+    let index = Index::new().expect("faild to initialize index").start();
+    let storage = Storage::new().expect("faild to initialize storage").start();
+    let search_engine = SearchEngine::init()
+        .expect("faild to initialize search engine")
+        .start();
+
     let db_pool = database::connect();
 
-    // We would want only one actor to operate the index repo
-    let index = SyncArbiter::start(1, move || Index::new());
-
-    let search_engine = SyncArbiter::start(1, move || {
-        SearchEngine::init().expect("Faild to initialize search engine")
-    });
-
-    let db = Database::new(db_pool, index, search_engine.clone());
+    let db = Database {
+        index,
+        storage,
+        search_engine: search_engine.clone(),
+        pool: db_pool,
+    };
     let db = SyncArbiter::start(num_cpus::get() * 4, move || db.clone());
 
     let app_state = AppState { db, search_engine };
@@ -74,7 +80,7 @@ fn main() {
             ));
         router::router(app)
     }).bind(&CONFIG.bind_to)
-    .expect(&format!("Can't bind to {}", &CONFIG.bind_to))
+    .expect(&format!("can't bind to {}", &CONFIG.bind_to))
     .start();
 
     sys.run();

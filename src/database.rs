@@ -8,6 +8,7 @@ use failure::Error;
 
 use crate::index::Index;
 use crate::search::SearchEngine;
+use crate::storage::Storage;
 
 pub type Connection = PooledConnection<ConnectionManager<PgConnection>>;
 pub type Pool = diesel::r2d2::Pool<ConnectionManager<PgConnection>>;
@@ -15,6 +16,7 @@ pub type Pool = diesel::r2d2::Pool<ConnectionManager<PgConnection>>;
 #[derive(Clone)]
 pub struct Database {
     pub index: Addr<Index>,
+    pub storage: Addr<Storage>,
     pub search_engine: Addr<SearchEngine>,
     pub pool: Pool,
 }
@@ -24,14 +26,6 @@ impl Actor for Database {
 }
 
 impl Database {
-    pub fn new(pool: Pool, index: Addr<Index>, search_engine: Addr<SearchEngine>) -> Self {
-        Database {
-            pool,
-            index,
-            search_engine,
-        }
-    }
-
     pub fn connection(&self) -> Result<Connection, Error> {
         Ok(self.pool.get()?)
     }
@@ -40,6 +34,6 @@ impl Database {
 pub fn connect() -> Pool {
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL not set");
     let manager = ConnectionManager::<PgConnection>::new(database_url);
-    let pool = Pool::new(manager).expect("Failed to connect to database");
+    let pool = Pool::new(manager).expect("failed to connect to database");
     pool
 }

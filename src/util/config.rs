@@ -4,7 +4,7 @@ use std::path::PathBuf;
 
 use elba::remote::Registry;
 
-use crate::index::storage::StorageConfig;
+use crate::storage::StorageConfig;
 
 #[derive(Clone)]
 pub struct Config {
@@ -30,7 +30,9 @@ impl Config {
                 bucket: read_env("STORAGE_S3_BUCKET"),
                 access_key: read_env("STORAGE_S3_ACCESS_KEY"),
                 secret_key: read_env("STORAGE_S3_SECRET_KEY"),
-                region: read_env("STORAGE_S3_REGION"),
+                region: read_env("STORAGE_S3_REGION")
+                    .parse()
+                    .expect("STORAGE_S3_REGION is not a valid AWS region"),
             },
             _ => panic!("`STORAGE_STRATEGY` only accepts `LOCAL` or `S3`."),
         };
@@ -61,16 +63,6 @@ fn read_env(env_name: &str) -> String {
 
 fn read_env_path(env_name: &str) -> PathBuf {
     let path = PathBuf::from(read_env(env_name));
-
     fs::create_dir_all(&path).expect(&format!("Can not create dir `{:?}`", &path));
-
-    if path.is_absolute() {
-        path
-    } else {
-        env::current_dir()
-            .unwrap()
-            .join(path)
-            .canonicalize()
-            .unwrap()
-    }
+    path
 }

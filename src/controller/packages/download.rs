@@ -4,8 +4,8 @@ use actix_web::*;
 use failure::Error;
 use tokio_async_await::await;
 
-use crate::index::storage;
 use crate::model::packages::*;
+use crate::storage;
 use crate::AppState;
 
 use super::*;

@@ -49,10 +49,11 @@ deploy:
   - provider: script
     script: 
       - openssl enc -d -des-ecb -k $ENCRYPT_KEY
-        -in ./deploy/docker-compose.prod.yml.enc -out deploy/docker-compose.prod.yml &&
+        -in docker-compose.prod.yml.enc -out docker-compose.prod.yml &&
         openssl enc -d -des-ecb -k $ENCRYPT_KEY
-        -in ./deploy/key.pem.enc -out deploy/key.pem &&
-        echo "$REGISTRY_DOMAIN" > inventory && 
+        -in key.pem.enc -out key.pem &&
+        chmod 600 key.pem &&
+        echo "$REGISTRY_DOMAIN" > inventory &&
         export ANSIBLE_HOST_KEY_CHECKING=false &&
         ansible-playbook -i inventory -u $REGISTRY_USER --private-key key.pem playbook.yml
     on:

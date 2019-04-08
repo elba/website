@@ -6,7 +6,7 @@ use tantivy::directory::MmapDirectory;
 use tantivy::query::{BooleanQuery, FuzzyTermQuery, Occur, Query, TermQuery};
 use tantivy::schema::*;
 use tantivy::{DocAddress, Score};
-use tantivy::{Index, IndexReader};
+use tantivy::{Index, IndexReader, IndexWriter};
 
 use crate::CONFIG;
 
@@ -60,10 +60,10 @@ impl SearchEngine {
 }
 
 impl Actor for SearchEngine {
-    type Context = SyncContext<Self>;
+    type Context = Context<Self>;
 }
 
-pub struct UpdatePackage {
+pub struct UpdateSearch {
     pub package_info: PackageInfo,
 }
 
@@ -71,18 +71,18 @@ pub struct SearchPackage {
     pub query: String,
 }
 
-impl Message for UpdatePackage {
-    type Result = Result<(), Error>;
+impl Message for UpdateSearch {
+    type Result = Result<UpdateTransaction, Error>;
 }
 
 impl Message for SearchPackage {
     type Result = Result<Vec<PackageName>, Error>;
 }
 
-impl Handler<UpdatePackage> for SearchEngine {
-    type Result = Result<(), Error>;
+impl Handler<UpdateSearch> for SearchEngine {
+    type Result = Result<UpdateTransaction, Error>;
 
-    fn handle(&mut self, msg: UpdatePackage, _: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, msg: UpdateSearch, _: &mut Self::Context) -> Self::Result {
         let mut writer = self.index.writer_with_num_threads(1, 10 * 1024 * 1024)?;
 
         // remove previous document of this package
@@ -106,9 +106,10 @@ impl Handler<UpdatePackage> for SearchEngine {
         }
 
         writer.add_document(document);
-        writer.commit()?;
 
-        Ok(())
+        let transaction = UpdateTransaction::new(writer);
+
+        Ok(transaction)
     }
 }
 
@@ -165,5 +166,20 @@ impl Handler<SearchPackage> for SearchEngine {
             }).collect();
 
         Ok(results)
+    }
+}
+
+pub struct UpdateTransaction {
+    writer: IndexWriter,
+}
+
+impl UpdateTransaction {
+    pub fn new(writer: IndexWriter) -> Self {
+        UpdateTransaction { writer }
+    }
+
+    pub fn commit(mut self) -> Result<(), Error> {
+        self.writer.commit()?;
+        Ok(())
     }
 }

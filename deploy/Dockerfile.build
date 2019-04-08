@@ -1,4 +1,4 @@
-FROM clux/muslrust:nightly
+FROM clux/muslrust:nightly-2019-04-04 
 
 RUN apt-get update --fix-missing  \
     && apt-get install -y postgresql cmake \

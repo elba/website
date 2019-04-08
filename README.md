@@ -8,7 +8,9 @@ elba's website and registry backend is growing here. It's now under heavy develo
 
 elba's registry backend requires `PostgreSQL` to build. You can install it by package manager or an installer provided by the `PostgreSQL` project. Read more in [Official Guide](https://www.postgresql.org/download/).
 
-Also, since elba's registry backend is written in Rust, you need to install the rust nightly toolchain first, and then run the commands below to start the backend.
+Then so as to setup a remote index repo, locally, you can unpack `deploy/index-bare-example.tar` into `tmp/`.
+
+Also, since elba's registry backend is written in Rust, you need to install rust nightly toolchain first, and then run the commands below to start the backend.
 
 ```
 $ cargo install diesel_cli --no-default-features --features postgres
@@ -16,9 +18,9 @@ $ diesel setup
 $ cargo run
 ```
 
-Note that all of the configruations of registry backend is passed in by environment variables. When it starts it reads `.env` file and mash it with the existing environment variables. You would like to change something in that file rather than in the shell enviroment when you do development.
+Note that all of the configruations of registry backend is passed in by environment variables. When it starts it reads `.env` file and mash it with the existing environment variables. You would like to change configruations in that file rather than in the shell enviroment when you do development.
 
-You may also want to build frontend project as well, then run the following commands, and it will output build results to `/public` :
+You may also want to build frontend project as well, if so, run the following commands, and it will output build results to `/public` :
 
 ```
 cd frontend

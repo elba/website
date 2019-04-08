@@ -1,69 +1,58 @@
 pub mod repo;
-pub mod storage;
 
 use std::fs::{create_dir_all, OpenOptions};
 use std::io::{Read, Write};
 
 use actix::prelude::*;
-use bytes::Bytes;
+use elba::remote::{resolution::DirectRes, TomlDep, TomlEntry};
 use failure::{Error, ResultExt};
 use serde_json;
-
-use elba::remote::{resolution::DirectRes, TomlDep, TomlEntry};
 
 use crate::model::packages::{DependencyReq, PackageVersion};
 use crate::CONFIG;
 
 use self::repo::IndexRepo;
-use self::storage::Storage;
 
 pub struct Index {
     pub repo: IndexRepo,
-    pub storage: Storage,
 }
 
 impl Index {
-    pub fn new() -> Self {
-        Index {
-            repo: IndexRepo::init().expect("Failed to init index repo"),
-            storage: Storage::new(),
-        }
+    pub fn new() -> Result<Self, Error> {
+        Ok(Index {
+            repo: IndexRepo::init()?,
+        })
     }
 }
 
 impl Actor for Index {
-    type Context = SyncContext<Self>;
+    type Context = Context<Self>;
 }
 
-pub struct SaveAndUpdate {
+pub struct UpdatePackage {
     pub package: PackageVersion,
     pub dependencies: Vec<(DependencyReq)>,
-    pub bytes: Bytes,
-    pub readme: Option<String>,
 }
 
-pub struct YankAndUpdate {
+pub struct YankPackage {
     pub package: PackageVersion,
     pub yanked: bool,
 }
 
-impl Message for SaveAndUpdate {
+impl Message for UpdatePackage {
     type Result = Result<(), Error>;
 }
 
-impl Message for YankAndUpdate {
+impl Message for YankPackage {
     type Result = Result<(), Error>;
 }
 
-impl Handler<SaveAndUpdate> for Index {
+impl Handler<UpdatePackage> for Index {
     type Result = Result<(), Error>;
 
-    fn handle(&mut self, msg: SaveAndUpdate, _: &mut Self::Context) -> Self::Result {
-        self.storage
-            .store_package(&msg.package, msg.bytes, msg.readme)?;
-
+    fn handle(&mut self, msg: UpdatePackage, _: &mut Self::Context) -> Self::Result {
         info!(
-            "Updating index for publishing `{} {}`",
+            "Index: updating index for publishing `{} {}`",
             &msg.package.name.as_str(),
             &msg.package.semver
         );
@@ -99,18 +88,18 @@ impl Handler<SaveAndUpdate> for Index {
                     &msg.package.semver
                 ),
                 &meta_path,
-            ).context("Failed to push index to remote repo")?;
+            ).with_context(|_| "failed to push index to remote repo")?;
 
         Ok(())
     }
 }
 
-impl Handler<YankAndUpdate> for Index {
+impl Handler<YankPackage> for Index {
     type Result = Result<(), Error>;
 
-    fn handle(&mut self, msg: YankAndUpdate, _: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, msg: YankPackage, _: &mut Self::Context) -> Self::Result {
         info!(
-            "Updating index for yanking `{} {}` (yanked={})",
+            "Index: updating index for yanking `{} {}` (yanked={})",
             &msg.package.name.as_str(),
             &msg.package.semver,
             &msg.yanked,
@@ -123,7 +112,7 @@ impl Handler<YankAndUpdate> for Index {
         let meta_path = group_path.join(&msg.package.name.name());
 
         if !meta_path.exists() {
-            return Err(format_err!("Metafile `{:?}` not found", &meta_path));
+            return Err(format_err!("metafile `{:?}` not found", &meta_path));
         }
 
         let mut file = OpenOptions::new().read(true).open(&meta_path)?;
@@ -161,7 +150,7 @@ impl Handler<YankAndUpdate> for Index {
                     &msg.package.semver
                 ),
                 &meta_path,
-            ).context("Failed to push index to remote repo")?;
+            ).with_context(|_| "failed to push index to remote repo")?;
 
         Ok(())
     }
