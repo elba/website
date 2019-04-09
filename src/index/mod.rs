@@ -6,6 +6,7 @@ use std::io::{Read, Write};
 use actix::prelude::*;
 use elba::remote::{resolution::DirectRes, TomlDep, TomlEntry};
 use failure::{Error, ResultExt};
+use itertools::Itertools;
 use serde_json;
 
 use crate::model::packages::{DependencyReq, PackageVersion};
@@ -60,24 +61,41 @@ impl Handler<UpdatePackage> for Index {
         // git fetch
         self.repo.fetch_and_reset()?;
 
-        // create metadata entry
-        let mut metadata = TomlEntry::from(msg.package.clone());
-        for dep in msg.dependencies {
-            metadata.dependencies.push(TomlDep::from(dep));
-        }
-
         let group_path = self.repo.index_dir.path().join(&msg.package.name.group());
         let meta_path = group_path.join(&msg.package.name.name());
 
         create_dir_all(&group_path)?;
 
+        let content = if meta_path.exists() {
+            let mut file = OpenOptions::new().read(true).open(&meta_path)?;
+            let mut content = String::new();
+            file.read_to_string(&mut content)?;
+            content
+        } else {
+            String::new()
+        };
+
+        // read entries
+        let mut entries = parse_entries(&content);
+
+        // fix potential violation
+        entries
+            .retain(|entry| entry.name != msg.package.name || entry.version != msg.package.semver);
+
+        // insert metadata entry
+        let mut metadata = TomlEntry::from(msg.package.clone());
+        for dep in msg.dependencies {
+            metadata.dependencies.push(TomlDep::from(dep));
+        }
+        entries.push(metadata);
+
+        // save entries
         let mut file = OpenOptions::new()
-            .append(true)
-            .create(true)
+            .truncate(true)
+            .write(true)
             .open(&meta_path)?;
-        let mut buf = serde_json::to_string(&metadata)?;
-        buf.push('\n');
-        file.write_all(&buf.as_bytes())?;
+        file.write_all(&serialize_entries(entries).as_bytes())?;
+        file.sync_all()?;
 
         // git commit && git push
         self.repo
@@ -116,30 +134,26 @@ impl Handler<YankPackage> for Index {
         }
 
         let mut file = OpenOptions::new().read(true).open(&meta_path)?;
-        let mut buf = String::new();
-        let mut new_buf = String::new();
-        file.read_to_string(&mut buf)?;
+        let mut content = String::new();
+        file.read_to_string(&mut content)?;
 
-        for line in buf.split("\n") {
-            let mut metadata: TomlEntry = match serde_json::from_str(line) {
-                Ok(metadata) => metadata,
-                Err(_) => continue,
-            };
+        // read entries
+        let mut entries = parse_entries(&content);
 
-            if metadata.name == msg.package.name && metadata.version == msg.package.semver {
-                metadata.yanked = msg.yanked;
+        // modify metadata entry
+        for entry in &mut entries {
+            if entry.name == msg.package.name && entry.version == msg.package.semver {
+                entry.yanked = msg.yanked;
             }
-
-            let new_metadata = serde_json::to_string(&metadata)?;
-            new_buf += &new_metadata;
-            new_buf.push('\n');
         }
 
+        // save entries
         let mut file = OpenOptions::new()
             .truncate(true)
             .write(true)
             .open(&meta_path)?;
-        file.write_all(&new_buf.as_bytes())?;
+        file.write_all(&serialize_entries(entries).as_bytes())?;
+        file.sync_all()?;
 
         // git commit && git push
         self.repo
@@ -154,6 +168,20 @@ impl Handler<YankPackage> for Index {
 
         Ok(())
     }
+}
+
+fn parse_entries(content: &str) -> Vec<TomlEntry> {
+    content
+        .split("\n")
+        .filter_map(|line| serde_json::from_str(line).ok())
+        .collect()
+}
+
+fn serialize_entries(entries: Vec<TomlEntry>) -> String {
+    entries
+        .iter()
+        .filter_map(|entry| serde_json::to_string(entry).ok())
+        .join("\n")
 }
 
 impl From<PackageVersion> for TomlEntry {
