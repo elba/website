@@ -30,7 +30,7 @@ pub async fn login(
         client::get("https://api.github.com/user")
             .header("Authorization", format!("Basic {}", auth).as_str())
             .finish()
-            .unwrap()
+            .map_err(|err| format_err!("{:?}", err))?
             .send()
     )?;
 

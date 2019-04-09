@@ -2,8 +2,7 @@ use actix_web::*;
 use failure::Error;
 use tokio_async_await::await;
 
-use crate::search::SearchPackage;
-use crate::AppState;
+use crate::search;
 
 use super::PackageReq;
 
@@ -12,12 +11,8 @@ pub struct SearchReq {
     pub q: String,
 }
 
-pub async fn search(
-    (query, state): (Query<SearchReq>, State<AppState>),
-) -> Result<HttpResponse, Error> {
-    let packages = await!(state.search_engine.send(SearchPackage {
-        query: query.into_inner().q
-    }))??;
+pub async fn search(query: Query<SearchReq>) -> Result<HttpResponse, Error> {
+    let packages = await!(search::search_package(query.into_inner().q))?;
     let packages = packages.into_iter().map(PackageReq::from).collect();
 
     #[derive(Serialize)]

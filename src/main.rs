@@ -31,7 +31,6 @@ use actix_web::{middleware, server, App};
 
 use crate::database::Database;
 use crate::index::Index;
-use crate::search::SearchEngine;
 use crate::storage::Storage;
 use crate::util::Config;
 
@@ -42,7 +41,6 @@ lazy_static! {
 #[derive(Clone)]
 pub struct AppState {
     pub db: Addr<Database>,
-    pub search_engine: Addr<SearchEngine>,
 }
 
 fn main() {
@@ -54,21 +52,17 @@ fn main() {
 
     let index = Index::new().expect("faild to initialize index").start();
     let storage = Storage::new().expect("faild to initialize storage").start();
-    let search_engine = SearchEngine::init()
-        .expect("faild to initialize search engine")
-        .start();
 
     let db_pool = database::connect();
 
     let db = Database {
         index,
         storage,
-        search_engine: search_engine.clone(),
         pool: db_pool,
     };
     let db = SyncArbiter::start(num_cpus::get() * 4, move || db.clone());
 
-    let app_state = AppState { db, search_engine };
+    let app_state = AppState { db };
 
     server::new(move || {
         let app = App::with_state(app_state.clone())

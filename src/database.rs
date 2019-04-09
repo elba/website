@@ -7,7 +7,6 @@ use diesel::r2d2::{ConnectionManager, PooledConnection};
 use failure::Error;
 
 use crate::index::Index;
-use crate::search::SearchEngine;
 use crate::storage::Storage;
 
 pub type Connection = PooledConnection<ConnectionManager<PgConnection>>;
@@ -17,7 +16,6 @@ pub type Pool = diesel::r2d2::Pool<ConnectionManager<PgConnection>>;
 pub struct Database {
     pub index: Addr<Index>,
     pub storage: Addr<Storage>,
-    pub search_engine: Addr<SearchEngine>,
     pub pool: Pool,
 }
 

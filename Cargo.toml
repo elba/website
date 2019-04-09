@@ -16,9 +16,11 @@ failure_derive = "0.1"
 flate2 = "1.0"
 futures = "0.1"
 git2 = "0.7.5"
+itertools = "0.8.0"
 lazy_static = "1"
 log = "0.4"
 num_cpus = "1.0"
+reqwest = "0.9.13"
 rusoto_core = "0.37"
 rusoto_credential = "0.16.0"
 rusoto_s3 = "0.37"
@@ -47,9 +49,6 @@ version = "1.4"
 
 [dependencies.elba]
 git = "https://github.com/elba/elba.git"
-
-[dependencies.tantivy]
-git = "https://github.com/andylokandy/tantivy.git"
 
 [dependencies.tokio-async-await]
 features = ["async-await-preview"]

@@ -12,7 +12,7 @@ pub struct Config {
     pub max_upload_size: usize,
     pub storage_config: StorageConfig,
     pub registry: Registry,
-    pub search_engine_path: PathBuf,
+    pub search_engine_url: String,
     pub remote_index_url: String,
     pub remote_index_user: Option<String>,
     pub remote_index_pwd: Option<String>,
@@ -47,7 +47,7 @@ impl Config {
                     .parse()
                     .expect("REGISTRY_URL is not a valid url."),
             },
-            search_engine_path: read_env_path("SEARCH_ENGINE_PATH"),
+            search_engine_url: read_env("SEARCH_ENGINE_URL"),
             remote_index_url: read_env("REMOTE_INDEX_URL"),
             remote_index_user: env::var("REMOTE_INDEX_USER").ok(),
             remote_index_pwd: env::var("REMOTE_INDEX_PWD").ok(),

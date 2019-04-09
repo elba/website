@@ -10,7 +10,7 @@ use crate::database::{Connection, Database};
 use crate::index::{Index, UpdatePackage, YankPackage};
 use crate::model::users::{lookup_user_by_token, LookupUserByToken, User};
 use crate::schema::*;
-use crate::search::{SearchEngine, UpdateSearch};
+use crate::search;
 use crate::storage::{Storage, StorePackage};
 use crate::util::error::Reason;
 
@@ -109,13 +109,7 @@ impl Handler<PublishVersion> for Database {
     type Result = Result<(), Error>;
 
     fn handle(&mut self, msg: PublishVersion, _: &mut Self::Context) -> Self::Result {
-        publish_version(
-            msg,
-            &self.connection()?,
-            &self.index,
-            &self.storage,
-            &self.search_engine,
-        )
+        publish_version(msg, &self.connection()?, &self.index, &self.storage)
     }
 }
 
@@ -228,7 +222,6 @@ pub fn publish_version(
     conn: &Connection,
     index: &Addr<Index>,
     storage: &Addr<Storage>,
-    search_engine: &Addr<SearchEngine>,
 ) -> Result<(), Error> {
     conn.build_transaction().serializable().run(|| {
         let user = lookup_user_by_token(
@@ -398,11 +391,7 @@ pub fn publish_version(
             .wait()?
             .with_context(|_| "failed to store package")?;
 
-        let search_update_transaction = search_engine
-            .send(UpdateSearch {
-                package_info: msg.package_info.clone(),
-            }).from_err::<Error>()
-            .wait()?
+        search::update_package(&msg.package_info)
             .with_context(|_| "failed to update search index")?;
 
         index
@@ -417,7 +406,6 @@ pub fn publish_version(
             .with_context(|_| "failed to update index")?;
 
         storage_transaction.commit()?;
-        search_update_transaction.commit()?;
 
         Ok(())
     })
