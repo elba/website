@@ -16,6 +16,8 @@ pub struct Config {
     pub remote_index_url: String,
     pub remote_index_user: Option<String>,
     pub remote_index_pwd: Option<String>,
+    pub index_bot_name: String,
+    pub index_bot_email: String,
 }
 
 impl Config {
@@ -51,6 +53,8 @@ impl Config {
             remote_index_url: read_env("REMOTE_INDEX_URL"),
             remote_index_user: env::var("REMOTE_INDEX_USER").ok(),
             remote_index_pwd: env::var("REMOTE_INDEX_PWD").ok(),
+            index_bot_name: read_env("INDEX_BOT_NAME"),
+            index_bot_email: read_env("INDEX_BOT_EMAIL"),
         }
     }
 }

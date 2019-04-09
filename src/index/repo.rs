@@ -20,9 +20,11 @@ impl IndexRepo {
 
         // git config
         let mut repo_cfg = repo.config().unwrap();
-        repo_cfg.set_str("user.name", "elba-bot").unwrap();
         repo_cfg
-            .set_str("user.email", "elba-bot@none.exist")
+            .set_str("user.name", &CONFIG.index_bot_name)
+            .unwrap();
+        repo_cfg
+            .set_str("user.email", &CONFIG.index_bot_email)
             .unwrap();
 
         let index_repo = IndexRepo { repo, index_dir };
