@@ -32,6 +32,7 @@ services:
       - 127.0.0.1:17000:17000
     environment:
       - DATABASE_URL=postgres://postgres:postgres@postgres:5432/elba
+      - SEARCH_ENGINE_URL=http://flexsearch:6780
     volumes:
       - storage:/app/tmp/storage
 

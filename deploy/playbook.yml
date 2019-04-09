@@ -34,6 +34,7 @@
       - { src: 'docker-pull-image.sh', dest: '/app/docker-pull-image.sh', mode: 'u+rwx,g-rx,o-rx' }
       - { src: 'docker-compose.yml', dest: '/app/docker-compose.yml', mode: 'u+rw,g-rw,o-rw' }
       - { src: 'docker-compose.prod.yml', dest: '/app/docker-compose.prod.yml', mode: 'u+rw,g-rw,o-rw' }
+      - { src: 'flexsearch.Dockerfile', dest: '/app/flexsearch.Dockerfile', mode: 'u+rw,g-rw,o-rw' }
     - name: Pull 'elba/registry' image
       environment: 
         AWS_ACCOUNT_ID: "{{ lookup('env', 'AWS_ACCOUNT_ID') }}"
