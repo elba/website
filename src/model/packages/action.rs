@@ -233,7 +233,7 @@ impl Handler<PopulateSearch> for Database {
     type Result = Result<(), Error>;
 
     fn handle(&mut self, msg: PopulateSearch, _: &mut Self::Context) -> Self::Result {
-        populate_search(msg, &self.connection()?)
+        populate_search(msg, &self.search, &self.connection()?)
     }
 }
 
@@ -414,10 +414,11 @@ pub fn publish_version(
 
         search
             .send(UpdateSearch {
-                package_info: msg.package_info.clone(),
+                name: msg.package_info.name.clone(),
+                keywords: msg.package_info.keywords.clone(),
             }).from_err::<Error>()
             .wait()?
-            .with_context(|_| "failed to update search index")?;
+            .with_context(|_| "failed to update search engine")?;
 
         index
             .send(UpdatePackage {
@@ -734,8 +735,49 @@ pub fn lookup_download_graph(
     Ok(downloads_graph)
 }
 
-pub fn populate_search(msg: PopulateSearch, conn: &Connection) -> Result<(), Error> {
-    unimplemented!();
+pub fn populate_search(
+    _: PopulateSearch,
+    search: &Addr<Search>,
+    conn: &Connection,
+) -> Result<(), Error> {
+    use crate::schema::groups::dsl::*;
+    use crate::schema::packages::dsl::*;
+
+    info!("populating search engine");
+
+    let all_packages = groups
+        .inner_join(packages)
+        .select((group_name, package_name))
+        .load::<(String, String)>(conn)?;
+
+    for (group, package) in all_packages {
+        let package = PackageName::new(group, package)?;
+        let mut versions = list_versions(ListVersions(package.clone()), conn)?;
+        versions.sort_by(|lhs, rhs| lhs.semver.cmp(&rhs.semver));
+        let latest_version = versions
+            .pop()
+            .ok_or_else(|| format_err!("no version found for package {}", &package))?;
+        let (_, version) = lookup_version(
+            LookupVersion(PackageVersion {
+                name: package.clone(),
+                semver: latest_version.semver,
+            }),
+            conn,
+        )?;
+        let keywords = list_keywords(
+            ListKeywords {
+                version_id: version.id,
+            },
+            conn,
+        )?;
+        search
+            .send(UpdateSearch {
+                name: package,
+                keywords,
+            }).from_err::<Error>()
+            .wait()?
+            .with_context(|_| "failed to update search engine")?;
+    }
 
     Ok(())
 }

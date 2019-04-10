@@ -19,13 +19,9 @@ impl IndexRepo {
         let repo = Repository::clone(&CONFIG.remote_index_url, index_dir.path())?;
 
         // git config
-        let mut repo_cfg = repo.config().unwrap();
-        repo_cfg
-            .set_str("user.name", &CONFIG.index_bot_name)
-            .unwrap();
-        repo_cfg
-            .set_str("user.email", &CONFIG.index_bot_email)
-            .unwrap();
+        let mut repo_cfg = repo.config()?;
+        repo_cfg.set_str("user.name", &CONFIG.index_bot_name)?;
+        repo_cfg.set_str("user.email", &CONFIG.index_bot_email)?;
 
         let index_repo = IndexRepo { repo, index_dir };
 
@@ -55,7 +51,10 @@ impl IndexRepo {
         let tree = self.repo.find_tree(tree_id)?;
 
         let head = self.repo.head()?;
-        let parent = self.repo.find_commit(head.target().unwrap())?;
+        let parent = self.repo.find_commit(
+            head.target()
+                .ok_or_else(|| format_err!("no initial commit in remote index"))?,
+        )?;
         let sig = self.repo.signature()?;
 
         // git commit -m

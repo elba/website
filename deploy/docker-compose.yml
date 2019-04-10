@@ -27,5 +27,4 @@ services:
 
 volumes:
   postgres-data:
-  search-index:
   storage:

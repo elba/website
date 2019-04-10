@@ -1,5 +1,5 @@
 use actix::prelude::*;
-use elba::package::{manifest::PackageInfo, Name as PackageName};
+use elba::package::Name as PackageName;
 use failure::Error;
 use simsearch::SimSearch;
 
@@ -8,8 +8,10 @@ pub struct Search {
 }
 
 impl Search {
-    pub fn init() -> Result<Self, Error> {
-        unimplemented!()
+    pub fn new() -> Self {
+        Search {
+            engine: SimSearch::new(),
+        }
     }
 }
 
@@ -18,7 +20,8 @@ impl Actor for Search {
 }
 
 pub struct UpdateSearch {
-    pub package_info: PackageInfo,
+    pub name: PackageName,
+    pub keywords: Vec<String>,
 }
 
 pub struct SearchPackage {
@@ -37,13 +40,13 @@ impl Handler<UpdateSearch> for Search {
     type Result = Result<(), Error>;
 
     fn handle(&mut self, msg: UpdateSearch, _: &mut Self::Context) -> Self::Result {
-        let terms: Vec<&str> = [msg.package_info.name.group(), msg.package_info.name.name()]
+        let terms: Vec<&str> = [msg.name.group(), msg.name.name()]
             .iter()
             .map(|s| *s)
-            .chain(msg.package_info.keywords.iter().map(|s| s.as_str()))
+            .chain(msg.keywords.iter().map(|s| s.as_str()))
             .collect();
 
-        self.engine.insert(msg.package_info.name.clone(), &terms);
+        self.engine.insert(msg.name.clone(), &terms);
 
         Ok(())
     }

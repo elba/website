@@ -115,8 +115,11 @@ pub async fn show_package(
     versions.sort_by(|lhs, rhs| lhs.semver.cmp(&rhs.semver));
 
     let package_meta = PackageView {
+        latest_version: versions
+            .pop()
+            .ok_or_else(|| format_err!("no version found for package {}", &package_name))?
+            .into(),
         package: package_name.into(),
-        latest_version: versions.pop().unwrap().into(),
         updated_at: package.updated_at,
         created_at: package.created_at,
     };

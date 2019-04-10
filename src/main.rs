@@ -31,6 +31,7 @@ use actix_web::{middleware, server, App};
 
 use crate::database::Database;
 use crate::index::Index;
+use crate::model::packages::PopulateSearch;
 use crate::search::Search;
 use crate::storage::Storage;
 use crate::util::Config;
@@ -50,13 +51,11 @@ fn main() {
 
     env_logger::init();
 
-    let sys = System::new("elba-backaned");
+    let mut sys = System::new("elba-registry");
 
     let index = Index::new().expect("faild to initialize index").start();
     let storage = Storage::new().expect("faild to initialize storage").start();
-    let search = Search::init()
-        .expect("faild to initialize search engine")
-        .start();
+    let search = Search::new().start();
 
     let db_pool = database::connect();
 
@@ -69,6 +68,10 @@ fn main() {
     let db = SyncArbiter::start(num_cpus::get() * 4, move || db.clone());
 
     let app_state = AppState { db, search };
+
+    sys.block_on(app_state.db.send(PopulateSearch))
+        .unwrap()
+        .expect("faild to populate search engine");
 
     server::new(move || {
         let app = App::with_state(app_state.clone())
