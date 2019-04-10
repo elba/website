@@ -82,8 +82,8 @@ where
                     let score = (score
                         + normalized_levenshtein(&prefix_term, &token) as f64 / prefix_len as f64)
                         / 2.;
-                    let score_current = term_scores.get(term).map(|score| *score).unwrap_or(1.);
-                    term_scores.insert(term.to_owned(), score_current.min(score));
+                    let score_current = term_scores.get(term).map(|score| *score).unwrap_or(0.);
+                    term_scores.insert(term.to_owned(), score_current.max(score));
                 }
             }
         }

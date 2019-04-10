@@ -1,6 +1,6 @@
 use std::fs::File;
-use std::io;
-use std::io::Read;
+use std::io::{self, Read as _};
+use std::time::Instant;
 
 use json;
 use simsearch::SimSearch;
@@ -22,15 +22,20 @@ fn main() -> io::Result<()> {
         );
     }
 
+    println!("Please input a query string and hit enter (e.g 'old man'):",);
+
     loop {
         let mut pattern = String::new();
         io::stdin()
             .read_line(&mut pattern)
             .expect("failed to read from stdin");
 
+        let start = Instant::now();
         let pattern = pattern.replace("\r\n", "");
+        let end = Instant::now();
 
         println!("pattern: {:?}", &pattern);
-        println!("result: {:?}", engine.search(&pattern));
+        println!("results: {:?}", engine.search(&pattern));
+        println!("time: {:?}", end - start);
     }
 }
