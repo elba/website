@@ -50,6 +50,9 @@ version = "1.4"
 [dependencies.elba]
 git = "https://github.com/elba/elba.git"
 
+[dependencies.simsearch]
+path = "./simsearch"
+
 [dependencies.tokio-async-await]
 features = ["async-await-preview"]
 version = "0.1.6"

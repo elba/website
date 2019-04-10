@@ -1,6 +1,7 @@
 use std::fs::File;
 use std::io::Read;
 
+use itertools::Itertools;
 use json;
 use simsearch::SimSearch;
 
@@ -35,5 +36,5 @@ fn populate_engine() -> SimSearch<String> {
 
 #[quickcheck]
 fn test_quickcheck(tokens: Vec<String>) {
-    ENGINE.search(&tokens.iter().map(String::as_str).collect::<Vec<_>>());
+    ENGINE.search(&tokens.join(" "));
 }

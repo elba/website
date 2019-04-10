@@ -1,67 +1,58 @@
-use std::str::FromStr;
-
-use actix_web::{client, HttpMessage};
+use actix::prelude::*;
 use elba::package::{manifest::PackageInfo, Name as PackageName};
 use failure::Error;
-use futures::future::{self, Future, IntoFuture};
-use itertools::Itertools;
-use reqwest::{Client, StatusCode};
+use simsearch::SimSearch;
 
-use crate::CONFIG;
-
-#[derive(Serialize)]
-struct UpdateRequest {
-    id: String,
-    content: String,
+pub struct Search {
+    engine: SimSearch<PackageName>,
 }
 
-pub fn update_package(package_info: &PackageInfo) -> Result<(), Error> {
-    info!("updating search index");
-
-    let client = Client::new();
-    let res = client
-        .post(&format!("{}/add", CONFIG.search_engine_url))
-        .json(&UpdateRequest {
-            id: package_info.name.as_normalized().to_owned(),
-            content: vec![package_info.name.group(), package_info.name.name()]
-                .into_iter()
-                .chain(package_info.keywords.iter().map(|s| s.as_str()))
-                .join(" "),
-        }).send()?;
-
-    if res.status() == StatusCode::OK {
-        Ok(())
-    } else {
-        Err(format_err!("failed to update search index. res: {:?}", res))
+impl Search {
+    pub fn init() -> Result<Self, Error> {
+        unimplemented!()
     }
 }
 
-#[derive(Serialize)]
-struct SearchRequest {
-    query: String,
+impl Actor for Search {
+    type Context = Context<Self>;
 }
 
-pub fn search_package(query: String) -> Box<Future<Item = Vec<PackageName>, Error = Error>> {
-    let future = client::get(format!("{}/search", CONFIG.search_engine_url))
-        .json(SearchRequest { query })
-        .map_err(|err| format_err!("{:?}", err))
-        .into_future()
-        .and_then(|req| req.send().from_err::<Error>())
-        .and_then(|res| -> Box<Future<Item = Vec<String>, Error = Error>> {
-            if res.status() == StatusCode::OK {
-                Box::new(res.json::<Vec<String>>().from_err::<Error>())
-            } else {
-                Box::new(future::err(format_err!(
-                    "failed to update search index. res: {:?}",
-                    res
-                )))
-            }
-        }).and_then(|res| {
-            Ok(res
-                .iter()
-                .filter_map(|name| PackageName::from_str(name).ok())
-                .collect::<Vec<_>>())
-        });
+pub struct UpdateSearch {
+    pub package_info: PackageInfo,
+}
 
-    Box::new(future)
+pub struct SearchPackage {
+    pub query: String,
+}
+
+impl Message for UpdateSearch {
+    type Result = Result<(), Error>;
+}
+
+impl Message for SearchPackage {
+    type Result = Result<Vec<PackageName>, Error>;
+}
+
+impl Handler<UpdateSearch> for Search {
+    type Result = Result<(), Error>;
+
+    fn handle(&mut self, msg: UpdateSearch, _: &mut Self::Context) -> Self::Result {
+        let terms: Vec<&str> = [msg.package_info.name.group(), msg.package_info.name.name()]
+            .iter()
+            .map(|s| *s)
+            .chain(msg.package_info.keywords.iter().map(|s| s.as_str()))
+            .collect();
+
+        self.engine.insert(msg.package_info.name.clone(), &terms);
+
+        Ok(())
+    }
+}
+
+impl Handler<SearchPackage> for Search {
+    type Result = Result<Vec<PackageName>, Error>;
+
+    fn handle(&mut self, msg: SearchPackage, _: &mut Self::Context) -> Self::Result {
+        Ok(self.engine.search(&msg.query))
+    }
 }

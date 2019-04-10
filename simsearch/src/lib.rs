@@ -60,9 +60,9 @@ where
         }
     }
 
-    pub fn search(&self, tokens: &[&str]) -> Vec<Tag> {
-        let tokens: Vec<String> = tokens
-            .iter()
+    pub fn search(&self, pattern: &str) -> Vec<Tag> {
+        let tokens: Vec<String> = pattern
+            .split_whitespace()
             .map(|token| token.trim().to_lowercase())
             .filter(|token| !token.is_empty())
             .collect();

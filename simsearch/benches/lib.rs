@@ -54,5 +54,5 @@ fn bench_search(b: &mut Bencher) {
         );
     }
 
-    b.iter(|| engine.search(&["odl sea"]));
+    b.iter(|| engine.search("odl sea"));
 }

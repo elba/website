@@ -29,9 +29,8 @@ fn main() -> io::Result<()> {
             .expect("failed to read from stdin");
 
         let pattern = pattern.replace("\r\n", "");
-        let tokens: Vec<&str> = pattern.split_whitespace().collect();
 
         println!("pattern: {:?}", &pattern);
-        println!("result: {:?}", engine.search(&tokens));
+        println!("result: {:?}", engine.search(&pattern));
     }
 }

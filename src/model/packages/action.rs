@@ -10,7 +10,7 @@ use crate::database::{Connection, Database};
 use crate::index::{Index, UpdatePackage, YankPackage};
 use crate::model::users::{lookup_user_by_token, LookupUserByToken, User};
 use crate::schema::*;
-use crate::search;
+use crate::search::{Search, UpdateSearch};
 use crate::storage::{Storage, StorePackage};
 use crate::util::error::Reason;
 
@@ -48,6 +48,8 @@ pub struct LookupVersion(pub PackageVersion);
 pub struct IncreaseDownload(pub PackageVersion);
 pub struct LookupDownloadStats(pub PackageVersion);
 pub struct LookupDownloadGraph(pub PackageVersion);
+
+pub struct PopulateSearch;
 
 impl Message for PublishVersion {
     type Result = Result<(), Error>;
@@ -105,11 +107,21 @@ impl Message for LookupDownloadGraph {
     type Result = Result<Vec<DownloadGraph>, Error>;
 }
 
+impl Message for PopulateSearch {
+    type Result = Result<(), Error>;
+}
+
 impl Handler<PublishVersion> for Database {
     type Result = Result<(), Error>;
 
     fn handle(&mut self, msg: PublishVersion, _: &mut Self::Context) -> Self::Result {
-        publish_version(msg, &self.connection()?, &self.index, &self.storage)
+        publish_version(
+            msg,
+            &self.connection()?,
+            &self.index,
+            &self.storage,
+            &self.search,
+        )
     }
 }
 
@@ -217,11 +229,20 @@ impl Handler<LookupDownloadGraph> for Database {
     }
 }
 
+impl Handler<PopulateSearch> for Database {
+    type Result = Result<(), Error>;
+
+    fn handle(&mut self, msg: PopulateSearch, _: &mut Self::Context) -> Self::Result {
+        populate_search(msg, &self.connection()?)
+    }
+}
+
 pub fn publish_version(
     msg: PublishVersion,
     conn: &Connection,
     index: &Addr<Index>,
     storage: &Addr<Storage>,
+    search: &Addr<Search>,
 ) -> Result<(), Error> {
     conn.build_transaction().serializable().run(|| {
         let user = lookup_user_by_token(
@@ -391,7 +412,11 @@ pub fn publish_version(
             .wait()?
             .with_context(|_| "failed to store package")?;
 
-        search::update_package(&msg.package_info)
+        search
+            .send(UpdateSearch {
+                package_info: msg.package_info.clone(),
+            }).from_err::<Error>()
+            .wait()?
             .with_context(|_| "failed to update search index")?;
 
         index
@@ -707,4 +732,10 @@ pub fn lookup_download_graph(
         .load::<DownloadGraph>(conn)?;
 
     Ok(downloads_graph)
+}
+
+pub fn populate_search(msg: PopulateSearch, conn: &Connection) -> Result<(), Error> {
+    unimplemented!();
+
+    Ok(())
 }

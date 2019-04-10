@@ -14,16 +14,6 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql/data
 
-  flexsearch:
-    build:
-      context: .
-      dockerfile: flexsearch.Dockerfile
-    container_name: flexsearch
-    ports:
-      - 127.0.0.1:6780:6780
-    volumes:
-      - search-index:/app/store
-
   registry:
     image: elba/registry:latest
     container_name: registry
@@ -32,7 +22,6 @@ services:
       - 127.0.0.1:17000:17000
     environment:
       - DATABASE_URL=postgres://postgres:postgres@postgres:5432/elba
-      - SEARCH_ENGINE_URL=http://flexsearch:6780
     volumes:
       - storage:/app/tmp/storage
 
