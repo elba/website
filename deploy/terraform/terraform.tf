@@ -45,6 +45,13 @@ resource "aws_security_group" "web-server" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  ingress {
+    protocol    = "icmp"
+    from_port   = -1
+    to_port     = -1
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   egress {
     protocol    = "-1"
     from_port   = 0
@@ -124,14 +131,15 @@ resource "aws_ecr_repository" "elba-registry" {
 }
 
 locals {
-  s3-cdn-public-origin-id = "s3-elba-registry/public"
+  cdn-public-origin-id  = "s3-elba-registry/public"
+  cdn-storage-origin-id = "s3-elba-registry"
 }
 
-resource "aws_cloudfront_distribution" "s3-cdn-public" {
+resource "aws_cloudfront_distribution" "cdn-public" {
   origin {
     domain_name = "${aws_s3_bucket.elba-registry.bucket_regional_domain_name}"
     origin_path = "/public"
-    origin_id   = "${local.s3-cdn-public-origin-id}"
+    origin_id   = "${local.cdn-public-origin-id}"
   }
 
   enabled             = true
@@ -143,7 +151,7 @@ resource "aws_cloudfront_distribution" "s3-cdn-public" {
   default_cache_behavior {
     allowed_methods  = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods   = ["GET", "HEAD"]
-    target_origin_id = "${local.s3-cdn-public-origin-id}"
+    target_origin_id = "${local.cdn-public-origin-id}"
 
     forwarded_values {
       query_string = false
@@ -170,7 +178,7 @@ resource "aws_cloudfront_distribution" "s3-cdn-public" {
 
   viewer_certificate {
     ssl_support_method  = "sni-only"
-    acm_certificate_arn = "${aws_acm_certificate_validation.cert.certificate_arn}"
+    acm_certificate_arn = "${aws_acm_certificate_validation.cert-public.certificate_arn}"
   }
 }
 
@@ -179,23 +187,23 @@ data "aws_route53_zone" "zone" {
   private_zone = false
 }
 
-resource "aws_acm_certificate" "cert" {
-  domain_name       = "*.${var.domain_zone}"
+resource "aws_acm_certificate" "cert-public" {
+  domain_name       = "${var.domain_public}"
   validation_method = "DNS"
   provider          = "aws.use1"
 }
 
-resource "aws_acm_certificate_validation" "cert" {
-  certificate_arn         = "${aws_acm_certificate.cert.arn}"
-  validation_record_fqdns = ["${aws_route53_record.cert_validation.fqdn}"]
+resource "aws_acm_certificate_validation" "cert-public" {
+  certificate_arn         = "${aws_acm_certificate.cert-public.arn}"
+  validation_record_fqdns = ["${aws_route53_record.cert-validation-public.fqdn}"]
   provider                = "aws.use1"
 }
 
-resource "aws_route53_record" "cert_validation" {
-  name    = "${aws_acm_certificate.cert.domain_validation_options.0.resource_record_name}"
-  type    = "${aws_acm_certificate.cert.domain_validation_options.0.resource_record_type}"
+resource "aws_route53_record" "cert-validation-public" {
+  name    = "${aws_acm_certificate.cert-public.domain_validation_options.0.resource_record_name}"
+  type    = "${aws_acm_certificate.cert-public.domain_validation_options.0.resource_record_type}"
   zone_id = "${data.aws_route53_zone.zone.id}"
-  records = ["${aws_acm_certificate.cert.domain_validation_options.0.resource_record_value}"]
+  records = ["${aws_acm_certificate.cert-public.domain_validation_options.0.resource_record_value}"]
   ttl     = 60
 }
 
@@ -204,7 +212,7 @@ resource "aws_route53_record" "public" {
   name    = "${var.domain_public}"
   type    = "CNAME"
   ttl     = "300"
-  records = ["${aws_cloudfront_distribution.s3-cdn-public.domain_name}"]
+  records = ["${aws_cloudfront_distribution.cdn-public.domain_name}"]
 }
 
 resource "aws_route53_record" "registry" {
