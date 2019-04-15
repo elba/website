@@ -1,9 +1,9 @@
 import React from "react"
 import style from "./styles.scss"
-import { PackageList, PackageView } from "~/components/package_list"
+import { PackageList, PackageProps } from "~/components/package-listing"
 import avatar from "~/img/avatar.jpg"
 
-const testResults: PackageView[] = new Array(10).fill({
+const testResults: PackageProps[] = new Array(10).fill({
   group: "lightyear",
   name: "lightyear",
   version: "0.2.1",
@@ -13,7 +13,7 @@ const testResults: PackageView[] = new Array(10).fill({
   downloads: 102,
   avatar: avatar,
   author: "ziman",
-  updated_at: new Date(),
+  updatedAt: new Date(),
 })
 
 export const Homepage: React.FunctionComponent = () => (
@@ -137,3 +137,5 @@ const Question: React.FunctionComponent = () => (
     </a>
   </div>
 )
+
+export default Homepage

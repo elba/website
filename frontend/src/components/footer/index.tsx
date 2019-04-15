@@ -29,3 +29,5 @@ export const Footer: React.FunctionComponent = () => (
     </ul>
   </footer>
 )
+
+export default Footer

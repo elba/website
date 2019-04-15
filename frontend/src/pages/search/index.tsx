@@ -1,24 +1,26 @@
 import React, { useState, useEffect } from "react"
 import style from "./styles.scss"
-import { PackageList, PackageView } from "~/components/package_list"
+import { PackageList, PackageProps } from "~components/package-listing"
 import { RemoteData } from "~/utils/remote-data"
 import avatar from "~/img/avatar.jpg"
 
-const testResults: PackageView[] = new Array(5).fill({
-  group: "lightyear",
-  name: "lightyear",
-  version: "0.2.1",
-  description:
-    "Lightweight parser combinator library for Idris, inspired by Parsec.",
-  keywords: ["parser", "parser", "parser", "parser", "parser"],
-  downloads: 102,
-  avatar: avatar,
-  author: "ziman",
-  updated_at: new Date(),
-})
+const testResults: PackageProps[] = new Array(5)
+  .fill({
+    group: "lightyear",
+    name: "lightyear",
+    version: "0.2.1",
+    description:
+      "Lightweight parser combinator library for Idris, inspired by Parsec.",
+    keywords: ["parser", "parser", "parser", "parser", "parser"],
+    downloads: 102,
+    avatar: avatar,
+    author: "ziman",
+    updatedAt: new Date(),
+  })
+  .map((item, idx) => ({ ...item, name: `${item.name}${idx}` }))
 
 export const SearchResultsPage: React.FunctionComponent = () => {
-  const [result, setResult] = useState<RemoteData<PackageView[]>>({
+  const [result, setResult] = useState<RemoteData<PackageProps[]>>({
     type: "Not Asked",
   })
   useEffect(() => {
@@ -52,7 +54,7 @@ export const SearchResultsPage: React.FunctionComponent = () => {
               ))}
             </div>
           </div>
-          <PackageList packages={testResults} />
+          <PackageList packages={result.data} />
         </main>
       ) : result.type === "Started" ? (
         <p>Loading...</p>
@@ -64,3 +66,5 @@ export const SearchResultsPage: React.FunctionComponent = () => {
     </div>
   )
 }
+
+export default SearchResultsPage

@@ -1,0 +1,11 @@
+@import "~/styles/variables.scss";
+@import "~/styles/layouts.scss";
+
+.page {
+  @include content-padding;
+}
+
+.main-layout {
+  display: grid;
+  grid-auto-columns: 2;
+}
