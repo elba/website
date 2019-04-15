@@ -1,7 +1,7 @@
 use actix::prelude::*;
 use elba::package::Name as PackageName;
 use failure::Error;
-use simsearch::SimSearch;
+use simsearch::{SearchOptions, SimSearch};
 
 pub struct Search {
     engine: SimSearch<PackageName>,
@@ -10,7 +10,7 @@ pub struct Search {
 impl Search {
     pub fn new() -> Self {
         Search {
-            engine: SimSearch::new(),
+            engine: SimSearch::new_with(SearchOptions::new().stop_words(&["/", "\\"])),
         }
     }
 }
@@ -40,13 +40,13 @@ impl Handler<UpdateSearch> for Search {
     type Result = Result<(), Error>;
 
     fn handle(&mut self, msg: UpdateSearch, _: &mut Self::Context) -> Self::Result {
-        let terms: Vec<&str> = [msg.name.group(), msg.name.name()]
+        let tokens: Vec<&str> = [msg.name.group(), msg.name.name()]
             .iter()
             .map(|s| *s)
             .chain(msg.keywords.iter().map(|s| s.as_str()))
             .collect();
 
-        self.engine.insert(msg.name.clone(), &terms);
+        self.engine.insert_tokenized(msg.name.clone(), &tokens);
 
         Ok(())
     }
