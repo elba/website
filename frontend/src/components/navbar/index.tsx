@@ -53,3 +53,5 @@ function onSearch(ev: React.FormEvent<HTMLFormElement>) {
     search: `?q=${(ev.target as any).q.value}`,
   })
 }
+
+export default Navbar
