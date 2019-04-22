@@ -8,6 +8,14 @@ use std::future::Future;
 use crate::util::error::report_error;
 
 #[inline]
+pub fn compat_future<Fut, Ret>(f: Fut) -> FutureResponse<Ret, Error>
+where
+    Fut: Future<Output = Result<Ret, Error>> + 'static,
+{
+    Box::new(Compat::new(f))
+}
+
+#[inline]
 pub fn compat<F, Fut, Arg>(f: F) -> impl Fn(Arg) -> FutureResponse<HttpResponse>
 where
     F: Fn(Arg) -> Fut,

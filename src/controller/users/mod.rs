@@ -1,9 +1,7 @@
 pub mod metadata;
 pub mod token;
 
-mod login;
-
-pub use login::login;
+pub mod login;
 
 use crate::model::users::User;
 

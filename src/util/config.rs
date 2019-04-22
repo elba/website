@@ -4,6 +4,7 @@ use std::path::PathBuf;
 
 use elba::remote::Registry;
 
+use crate::login::GhOAuthConfig;
 use crate::storage::StorageConfig;
 
 #[derive(Clone)]
@@ -17,10 +18,23 @@ pub struct Config {
     pub remote_index_pwd: Option<String>,
     pub index_bot_name: String,
     pub index_bot_email: String,
+    pub gh_oauth_config: Option<GhOAuthConfig>,
 }
 
 impl Config {
     pub fn from_env() -> Config {
+        let gh_oauth_config = if read_env("GH_OAUTH_ENABLED")
+            .parse::<bool>()
+            .expect("`GH_OAUTH_ENABLED` should be a boolean")
+        {
+            Some(GhOAuthConfig {
+                client_id: read_env("GH_CLIENT_ID"),
+                client_secret: read_env("GH_CLIENT_SECRET"),
+            })
+        } else {
+            None
+        };
+
         let storage_config = match read_env("STORAGE_STRATEGY").to_uppercase().as_str() {
             "LOCAL" => StorageConfig::Local {
                 path: read_env_path("STORAGE_LOCAL_PATH"),
@@ -42,6 +56,7 @@ impl Config {
             max_upload_size: read_env("MAX_UPLOAD_SIZE")
                 .parse()
                 .expect("MAX_UPLOAD_SIZE is expected to be number."),
+            gh_oauth_config,
             storage_config,
             registry: Registry {
                 url: read_env("REGISTRY_URL")

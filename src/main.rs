@@ -7,6 +7,7 @@ mod util;
 mod controller;
 mod database;
 mod index;
+mod login;
 mod model;
 mod router;
 mod schema;
@@ -31,6 +32,7 @@ use actix_web::{middleware, server, App};
 
 use crate::database::Database;
 use crate::index::Index;
+use crate::login::GhLogin;
 use crate::model::packages::PopulateSearch;
 use crate::search::Search;
 use crate::storage::Storage;
@@ -42,6 +44,7 @@ lazy_static! {
 
 #[derive(Clone)]
 pub struct AppState {
+    pub login: Addr<GhLogin>,
     pub search: Addr<Search>,
     pub db: Addr<Database>,
 }
@@ -67,7 +70,9 @@ fn main() {
     };
     let db = SyncArbiter::start(num_cpus::get() * 4, move || db.clone());
 
-    let app_state = AppState { db, search };
+    let login = GhLogin { db: db.clone() }.start();
+
+    let app_state = AppState { db, search, login };
 
     sys.block_on(app_state.db.send(PopulateSearch))
         .unwrap()
@@ -82,7 +87,8 @@ fn main() {
                     .secure(false),
             ));
         router::router(app)
-    }).bind(&CONFIG.bind_to)
+    })
+    .bind(&CONFIG.bind_to)
     .expect(&format!("can't bind to {}", &CONFIG.bind_to))
     .start();
 

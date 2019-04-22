@@ -1,57 +1,55 @@
 use actix_web::middleware::identity::RequestIdentity;
-use actix_web::{client, http::StatusCode, HttpMessage, HttpRequest, HttpResponse, Query, State};
-use base64;
+use actix_web::{HttpRequest, HttpResponse, Query, State};
 use failure::Error;
 use tokio_async_await::await;
 
-use crate::model::users::CreateUserOrLogin;
-use crate::util::error::Reason;
+use crate::login::{self, LoginByAccessToken, LoginByOAuth};
 use crate::AppState;
 
 #[derive(Deserialize)]
-pub struct LoginReq {
-    gh_name: String,
+pub struct LoginByAccessTokenReq {
     gh_access_token: String,
 }
 
 #[derive(Deserialize)]
-struct GithubRes {
-    id: i32,
-    email: Option<String>,
-    avatar_url: Option<String>,
+pub struct OAuthCallbackReq {
+    code: String,
 }
 
-pub async fn login(
-    (query, state, req): (Query<LoginReq>, State<AppState>, HttpRequest<AppState>),
+pub async fn login_by_access_token(
+    (query, state, req): (
+        Query<LoginByAccessTokenReq>,
+        State<AppState>,
+        HttpRequest<AppState>,
+    ),
 ) -> Result<HttpResponse, Error> {
-    let auth = base64::encode(&format!("{}:{}", query.gh_name, query.gh_access_token));
-
-    let github_response = await!(
-        client::get("https://api.github.com/user")
-            .header("Authorization", format!("Basic {}", auth).as_str())
-            .finish()
-            .map_err(|err| format_err!("{:?}", err))?
-            .send()
-    )?;
-
-    if github_response.status() != StatusCode::OK {
-        return Err(human!(
-            Reason::UserNotFound,
-            "Bad username or access token to Github"
-        ));
-    }
-
-    let response_json: GithubRes = await!(github_response.json())?;
-
-    let user = await!(state.db.send(CreateUserOrLogin {
-        email: response_json.email,
-        gh_id: response_json.id,
-        gh_name: query.gh_name.clone(),
-        gh_access_token: query.gh_access_token.clone(),
-        gh_avatar: response_json.avatar_url,
+    let user_id = await!(state.login.send(LoginByAccessToken {
+        gh_access_token: query.into_inner().gh_access_token
     }))??;
 
-    req.remember(user.id.to_string());
+    req.remember(user_id.to_string());
+
+    Ok(HttpResponse::Ok().finish())
+}
+
+pub async fn login_by_oauth((): ()) -> Result<HttpResponse, Error> {
+    Ok(HttpResponse::TemporaryRedirect()
+        .header("Location", login::get_oauth_url()?)
+        .finish())
+}
+
+pub async fn login_by_oauth_callback(
+    (query, state, req): (
+        Query<OAuthCallbackReq>,
+        State<AppState>,
+        HttpRequest<AppState>,
+    ),
+) -> Result<HttpResponse, Error> {
+    let user_id = await!(state.login.send(LoginByOAuth {
+        code: query.into_inner().code
+    }))??;
+
+    req.remember(user_id.to_string());
 
     Ok(HttpResponse::Ok().finish())
 }

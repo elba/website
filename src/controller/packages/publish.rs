@@ -67,7 +67,8 @@ fn read_manifest(bytes: &[u8]) -> Result<Manifest, Error> {
         .find(|entry| match entry.path() {
             Ok(ref path) if path.to_string_lossy().to_lowercase() == "elba.toml" => true,
             _ => false,
-        }).ok_or_else(|| human!(Reason::InvalidManifest, "Manifest not found in archive"))?;
+        })
+        .ok_or_else(|| human!(Reason::InvalidManifest, "Manifest not found in archive"))?;
 
     let mut buffer = String::new();
     entry.read_to_string(&mut buffer)?;

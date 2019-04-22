@@ -36,6 +36,7 @@ pub fn report_error(error: Error) -> HttpResponse {
 
 #[derive(Debug)]
 pub enum Reason {
+    InvalidRequest,
     InvalidFormat,
     InvalidManifest,
     NoPermission,
@@ -48,6 +49,7 @@ pub enum Reason {
 impl Reason {
     pub fn tag(&self) -> &'static str {
         match self {
+            Reason::InvalidRequest => "invalid_request",
             Reason::InvalidFormat => "invalid_format",
             Reason::InvalidManifest => "invalid_manifest",
             Reason::NoPermission => "no_permission",
