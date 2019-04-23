@@ -16,6 +16,7 @@ use elba::package::Name as PackageName;
 use failure::{Error, ResultExt};
 use semver;
 
+use crate::controller::users::UserView;
 use crate::model::packages::*;
 use crate::util::error::Reason;
 
@@ -50,6 +51,7 @@ pub struct PackageView {
     #[serde(flatten)]
     pub package: PackageReq,
     pub latest_version: PackageVersionReq,
+    pub owners: Vec<UserView>,
     #[serde(with = "crate::util::rfc3339")]
     pub updated_at: NaiveDateTime,
     #[serde(with = "crate::util::rfc3339")]
@@ -66,6 +68,7 @@ pub struct VersionView {
     pub repository: Option<String>,
     pub license: Option<String>,
     pub keywords: Vec<String>,
+    pub owners: Vec<UserView>,
     #[serde(with = "crate::util::rfc3339")]
     pub created_at: NaiveDateTime,
 }

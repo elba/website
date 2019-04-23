@@ -72,11 +72,6 @@ pub fn router(app: App<AppState>) -> App<AppState> {
             compat(controller::packages::metadata::list_versions),
         )
         .route(
-            "/packages/{group}/{package}/owners",
-            Method::GET,
-            compat(controller::packages::metadata::list_owners),
-        )
-        .route(
             "/packages/{group}/{package}/{version}/metadata",
             Method::GET,
             compat(controller::packages::metadata::show_version),

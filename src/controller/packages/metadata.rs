@@ -57,21 +57,6 @@ pub async fn list_versions(
     Ok(HttpResponse::Ok().json(R { versions }))
 }
 
-pub async fn list_owners(
-    (path, state): (Path<PackageReq>, State<AppState>),
-) -> Result<HttpResponse, Error> {
-    let package_name = PackageName::try_from(path.clone())?;
-    let owners = await!(state.db.send(ListOwners(package_name)))??;
-    let owners = owners.into_iter().map(UserView::from).collect();
-
-    #[derive(Serialize)]
-    struct R {
-        owners: Vec<UserView>,
-    }
-
-    Ok(HttpResponse::Ok().json(R { owners }))
-}
-
 pub async fn list_dependencies(
     (path, state): (Path<PackageVersionReq>, State<AppState>),
 ) -> Result<HttpResponse, Error> {
@@ -114,12 +99,16 @@ pub async fn show_package(
     let mut versions = await!(state.db.send(ListVersions(package_name.clone())))??;
     versions.sort_by(|lhs, rhs| lhs.semver.cmp(&rhs.semver));
 
+    let owners = await!(state.db.send(ListOwners(package_name.clone())))??;
+    let owners = owners.into_iter().map(UserView::from).collect();
+
     let package_meta = PackageView {
         latest_version: versions
             .pop()
             .ok_or_else(|| format_err!("no version found for package {}", &package_name))?
             .into(),
         package: package_name.into(),
+        owners,
         updated_at: package.updated_at,
         created_at: package.created_at,
     };
@@ -146,6 +135,9 @@ pub async fn show_version(
         version_id: version.id,
     }))??;
 
+    let owners = await!(state.db.send(ListOwners(package_version.name.clone())))??;
+    let owners = owners.into_iter().map(UserView::from).collect();
+
     let version_meta = VersionView {
         package_version: package_version.into(),
         yanked: version.yanked,
@@ -153,7 +145,8 @@ pub async fn show_version(
         homepage: version.homepage,
         repository: version.repository,
         license: version.license,
-        keywords: keywords,
+        keywords,
+        owners,
         created_at: version.created_at,
     };
 
