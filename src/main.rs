@@ -70,7 +70,7 @@ fn main() {
     };
     let db = SyncArbiter::start(num_cpus::get() * 4, move || db.clone());
 
-    let login = GhLogin { db: db.clone() }.start();
+    let login = GhLogin::new(db.clone()).start();
 
     let app_state = AppState { db, search, login };
 

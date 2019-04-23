@@ -51,5 +51,7 @@ pub async fn login_by_oauth_callback(
 
     req.remember(user_id.to_string());
 
-    Ok(HttpResponse::Ok().finish())
+    Ok(HttpResponse::TemporaryRedirect()
+        .header("Location", login::get_success_redirect_url()?)
+        .finish())
 }

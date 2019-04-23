@@ -30,6 +30,7 @@ impl Config {
             Some(GhOAuthConfig {
                 client_id: read_env("GH_CLIENT_ID"),
                 client_secret: read_env("GH_CLIENT_SECRET"),
+                success_redirect_url: read_env("GH_OAUTH_SUCCESS_REDIRECT_URL"),
             })
         } else {
             None

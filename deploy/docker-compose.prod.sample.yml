@@ -37,6 +37,7 @@ services:
       - GH_OAUTH_ENABLED=true
       - GH_CLIENT_ID=2c06e9a2cfecef2
       - GH_CLIENT_SECRET=4b843b41a078b032ae9e3ab4e9caa7
+      - GH_OAUTH_SUCCESS_REDIRECT_URL=https://elba.chaos.tk
       - VIRTUAL_HOST=api.elba.chaos.tk
       - VIRTUAL_PORT=17000
       - LETSENCRYPT_HOST=api.elba.chaos.tk

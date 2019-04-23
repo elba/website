@@ -1,6 +1,9 @@
 use actix::prelude::*;
-use actix_web::{client, http::StatusCode, FutureResponse, HttpMessage};
+use actix_web::FutureResponse;
 use failure::Error;
+use reqwest::r#async::Client;
+use reqwest::StatusCode;
+use std::sync::Arc;
 use tokio_async_await::await;
 
 use crate::database::Database;
@@ -13,10 +16,21 @@ use crate::CONFIG;
 pub struct GhOAuthConfig {
     pub client_id: String,
     pub client_secret: String,
+    pub success_redirect_url: String,
 }
 
 pub struct GhLogin {
-    pub db: Addr<Database>,
+    db: Addr<Database>,
+    client: Arc<Client>,
+}
+
+impl GhLogin {
+    pub fn new(db: Addr<Database>) -> Self {
+        GhLogin {
+            db,
+            client: Arc::new(Client::new()),
+        }
+    }
 }
 
 impl Actor for GhLogin {
@@ -57,13 +71,14 @@ impl Handler<LoginByAccessToken> for GhLogin {
 
     fn handle(&mut self, msg: LoginByAccessToken, _: &mut Self::Context) -> Self::Result {
         let db = self.db.clone();
+        let client = self.client.clone();
 
         compat_future(
             async move {
-                let github_response = await!(client::get("https://api.github.com/user")
+                let mut github_response = await!(client
+                    .get("https://api.github.com/user")
+                    .header("Accept", "application/json")
                     .basic_auth("token", Some(&msg.gh_access_token))
-                    .finish()
-                    .map_err(|err| format_err!("{:?}", err))?
                     .send())?;
 
                 if github_response.status() != StatusCode::OK {
@@ -94,6 +109,7 @@ impl Handler<LoginByOAuth> for GhLogin {
 
     fn handle(&mut self, msg: LoginByOAuth, ctx: &mut Self::Context) -> Self::Result {
         let self_addr = ctx.address().clone();
+        let client = self.client.clone();
 
         compat_future(
             async move {
@@ -101,18 +117,22 @@ impl Handler<LoginByOAuth> for GhLogin {
                     Some(GhOAuthConfig {
                         client_id,
                         client_secret,
+                        ..
                     }) => {
-                        let github_response = await!(client::get(format!(
-                            "https://github.com/login/oauth/access_token\
-                             &client_id={}\
-                             &client_secret={}\
-                             &code={}\
-                             &accept=json",
-                            client_id, client_secret, msg.code
-                        ))
-                        .finish()
-                        .map_err(|err| format_err!("{:?}", err))?
-                        .send())?;
+                        let mut github_response = await!(client
+                            .get(&format!(
+                                "https://github.com/login/oauth/access_token?\
+                                 client_id={}\
+                                 &client_secret={}\
+                                 &code={}",
+                                client_id, client_secret, msg.code
+                            ))
+                            .header("Accept", "application/json")
+                            .send())?;
+
+                        if github_response.status() != StatusCode::OK {
+                            return Err(format_err!("faild to retireve access token from Github"));
+                        }
 
                         let response_json: GithubGetAccessTokenRes =
                             await!(github_response.json())?;
@@ -137,10 +157,22 @@ pub fn get_oauth_url() -> Result<String, Error> {
     match &CONFIG.gh_oauth_config {
         Some(GhOAuthConfig { client_id, .. }) => Ok(format!(
             "https://github.com/login/oauth/authorize?scope=user:email\
-             &client_id={}\
-             &redirect_uri={}/api/v1/users/login/oauth/callback",
-            &client_id, &CONFIG.registry.url
+             &client_id={}",
+            &client_id
         )),
+        None => Err(human!(
+            Reason::InvalidRequest,
+            "Github OAuth is disabled by admin."
+        )),
+    }
+}
+
+pub fn get_success_redirect_url() -> Result<String, Error> {
+    match &CONFIG.gh_oauth_config {
+        Some(GhOAuthConfig {
+            success_redirect_url,
+            ..
+        }) => Ok(success_redirect_url.clone()),
         None => Err(human!(
             Reason::InvalidRequest,
             "Github OAuth is disabled by admin."
