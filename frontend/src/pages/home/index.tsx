@@ -20,7 +20,7 @@ export const Homepage: React.FunctionComponent = () => (
   <div>
     <Hero />
     <Features />
-    <Statistics />
+    <Stats />
     <section className={style.section}>
       <h2 className={style["section-title"]}>Popular packages</h2>
       <PackageList packages={testResults} />
@@ -105,17 +105,17 @@ const Features: React.FunctionComponent = () => (
   </div>
 )
 
-const Statistics: React.FunctionComponent = () => (
-  <div className={[style.section, style.statistics].join(" ")}>
+const Stats: React.FunctionComponent = () => (
+  <div className={[style.section, style.stats].join(" ")}>
     <h2 className={style["section-title"]}>Until now, we have</h2>
-    <ul className={style["statistics-item-container"]}>
-      <li className={style["statistics-item"]}>
-        <p className={style["statistics-value"]}>1230</p>
-        <p className={style["statistics-title"]}>packages</p>
+    <ul className={style["stats-item-container"]}>
+      <li className={style["stats-item"]}>
+        <p className={style["stats-value"]}>1230</p>
+        <p className={style["stats-title"]}>packages</p>
       </li>
-      <li className={style["statistics-item"]}>
-        <p className={style["statistics-value"]}>201649</p>
-        <p className={style["statistics-title"]}>downloads</p>
+      <li className={style["stats-item"]}>
+        <p className={style["stats-value"]}>201649</p>
+        <p className={style["stats-title"]}>downloads</p>
       </li>
     </ul>
   </div>
