@@ -73,7 +73,7 @@
   }
 }
 
-.statistics {
+.stats {
   width: 100%;
   background-color: $grey-1;
 
@@ -81,21 +81,21 @@
     @include content-padding;
   }
 
-  .statistics-item-container {
+  .stats-item-container {
     display: flex;
   }
 
-  .statistics-item {
+  .stats-item {
     flex-grow: 1;
 
-    .statistics-value {
+    .stats-value {
       font-size: 2.25rem;
       font-weight: bold;
       line-height: 0.9em;
       color: $purple;
     }
 
-    .statistics-title {
+    .stats-title {
       font-size: 1.25rem;
       font-family: $family-secondary;
       color: $grey-5;

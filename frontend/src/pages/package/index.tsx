@@ -8,7 +8,7 @@ export const PackageDetailsPage: React.FunctionComponent = () => {
   return (
     <div className={style.page}>
       <header>
-        <span>
+        <span className={style["title"]}>
           {group}/{name}
         </span>
         <span>{version}</span>

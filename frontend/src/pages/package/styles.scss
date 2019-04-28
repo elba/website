@@ -5,6 +5,10 @@
   @include content-padding;
 }
 
+.title {
+  font-size: 16px;
+}
+
 .main-layout {
   display: grid;
   grid-auto-columns: 2;

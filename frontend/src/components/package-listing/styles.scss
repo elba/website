@@ -40,6 +40,11 @@
       font-weight: bold;
       font-family: $family-secondary;
       color: $grey-8;
+
+      &:hover {
+        text-decoration: underline;
+        // border-bottom: 1px solid black;
+      }
     }
 
     .version {
@@ -78,6 +83,7 @@
       }
 
       &:hover {
+        text-decoration: underline;
         filter: brightness(90%);
       }
 
