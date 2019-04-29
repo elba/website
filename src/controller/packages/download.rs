@@ -28,7 +28,7 @@ pub async fn download(
 ) -> Result<HttpResponse, Error> {
     let package_version = PackageVersion::try_from(path.into_inner())?;
 
-    await!(state.db.send(IncreaseDownload(package_version.clone())))??;
+    state.db.do_send(IncreaseDownload(package_version.clone()));
 
     Ok(HttpResponse::TemporaryRedirect()
         .header("Location", storage::get_tarball_location(&package_version))
