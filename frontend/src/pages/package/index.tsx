@@ -7,19 +7,19 @@ export const PackageDetailsPage: React.FunctionComponent = () => {
   const version = "0.2.1"
   return (
     <div className={style.page}>
-      <header>
-        <span className={style["title"]}>
-          {group}/{name}
+      <header className={style["title"]}>
+        <span className={style["title__name"]}>
+          {group} / {name}
         </span>
-        <span>{version}</span>
+        <span className={style["title__version"]}>{version}</span>
       </header>
+      <div className={style["package-top-bar"]}>
+        <a>Homepage</a>
+        <a>Documentation</a>
+      </div>
       <div className={style["main-layout"]}>
         <main>
-          <div>
-            <a>Homepage</a>
-            <a>Documentation</a>
-          </div>
-          <div>
+          <div className={style["main-layout__readme"]}>
             {/* readme */}
             <h1>Insert markdown here</h1>
             <p>
@@ -30,24 +30,24 @@ export const PackageDetailsPage: React.FunctionComponent = () => {
             </p>
           </div>
         </main>
-        <aside>
-          <div>
+        <aside className={style["main-layout__info"]}>
+          <div className={style["main-layout__info__item"]}>
             <p>Install</p>
-            <code>
-              > elba add {group}/{name}
-            </code>
+            <pre>
+              "{group}/{name}" = {version}
+            </pre>
           </div>
-          <div>
+          <div className={style["main-layout__info__item"]}>
             <p>License</p>
             <a>MIT</a>
           </div>
-          <div>
+          <div className={style["main-layout__info__item"]}>
             <p>Versions</p>
             <a>0.2.1</a>
             <a>0.2.0</a>
             <a>0.1.9</a>
             <a>0.1.8</a>
-            <a>Older...</a>
+            <a>...</a>
           </div>
         </aside>
       </div>

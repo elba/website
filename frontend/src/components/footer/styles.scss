@@ -21,15 +21,16 @@
     flex-grow: 1;
 
     h2 {
-      margin-bottom: 1rem;
+      margin-bottom: 18px;
       color: $magenta;
-      font-size: 1.25rem;
+      font-size: 1rem;
       font-weight: 500;
     }
 
     a {
-      margin-bottom: 0.25rem;
+      margin-bottom: 10px;
       display: block;
+      font-size: 0.9rem;
       color: $grey-8;
     }
   }
