@@ -12,7 +12,7 @@ export const Navbar: React.FunctionComponent = () => (
       <a className={style["navbar-menu-item"]} href="#">
         Get Started
       </a>
-      <a className={style["navbar-menu-item"]} href="#">
+      <a className={style["navbar-menu-item"]} href="https://elba.readthedocs.io/">
         Docs
       </a>
       <a className={style["navbar-menu-item"]} href="#">
