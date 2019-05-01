@@ -1,11 +1,14 @@
 import React from "react"
 import style from "./styles.scss"
 import avatar from "~/img/avatar.jpg"
+import ReadmeViewer from "~/components/readme-viewer"
 
 export const PackageDetailsPage: React.FunctionComponent = () => {
   const group = "lightyear"
   const name = "lightyear"
   const version = "0.2.1"
+  const readme =
+    "# Lightyear \n\n [![Build Status](https://travis-ci.org/ziman/lightyear.svg?branch=master)](https://travis-ci.org/ziman/lightyear)"
   return (
     <div className={style.page}>
       <header className={style["title"]}>
@@ -21,14 +24,7 @@ export const PackageDetailsPage: React.FunctionComponent = () => {
       <div className={style["main-layout"]}>
         <main>
           <div className={style["main-layout__readme"]}>
-            {/* readme */}
-            <h1>Insert markdown here</h1>
-            <p>
-              Lorem ipsum dolor sit amet, consectetur adipisicing elit. Sit
-              blanditiis harum qui hic rerum quisquam iure, placeat non
-              perspiciatis beatae voluptatum vero corrupti sed velit atque!
-              Vitae earum facilis sunt.
-            </p>
+            <ReadmeViewer markdown={readme} />
           </div>
         </main>
         <aside className={style["main-layout__info"]}>
