@@ -116,6 +116,7 @@ pre {
 }
 
 :global #main-app {
-  border-top: 10px solid $purple;
-  border-bottom: 10px solid $purple;
+  min-height: calc(100vh);
+  border-top: 6px solid $purple;
+  border-bottom: 6px solid $purple;
 }

@@ -36,7 +36,11 @@ const Hero: React.FunctionComponent = () => (
         Blazingly fast and modern{"\n"}
         package manager{"\n"}
         for{"\n"}
-        <a className={style.highlight} href="#">
+        <a
+          className={style.highlight}
+          href="https://www.idris-lang.org"
+          target="_blank"
+        >
           Idris
         </a>
       </h1>

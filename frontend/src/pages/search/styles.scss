@@ -9,14 +9,19 @@
   margin-top: 30px;
   margin-bottom: 30px;
 
-  font-size: 1.5rem;
-  .search-term {
-    color: $purple;
-    font-weight: 500;
+  .search-result {
+    font-weight: 700;
+    font-size: 1.3rem;
   }
 
   .search-for {
     margin: 0.8em;
+    font-size: 1.3rem;
+  }
+
+  .search-term {
+    color: $purple;
+    font-weight: 500;
     font-size: 1.4rem;
   }
 }

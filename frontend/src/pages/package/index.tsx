@@ -1,5 +1,6 @@
 import React from "react"
 import style from "./styles.scss"
+import avatar from "~/img/avatar.jpg"
 
 export const PackageDetailsPage: React.FunctionComponent = () => {
   const group = "lightyear"
@@ -48,6 +49,19 @@ export const PackageDetailsPage: React.FunctionComponent = () => {
             <a>0.1.9</a>
             <a>0.1.8</a>
             <a>...</a>
+          </div>
+          <div className={style["main-layout__info__item"]}>
+            <p>Owners</p>
+            <div className={style["owner-layout"]}>
+              <img
+                className={style["owner-layout__avatar"]}
+                src={avatar}
+                alt="avatar"
+              />
+              <span className={style["owner-layout__name"]}>
+                ziman ziman@example.com
+              </span>
+            </div>
           </div>
         </aside>
       </div>

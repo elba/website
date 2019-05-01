@@ -48,6 +48,7 @@
 
     .navbar-menu-item {
       padding: 0.5rem;
+      font-weight: 500;
       color: $grey-8;
     }
   }
@@ -62,6 +63,7 @@
     }
     @include desktop {
       justify-self: end;
+      padding-right: $content-padding-gap;
     }
 
     display: flex;

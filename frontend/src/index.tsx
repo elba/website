@@ -11,14 +11,12 @@ import PackageDetailsPage from "~/pages/package"
 import "~/styles/global_styles.scss"
 
 ReactDOM.render(
-  <div>
-    <Router history={history}>
-      <Navbar />
-      <Route exact path="/" component={Homepage} />
-      <Route exact path="/search" component={SearchResultsPage} />
-      <Route path="/package" component={PackageDetailsPage} />
-      <Footer />
-    </Router>
-  </div>,
+  <Router history={history}>
+    <Navbar />
+    <Route exact path="/" component={Homepage} />
+    <Route exact path="/search" component={SearchResultsPage} />
+    <Route path="/package" component={PackageDetailsPage} />
+    <Footer />
+  </Router>,
   document.getElementById("main-app")
 )

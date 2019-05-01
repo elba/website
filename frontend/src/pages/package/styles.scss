@@ -13,9 +13,8 @@
   align-items: baseline;
 
   .title__name {
-    font-size: 1.5rem;
+    font-size: 1.4rem;
     font-weight: bold;
-    font-family: $family-secondary;
   }
 
   .title__version {
@@ -95,11 +94,26 @@
     }
 
     a {
-      // width: fit-content;
       display: block;
       font-family: $family-secondary;
       font-weight: bold;
       color: $purple;
+    }
+  }
+
+  .owner-layout {
+    display: flex;
+    align-items: center;
+
+    .owner-layout__avatar {
+      width: 25px;
+      height: 25px;
+      border-radius: 2px;
+    }
+
+    .owner-layout__name {
+      margin-left: 10px;
+      font-size: 0.9rem;
     }
   }
 }

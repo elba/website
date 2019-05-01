@@ -34,7 +34,7 @@ export const SearchResultsPage: React.FunctionComponent = () => {
   return (
     <div className={style.page}>
       <header className={style.header}>
-        <b>Search result</b>
+        <span className={style["search-result"]}>Search result</span>
         <span className={style["search-for"]}>for</span>
         <span className={style["search-term"]}>lightyear</span>
       </header>
