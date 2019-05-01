@@ -16,13 +16,13 @@ variable "s3_bucket_name" {
 }
 
 variable "domain_zone" {
-  default = "chaos.tk"
+  default = "elba.pub"
 }
 
 variable "domain_public" {
-  default = "elba.chaos.tk"
+  default = "www.elba.pub"
 }
 
 variable "domain_registry" {
-  default = "api.elba.chaos.tk"
+  default = "api.elba.pub"
 }
