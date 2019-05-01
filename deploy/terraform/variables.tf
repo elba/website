@@ -20,9 +20,9 @@ variable "domain_zone" {
 }
 
 variable "domain_public" {
-  default = "elba.chaos.tk"
+  default = "elba.pub"
 }
 
 variable "domain_registry" {
-  default = "api.elba.chaos.tk"
+  default = "api.pub"
 }

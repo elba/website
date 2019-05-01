@@ -33,10 +33,9 @@ const Hero: React.FunctionComponent = () => (
   <div className={style.hero}>
     <div className={style["hero-text"]}>
       <h1>
-        Blazingly fast and modern{"\n"}
-        package manager{"\n"}
-        for{"\n"}
-        <a className={style.highlight} href="#">
+        A blazingly fast and modern{"\n"}
+        package manager for{"\n"}
+        <a className={style.highlight} href="https://idris-lang.org">
           Idris
         </a>
       </h1>
@@ -51,7 +50,7 @@ const Hero: React.FunctionComponent = () => (
             "is-purple",
             "has-shadow",
           ].join(" ")}
-          href="#"
+          href="https://elba.readthedocs.io/en/latest/usage/quick_start.html"
         >
           Get Started
         </a>
@@ -64,7 +63,7 @@ const Hero: React.FunctionComponent = () => (
             "is-purple",
             "has-shadow",
           ].join(" ")}
-          href="#"
+          href="https://github.com/elba/elba/releases"
         >
           Download
         </a>
@@ -81,24 +80,26 @@ const Features: React.FunctionComponent = () => (
         <div />
         <h2>Packages</h2>
         <p>
-          Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do
-          eiusmod tempor incididunt ut ero labore et dolore
+          Many elba packages are already available online, meaning you can add
+          extra dependencies to your own projects without fussing with git clones
+          and ipkg installs.
         </p>
       </li>
       <li className={style["features-item"]}>
         <div />
         <h2>Modern build system</h2>
         <p>
-          Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do
-          eiusmod tempor incididunt ut ero labore et dolore
+          elba uses the state-of-the-art Pubgrub dependency resolution algorithm
+          and global Nix-style caching to ensure reliable, reproducible builds.
         </p>
       </li>
       <li className={style["features-item"]}>
         <div />
-        <h2>Out of box</h2>
+        <h2>Out of the box</h2>
         <p>
-          Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do
-          eiusmod tempor incididunt ut ero labore et dolore
+          Adding elba to your project is as simple as adding an `elba.toml`
+          manifest file; from there, package building, doc generation,
+          REPL interaction, and more all work seamlessly.
         </p>
       </li>
     </ul>
