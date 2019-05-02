@@ -6,16 +6,15 @@ export const Footer: React.FunctionComponent = () => (
     <ul className={style["items"]}>
       <li className={style["item"]}>
         <h2>Help</h2>
-        <a href="#">Get started</a>
-        <a href="#">Docs</a>
-        <a href="#">Guide</a>
+        <a href="https://elba.readthedocs.io/en/latest/usage/quick_start.html">Get started</a>
+        <a href="https://elba.readthedocs.io/">Documentation</a>
       </li>
       <li className={style["item"]}>
         <h2>Get in touch</h2>
         <a href="https://github.com/elba/elba/issues" target="_blank">
           Issue Tracker (GitHub)
         </a>
-        <a href="#">Riot</a>
+        <a href="https://matrix.to/#/+elba:matrix.org">Matrix</a>
       </li>
       <li className={style["item"]}>
         <h2>Link</h2>
