@@ -48,13 +48,13 @@ export const PackageDetailsPage: React.FunctionComponent = () => {
           </div>
           <div className={style["main-layout__info__item"]}>
             <p>Owners</p>
-            <div className={style["owner-layout"]}>
+            <div className={style["main-layout__owner"]}>
               <img
-                className={style["owner-layout__avatar"]}
+                className={style["owner__avatar"]}
                 src={avatar}
                 alt="avatar"
               />
-              <span className={style["owner-layout__name"]}>
+              <span className={style["owner__name"]}>
                 ziman ziman@example.com
               </span>
             </div>

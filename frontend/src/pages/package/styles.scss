@@ -101,17 +101,17 @@
     }
   }
 
-  .owner-layout {
+  .main-layout__owner {
     display: flex;
     align-items: center;
 
-    .owner-layout__avatar {
+    .owner__avatar {
       width: 25px;
       height: 25px;
       border-radius: 2px;
     }
 
-    .owner-layout__name {
+    .owner__name {
       margin-left: 10px;
       font-size: 0.9rem;
     }
