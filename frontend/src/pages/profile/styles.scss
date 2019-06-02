@@ -4,3 +4,24 @@
 .page {
   @include content-padding;
 }
+
+.token-section {
+  padding: 20px 0px;
+
+  .token-section__title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+
+    h2 {
+      font-size: 1.3rem;
+      font-weight: bold;
+    }
+
+    button {
+      height: 45px;
+      font-size: 1.1rem;
+    }
+  }
+}

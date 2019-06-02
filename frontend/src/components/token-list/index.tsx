@@ -1,6 +1,7 @@
 import React, { useCallback } from "react"
 import style from "./styles.scss"
 import { timeago } from "~/utils/timeago"
+import { RemoteData } from "~/utils/remote-data"
 
 export type TokenProps = {
   token_id: number
@@ -21,7 +22,7 @@ const TokenRow: React.FunctionComponent<TokenProps> = props => {
 }
 
 export type TokenListProps = {
-  tokens: TokenProps[]
+  tokens: RemoteData<TokenProps[]>
 }
 
 export const TokenList: React.FunctionComponent<TokenListProps> = props => {
@@ -35,17 +36,24 @@ export const TokenList: React.FunctionComponent<TokenListProps> = props => {
         </tr>
       </thead>
       <tbody>
-        {props.tokens.map((token, idx) => (
-          <TokenRow key={idx} {...token} />
-        ))}
+        {props.tokens.type === "Done" ? (
+          props.tokens.data.map((token, idx) => (
+            <TokenRow key={idx} {...token} />
+          ))
+        ) : props.tokens.type === "Started" ? (
+          <tr>
+            <td className={style["td-info"]} colSpan={3}>
+              Loading
+            </td>
+          </tr>
+        ) : (
+          <tr>
+            <td className={style["td-info"]} colSpan={3}>
+              Faild
+            </td>
+          </tr>
+        )}
       </tbody>
     </table>
-    // <td className={style.list}>
-    //   <p className={style["title-1"]}>Token</p>
-    //   <p className={style["title-2"]}>Created</p>
-    //   {props.tokens.map((token, idx) => (
-    //     <TokenRow key={idx} {...token} />
-    //   ))}
-    // </div>
   )
 }

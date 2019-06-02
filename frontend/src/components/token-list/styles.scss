@@ -6,7 +6,7 @@
 
   thead {
     th {
-      padding: 15px 5px;
+      padding: 15px 0px;
       font-size: 1rem;
     }
   }
@@ -19,7 +19,7 @@
     }
 
     td {
-      padding: 7px 5px;
+      padding: 7px 0px;
       font-size: 0.9rem;
     }
   }
@@ -35,5 +35,10 @@
     width: 100%;
     height: 45px;
     font-size: 1rem;
+  }
+
+  .td-info {
+    text-align: center;
+    padding: 30px;
   }
 }
