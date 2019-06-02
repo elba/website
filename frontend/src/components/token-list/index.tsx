@@ -38,9 +38,17 @@ export const TokenList: React.FunctionComponent<TokenListProps> = props => {
       </thead>
       <tbody>
         {props.tokens.type === "Done" ? (
-          props.tokens.data.map((token, idx) => (
-            <TokenRow key={idx} {...token} />
-          ))
+          props.tokens.data.length === 0 ? (
+            <tr>
+              <td className={style["td-info"]} colSpan={3}>
+                You have no avaliable tokens
+              </td>
+            </tr>
+          ) : (
+            props.tokens.data.map((token, idx) => (
+              <TokenRow key={idx} {...token} />
+            ))
+          )
         ) : props.tokens.type === "Started" ? (
           <tr>
             <td className={style["td-info"]} colSpan={3}>
