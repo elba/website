@@ -46,6 +46,9 @@ export const UserProfilePage: React.FunctionComponent = () => {
         </div>
         <TokenList tokens={result} />
       </div>
+      <div className={style["logout"]}>
+        <button className="button is-purple">Logout</button>
+      </div>
     </div>
   )
 }
