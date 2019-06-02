@@ -1,3 +1,33 @@
 @import "~/styles/variables.scss";
 @import "~/styles/layouts.scss";
 
+.profile {
+  display: flex;
+}
+
+.avatar {
+  border-radius: 10000px;
+  border: 1px solid $grey-7;
+  height: 80px;
+  width: 80px;
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin-left: 20px;
+
+  .name {
+    font-family: $family-secondary;
+    font-size: 1.4rem;
+    font-weight: bold;
+  }
+
+  .email {
+    color: $grey-5;
+    font-family: $family-secondary;
+    font-size: 1rem;
+    font-weight: bold;
+  }
+}

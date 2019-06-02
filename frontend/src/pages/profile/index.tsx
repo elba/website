@@ -33,7 +33,12 @@ export const UserProfilePage: React.FunctionComponent = () => {
   })
   return (
     <div className={style.page}>
-      <UserProfile user={testUser} />
+      <div className={style["profile-section"]}>
+        <h2>Profile</h2>
+        <div className={style["profile-section__content"]}>
+          <UserProfile user={testUser} />
+        </div>
+      </div>
       <div className={style["token-section"]}>
         <div className={style["token-section__title"]}>
           <h2>Access Tokens</h2>

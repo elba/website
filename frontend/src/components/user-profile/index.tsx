@@ -15,12 +15,12 @@ type ProfileProps = {
 
 export const UserProfile: React.FunctionComponent<ProfileProps> = props => {
   return (
-    <div>
-      <div>
-        <img src={props.user.avatar} />
+    <div className={style["profile"]}>
+      <img className={style["avatar"]} src={props.user.avatar} />
+      <div className={style["text"]}>
+        <div className={style["name"]}>{props.user.name}</div>
+        <div className={style["email"]}>{props.user.email}</div>
       </div>
-      <div>{props.user.name}</div>
-      <div>{props.user.email}</div>
     </div>
   )
 }
