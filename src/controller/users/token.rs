@@ -15,7 +15,7 @@ pub async fn list_tokens(
     let user_id: i32 = match req.identity() {
         Some(user_id) => user_id.parse().unwrap(),
         None => {
-            return Err(human!(Reason::NoPermission, "Please login first"));
+            return Err(human!(Reason::NoPermission, "please login first"));
         }
     };
 
@@ -41,7 +41,7 @@ pub async fn create_token(
     let user_id: i32 = match req.identity() {
         Some(user_id) => user_id.parse().unwrap(),
         None => {
-            return Err(human!(Reason::NoPermission, "Please login first"));
+            return Err(human!(Reason::NoPermission, "please login first"));
         }
     };
 
@@ -64,7 +64,7 @@ pub async fn remove_token(
     let user_id: i32 = match req.identity() {
         Some(user_id) => user_id.parse().unwrap(),
         None => {
-            return Err(human!(Reason::NoPermission, "Please login first"));
+            return Err(human!(Reason::NoPermission, "please login first"));
         }
     };
 

@@ -49,7 +49,7 @@ table! {
 table! {
     users (id) {
         id -> Int4,
-        email -> Nullable<Varchar>,
+        email -> Varchar,
         gh_id -> Int4,
         gh_name -> Varchar,
         gh_access_token -> Varchar,

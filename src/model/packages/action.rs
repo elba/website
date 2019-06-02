@@ -264,8 +264,7 @@ pub fn publish_version(
                     group_name: &msg.package_info.name.normalized_group(),
                     group_name_origin: &msg.package_info.name.group(),
                     user_id: user.id,
-                })
-                .get_result(conn)?,
+                }).get_result(conn)?,
         };
 
         let package = Package::belonging_to(&group)
@@ -302,15 +301,13 @@ pub fn publish_version(
                         group_id: group.id,
                         package_name: &msg.package_info.name.normalized_name(),
                         package_name_origin: &msg.package_info.name.name(),
-                    })
-                    .get_result::<Package>(conn)?;
+                    }).get_result::<Package>(conn)?;
 
                 diesel::insert_into(package_owners::table)
                     .values(CreateOwner {
                         package_id: package.id,
                         user_id: user.id,
-                    })
-                    .execute(conn)?;
+                    }).execute(conn)?;
 
                 package
             }
@@ -342,8 +339,7 @@ pub fn publish_version(
                 homepage: msg.package_info.homepage.as_ref().map(|s| s.as_str()),
                 repository: msg.package_info.repository.as_ref().map(|s| s.as_str()),
                 license: msg.package_info.license.as_ref().map(|s| s.as_str()),
-            })
-            .get_result::<Version>(conn)?;
+            }).get_result::<Version>(conn)?;
 
         let mut deps_info = Vec::new();
         for dep_req in msg.dependencies.iter() {
@@ -372,8 +368,7 @@ pub fn publish_version(
                 version_id: version.id,
                 package_id: dep_info.0,
                 version_req: dep_info.1.to_string(),
-            })
-            .collect();
+            }).collect();
 
         diesel::insert_into(dependencies::table)
             .values(create_deps)
@@ -386,8 +381,7 @@ pub fn publish_version(
             .map(|name| CreateAuthor {
                 version_id: version.id,
                 name,
-            })
-            .collect();
+            }).collect();
 
         diesel::insert_into(version_authors::table)
             .values(create_authors)
@@ -400,8 +394,7 @@ pub fn publish_version(
             .map(|keyword| CreateKeyword {
                 version_id: version.id,
                 keyword,
-            })
-            .collect();
+            }).collect();
 
         diesel::insert_into(version_keywords::table)
             .values(create_keywords)
@@ -415,8 +408,7 @@ pub fn publish_version(
                 },
                 bytes: msg.bytes,
                 readme: msg.readme_file,
-            })
-            .from_err::<Error>()
+            }).from_err::<Error>()
             .wait()?
             .with_context(|_| "failed to store package")?;
 
@@ -424,8 +416,7 @@ pub fn publish_version(
             .send(UpdateSearch {
                 name: msg.package_info.name.clone(),
                 keywords: msg.package_info.keywords.clone(),
-            })
-            .from_err::<Error>()
+            }).from_err::<Error>()
             .wait()?
             .with_context(|_| "failed to update search engine")?;
 
@@ -436,8 +427,7 @@ pub fn publish_version(
                     semver: msg.package_info.version,
                 },
                 dependencies: msg.dependencies,
-            })
-            .from_err::<Error>()
+            }).from_err::<Error>()
             .wait()?
             .with_context(|_| "failed to update index")?;
 
@@ -492,8 +482,7 @@ pub fn yank_version(msg: YankVersion, conn: &Connection, index: &Addr<Index>) ->
             .send(YankPackage {
                 package: msg.package,
                 yanked: msg.yanked,
-            })
-            .from_err::<Error>()
+            }).from_err::<Error>()
             .wait()?
             .with_context(|_| "failed to yank/unyank version")?;
 
@@ -530,8 +519,7 @@ pub fn list_packages(msg: ListPackages, conn: &Connection) -> Result<Vec<Package
         .into_iter()
         .filter_map(|packages_name| {
             PackageName::new(group_name.group().to_owned(), packages_name).ok()
-        })
-        .collect();
+        }).collect();
 
     Ok(package_names)
 }
@@ -552,8 +540,7 @@ pub fn list_versions(msg: ListVersions, conn: &Connection) -> Result<Vec<Package
                 name: package_name.clone(),
                 semver: packages_version.parse().ok()?,
             })
-        })
-        .collect();
+        }).collect();
 
     Ok(packages_versions)
 }
@@ -587,8 +574,7 @@ pub fn list_dependencies(
             group_name_origin,
             package_name_origin,
             dependencies::all_columns(),
-        ))
-        .load::<((String, String, Dependency))>(conn)?;
+        )).load::<((String, String, Dependency))>(conn)?;
 
     let package_dependencies: Vec<_> = result
         .into_iter()
@@ -597,8 +583,7 @@ pub fn list_dependencies(
                 name: PackageName::new(groups_name, packages_name).ok()?,
                 version_req: dependency.version_req.parse().ok()?,
             })
-        })
-        .collect();
+        }).collect();
 
     Ok(package_dependencies)
 }
@@ -697,8 +682,7 @@ pub fn increase_download(msg: IncreaseDownload, conn: &Connection) -> Result<(),
     diesel::insert_into(version_downloads)
         .values(CreateVersionDownload {
             version_id: version.id,
-        })
-        .on_conflict(on_constraint("unique_version_date"))
+        }).on_conflict(on_constraint("unique_version_date"))
         .do_update()
         .set(downloads.eq(downloads + 1))
         .execute(conn)?;
@@ -790,8 +774,7 @@ pub fn populate_search(
             .send(UpdateSearch {
                 name: package,
                 keywords,
-            })
-            .from_err::<Error>()
+            }).from_err::<Error>()
             .wait()?
             .with_context(|_| "failed to update search engine")?;
     }

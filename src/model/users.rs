@@ -14,7 +14,7 @@ use crate::util::error::Reason;
 #[derive(Queryable)]
 pub struct User {
     pub id: i32,
-    pub email: Option<String>,
+    pub email: String,
     pub gh_id: i32,
     pub gh_name: String,
     pub gh_access_token: String,
@@ -35,7 +35,7 @@ pub struct AccessToken {
 #[derive(Insertable, AsChangeset)]
 #[table_name = "users"]
 pub struct CreateUserOrLogin {
-    pub email: Option<String>,
+    pub email: String,
     pub gh_id: i32,
     pub gh_name: String,
     pub gh_access_token: String,

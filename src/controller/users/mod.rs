@@ -18,7 +18,7 @@ pub struct AccessTokenReq {
 #[derive(Serialize, Clone)]
 pub struct UserView {
     pub id: i32,
-    pub email: Option<String>,
+    pub email: String,
     pub name: String,
     pub avatar: Option<String>,
 }

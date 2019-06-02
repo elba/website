@@ -106,8 +106,7 @@ impl Handler<UpdatePackage> for Index {
                     &msg.package.semver
                 ),
                 &meta_path,
-            )
-            .with_context(|_| "failed to push index to remote repo")?;
+            ).with_context(|_| "failed to push index to remote repo")?;
 
         Ok(())
     }
@@ -165,8 +164,7 @@ impl Handler<YankPackage> for Index {
                     &msg.package.semver
                 ),
                 &meta_path,
-            )
-            .with_context(|_| "failed to push index to remote repo")?;
+            ).with_context(|_| "failed to push index to remote repo")?;
 
         Ok(())
     }

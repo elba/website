@@ -10,103 +10,87 @@ pub fn router(app: App<AppState>) -> App<AppState> {
             "/users/login",
             Method::GET,
             compat(controller::users::login::login_by_access_token),
-        )
-        .route(
+        ).route(
             "/users/login/oauth",
             Method::GET,
             compat(controller::users::login::login_by_oauth),
-        )
-        .route(
+        ).route(
             "/users/login/oauth/callback",
             Method::GET,
             compat(controller::users::login::login_by_oauth_callback),
-        )
-        .route(
+        ).route(
+            "/users/metadata",
+            Method::GET,
+            compat(controller::users::metadata::show_user_self),
+        ).route(
             "/users/{id}/metadata",
             Method::GET,
             compat(controller::users::metadata::show_user),
-        )
-        .route(
+        ).route(
             "/users/tokens",
             Method::GET,
             compat(controller::users::token::list_tokens),
-        )
-        .route(
+        ).route(
             "/users/tokens/create",
             Method::PUT,
             compat(controller::users::token::create_token),
-        )
-        .route(
+        ).route(
             "/users/tokens/{token_id}",
             Method::DELETE,
             compat(controller::users::token::remove_token),
-        )
-        .route(
+        ).route(
             "/packages/search",
             Method::GET,
             compat(controller::packages::search),
-        )
-        .route(
+        ).route(
             "/packages/groups",
             Method::GET,
             compat(controller::packages::metadata::list_groups),
-        )
-        .route(
+        ).route(
             "/packages/{group}/metadata",
             Method::GET,
             compat(controller::packages::metadata::show_group),
-        )
-        .route(
+        ).route(
             "/packages/{group}/packages",
             Method::GET,
             compat(controller::packages::metadata::list_packages),
-        )
-        .route(
+        ).route(
             "/packages/{group}/{package}/metadata",
             Method::GET,
             compat(controller::packages::metadata::show_package),
-        )
-        .route(
+        ).route(
             "/packages/{group}/{package}/versions",
             Method::GET,
             compat(controller::packages::metadata::list_versions),
-        )
-        .route(
+        ).route(
             "/packages/{group}/{package}/{version}/metadata",
             Method::GET,
             compat(controller::packages::metadata::show_version),
-        )
-        .route(
+        ).route(
             "/packages/{group}/{package}/{version}/readme",
             Method::GET,
             compat(controller::packages::metadata::show_readme),
-        )
-        .route(
+        ).route(
             "/packages/{group}/{package}/{version}/dependencies",
             Method::GET,
             compat(controller::packages::metadata::list_dependencies),
-        )
-        .route(
+        ).route(
             "/packages/{group}/{package}/{version}/download",
             Method::GET,
             compat(controller::packages::download::download),
-        )
-        .route(
+        ).route(
             "/packages/{group}/{package}/{version}/yank",
             Method::PATCH,
             compat(controller::packages::yank),
-        )
-        .route(
+        ).route(
             "/packages/{group}/{package}/{version}/publish",
             Method::PUT,
             compat(controller::packages::publish),
-        )
-        .route(
+        ).route(
             "/packages/{group}/{package}/{version}/download_stats",
             Method::GET,
             compat(controller::packages::download::download_stats),
-        )
-        .route(
+        ).route(
             "/packages/{group}/{package}/{version}/download_graph",
             Method::GET,
             compat(controller::packages::download::download_graph),

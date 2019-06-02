@@ -75,23 +75,35 @@ impl Handler<LoginByAccessToken> for GhLogin {
 
         compat_future(
             async move {
-                let mut github_response = await!(client
-                    .get("https://api.github.com/user")
-                    .header("Accept", "application/json")
-                    .basic_auth("token", Some(&msg.gh_access_token))
-                    .send())?;
+                let mut github_response = await!(
+                    client
+                        .get("https://api.github.com/user")
+                        .header("Accept", "application/json")
+                        .basic_auth("token", Some(&msg.gh_access_token))
+                        .send()
+                )?;
 
                 if github_response.status() != StatusCode::OK {
                     return Err(human!(
                         Reason::UserNotFound,
-                        "Bad username or access token to Github"
+                        "Invalid access token to Github"
                     ));
                 }
 
                 let response_json: GithubUserRes = await!(github_response.json())?;
 
+                let email = match response_json.email {
+                    Some(email) => email,
+                    None => {
+                        return Err(human!(
+                            Reason::InvalidRequest,
+                            "Github does not returns an email"
+                        ))
+                    }
+                };
+
                 let user = await!(db.send(CreateUserOrLogin {
-                    email: response_json.email,
+                    email: email,
                     gh_id: response_json.id,
                     gh_name: response_json.name,
                     gh_access_token: msg.gh_access_token,
@@ -119,16 +131,17 @@ impl Handler<LoginByOAuth> for GhLogin {
                         client_secret,
                         ..
                     }) => {
-                        let mut github_response = await!(client
-                            .get(&format!(
-                                "https://github.com/login/oauth/access_token?\
-                                 client_id={}\
-                                 &client_secret={}\
-                                 &code={}",
-                                client_id, client_secret, msg.code
-                            ))
-                            .header("Accept", "application/json")
-                            .send())?;
+                        let mut github_response = await!(
+                            client
+                                .get(&format!(
+                                    "https://github.com/login/oauth/access_token?\
+                                     client_id={}\
+                                     &client_secret={}\
+                                     &code={}",
+                                    client_id, client_secret, msg.code
+                                )).header("Accept", "application/json")
+                                .send()
+                        )?;
 
                         if github_response.status() != StatusCode::OK {
                             return Err(format_err!("faild to retireve access token from Github"));

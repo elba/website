@@ -65,8 +65,7 @@ pub async fn download_graph(
         .map(|graph| DownloadGraphView {
             date: graph.date.and_hms(0, 0, 0),
             downloads: graph.downloads as u32,
-        })
-        .collect();
+        }).collect();
 
     #[derive(Serialize)]
     struct R {
