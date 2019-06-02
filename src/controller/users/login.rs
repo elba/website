@@ -4,6 +4,7 @@ use failure::Error;
 use tokio_async_await::await;
 
 use crate::login::{self, LoginByAccessToken, LoginByOAuth};
+use crate::util::empty_response;
 use crate::AppState;
 
 #[derive(Deserialize)]
@@ -29,7 +30,7 @@ pub async fn login_by_access_token(
 
     req.remember(user_id.to_string());
 
-    Ok(HttpResponse::Ok().finish())
+    Ok(empty_response())
 }
 
 pub async fn login_by_oauth((): ()) -> Result<HttpResponse, Error> {
@@ -54,4 +55,10 @@ pub async fn login_by_oauth_callback(
     Ok(HttpResponse::TemporaryRedirect()
         .header("Location", login::get_success_redirect_url()?)
         .finish())
+}
+
+pub async fn logout(req: HttpRequest<AppState>) -> Result<HttpResponse, Error> {
+    req.forget();
+
+    Ok(empty_response())
 }

@@ -4,6 +4,7 @@ use failure::Error;
 use tokio_async_await::await;
 
 use crate::model::users::*;
+use crate::util::empty_response;
 use crate::util::error::Reason;
 use crate::AppState;
 
@@ -73,5 +74,5 @@ pub async fn remove_token(
         access_token_id: path.token_id,
     }))??;
 
-    Ok(HttpResponse::Ok().finish())
+    Ok(empty_response())
 }

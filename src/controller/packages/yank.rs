@@ -5,6 +5,7 @@ use failure::Error;
 use tokio_async_await::await;
 
 use crate::model::packages::*;
+use crate::util::empty_response;
 use crate::AppState;
 
 use super::PackageVersionReq;
@@ -26,5 +27,5 @@ pub async fn yank(
         token: query.token.clone(),
     }))??;
 
-    Ok(HttpResponse::Ok().finish())
+    Ok(empty_response())
 }

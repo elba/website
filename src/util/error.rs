@@ -24,7 +24,7 @@ pub fn report_error(error: Error) -> HttpResponse {
 
     if let Some(human_error) = find_human_error(&error) {
         HttpResponse::BadRequest().body(format!(
-            "{{error:\"{}\",description:\"{}\"}}",
+            "{{\"error\":\"{}\",\"description\":\"{}\"}}",
             human_error.reason.tag(),
             human_error.message
         ))

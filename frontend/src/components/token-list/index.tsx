@@ -2,15 +2,10 @@ import React, { useCallback } from "react"
 import style from "./styles.scss"
 import { timeago } from "~/utils/timeago"
 import { RemoteData } from "~/utils/remote-data"
+import { AccessTokenView } from "~/models/api"
 import check from "~/img/check.svg"
 
-export type TokenProps = {
-  token_id: number
-  token_partial: string
-  created_at: Date
-}
-
-const TokenRow: React.FunctionComponent<TokenProps> = props => {
+const TokenRow: React.FunctionComponent<AccessTokenView> = props => {
   return (
     <tr>
       <td>{props.token_partial}</td>
@@ -23,7 +18,7 @@ const TokenRow: React.FunctionComponent<TokenProps> = props => {
 }
 
 export type TokenListProps = {
-  tokens: RemoteData<TokenProps[]>
+  tokens: RemoteData<AccessTokenView[]>
 }
 
 export const TokenList: React.FunctionComponent<TokenListProps> = props => {

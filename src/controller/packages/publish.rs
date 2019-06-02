@@ -11,6 +11,7 @@ use tar::Archive;
 use tokio_async_await::await;
 
 use crate::model::packages::*;
+use crate::util::empty_response;
 use crate::util::error::Reason;
 use crate::{AppState, CONFIG};
 
@@ -56,7 +57,7 @@ pub async fn publish(
         bytes: body,
     }))??;
 
-    Ok(HttpResponse::Ok().finish())
+    Ok(empty_response())
 }
 
 fn read_manifest(bytes: &[u8]) -> Result<Manifest, Error> {

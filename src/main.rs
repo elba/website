@@ -27,6 +27,7 @@ extern crate serde_derive;
 extern crate log;
 
 use actix::prelude::*;
+use actix_web::middleware::cors::Cors;
 use actix_web::middleware::identity::{CookieIdentityPolicy, IdentityService};
 use actix_web::{middleware, server, App};
 
@@ -79,14 +80,18 @@ fn main() {
         .expect("faild to populate search engine");
 
     server::new(move || {
-        let app = App::with_state(app_state.clone())
+        App::with_state(app_state.clone())
             .middleware(middleware::Logger::default())
             .middleware(IdentityService::new(
                 CookieIdentityPolicy::new(&[0; 32])
                     .name("user_token")
                     .secure(false),
-            ));
-        router::router(app)
+            )).configure(|app| {
+                let mut cors = Cors::for_app(app);
+                cors.supports_credentials();
+                router::router(&mut cors);
+                cors.register()
+            })
     }).bind(&CONFIG.bind_to)
     .expect(&format!("can't bind to {}", &CONFIG.bind_to))
     .start();

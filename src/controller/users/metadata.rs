@@ -4,7 +4,6 @@ use failure::Error;
 use tokio_async_await::await;
 
 use crate::model::users::*;
-use crate::util::error::Reason;
 use crate::AppState;
 
 use super::*;
@@ -27,10 +26,15 @@ pub async fn show_user(
 pub async fn show_user_self(
     (state, req): (State<AppState>, HttpRequest<AppState>),
 ) -> Result<HttpResponse, Error> {
+    #[derive(Serialize)]
+    struct R {
+        user: Option<UserView>,
+    }
+
     let user_id: i32 = match req.identity() {
         Some(user_id) => user_id.parse().unwrap(),
         None => {
-            return Err(human!(Reason::NoPermission, "please login first"));
+            return Ok(HttpResponse::Ok().json(R { user: None }));
         }
     };
 
@@ -38,10 +42,7 @@ pub async fn show_user_self(
 
     let user_meta = UserView::from(user);
 
-    #[derive(Serialize)]
-    struct R {
-        user: UserView,
-    }
-
-    Ok(HttpResponse::Ok().json(R { user: user_meta }))
+    Ok(HttpResponse::Ok().json(R {
+        user: Some(user_meta),
+    }))
 }
