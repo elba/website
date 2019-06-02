@@ -42,3 +42,31 @@
     padding: 30px;
   }
 }
+
+.token-display {
+  border: 1px solid $grey-3;
+
+  .token-display__top {
+    padding: 20px 12px;
+    display: flex;
+    align-items: center;
+
+    .token-display__text {
+      margin-left: 5px;
+      font-size: 0.95rem;
+    }
+  }
+
+  .token-display__bottom {
+    padding: 15px;
+    display: flex;
+    justify-content: center;
+    background-color: $grey-2;
+  }
+
+  img {
+    width: 25px;
+    height: 25px;
+    margin: 10px;
+  }
+}

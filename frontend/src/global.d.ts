@@ -5,3 +5,4 @@ declare module "*.scss" {
     export default classes
 }
 declare module "*.jpg"
+declare module "*.svg"

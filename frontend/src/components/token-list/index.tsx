@@ -2,6 +2,7 @@ import React, { useCallback } from "react"
 import style from "./styles.scss"
 import { timeago } from "~/utils/timeago"
 import { RemoteData } from "~/utils/remote-data"
+import check from "~/img/check.svg"
 
 export type TokenProps = {
   token_id: number
@@ -55,5 +56,26 @@ export const TokenList: React.FunctionComponent<TokenListProps> = props => {
         )}
       </tbody>
     </table>
+  )
+}
+
+export type TokenDisplayProps = {
+  token: string
+}
+
+export const TokenDisplay: React.FunctionComponent<
+  TokenDisplayProps
+> = props => {
+  return (
+    <div className={style["token-display"]}>
+      <div className={style["token-display__top"]}>
+        <img src={check} />
+        <div className={style["token-display__text"]}>
+          <p>Token created.</p>
+          <p>It will never be displayed again.</p>
+        </div>
+      </div>
+      <div className={style["token-display__bottom"]}>{props.token}</div>
+    </div>
   )
 }
