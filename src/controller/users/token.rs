@@ -22,7 +22,7 @@ pub async fn list_tokens(
     let access_tokens = await!(state.db.send(ListAccessTokens { user_id }))??;
     let access_tokens = access_tokens
         .into_iter()
-        .map(|access_token| AccessTokenView::new(access_token.id, access_token.token).hide_token())
+        .map(|access_token| AccessTokenView::from(access_token).hide_token())
         .collect();
 
     #[derive(Serialize)]
@@ -46,7 +46,7 @@ pub async fn create_token(
     };
 
     let access_token = await!(state.db.send(CreateAccessToken { user_id }))??;
-    let access_token = AccessTokenView::new(access_token.id, access_token.token);
+    let access_token = AccessTokenView::from(access_token);
 
     #[derive(Serialize)]
     struct R {

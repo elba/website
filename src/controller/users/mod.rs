@@ -3,7 +3,9 @@ pub mod token;
 
 pub mod login;
 
-use crate::model::users::User;
+use chrono::NaiveDateTime;
+
+use crate::model::users::{AccessToken, User};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct UserReq {
@@ -28,24 +30,29 @@ pub struct AccessTokenView {
     pub id: i32,
     pub token: Option<String>,
     pub token_partial: String,
+    #[serde(with = "crate::util::rfc3339")]
+    pub created_at: NaiveDateTime,
 }
 
 impl AccessTokenView {
-    pub fn new(id: i32, token: String) -> Self {
-        let mut token_partial = token.clone();
-        token_partial.replace_range(4..token.len() - 4, "....");
-
-        Self {
-            id,
-            token: Some(token),
-            token_partial,
-        }
-    }
-
     pub fn hide_token(self) -> Self {
         Self {
             token: None,
             ..self
+        }
+    }
+}
+
+impl From<AccessToken> for AccessTokenView {
+    fn from(access_token: AccessToken) -> AccessTokenView {
+        let mut token_partial = access_token.token.clone();
+        token_partial.replace_range(4..access_token.token.len() - 4, "....");
+
+        AccessTokenView {
+            id: access_token.id,
+            token: Some(access_token.token),
+            token_partial,
+            created_at: access_token.created_at,
         }
     }
 }
