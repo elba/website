@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react"
 import style from "./styles.scss"
 import { TokenList, TokenProps } from "~components/token-list"
+import { UserProfile, User } from "~components/user-profile"
 import { RemoteData } from "~/utils/remote-data"
+import avatar from "~/img/avatar.jpg"
 
 const testResults: TokenProps[] = new Array(5)
   .fill({
@@ -9,6 +11,13 @@ const testResults: TokenProps[] = new Array(5)
     created_at: new Date(),
   })
   .map((item, idx) => ({ ...item, token_id: idx }))
+
+const testUser: User = {
+  id: 0,
+  avatar: avatar,
+  name: "andylokandy",
+  email: "andylokandy@hotmail.com",
+}
 
 export const UserProfilePage: React.FunctionComponent = () => {
   const [result, setResult] = useState<RemoteData<TokenProps[]>>({
@@ -24,6 +33,7 @@ export const UserProfilePage: React.FunctionComponent = () => {
   })
   return (
     <div className={style.page}>
+      <UserProfile user={testUser} />
       <div className={style["token-section"]}>
         <div className={style["token-section__title"]}>
           <h2>Access Tokens</h2>
