@@ -11,7 +11,18 @@ const { Provider, Consumer } = createContext<UserContext>({
   fetchUser: () => undefined,
 })
 
-export class UserProvider extends React.Component {
+type UserProviderState = {
+  user?: UserView
+}
+
+export class UserProvider extends React.Component<{}, UserProviderState> {
+  constructor(props: any) {
+    super(props)
+    this.state = {
+      user: undefined,
+    }
+  }
+
   componentDidMount() {
     this.fetchUser()
   }
@@ -25,14 +36,13 @@ export class UserProvider extends React.Component {
     load()
   }
 
-  state = {
-    user: undefined,
-  }
-
   render() {
     return (
       <Provider
-        value={{ user: this.state.user, fetchUser: this.fetchUser.bind(this) }}
+        value={{
+          user: this.state.user,
+          fetchUser: this.fetchUser.bind(this),
+        }}
       >
         {this.props.children}
       </Provider>

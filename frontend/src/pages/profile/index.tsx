@@ -6,49 +6,45 @@ import { UserProfile } from "~components/user-profile"
 import { RemoteData } from "~/utils/remote-data"
 import "~/models/api"
 import {
-  show_user_self,
-  UserView,
   AccessTokenView,
   list_tokens,
   logout,
-} from "~/models/api"
+  create_token,
+  remove_token,
+} from "~/api"
 import { Redirect } from "react-router"
-
-const testResults: AccessTokenView[] = new Array(5)
-  .fill({
-    token_partial: "3423......2344",
-    created_at: new Date(),
-  })
-  .map((item, idx) => ({ ...item, token_id: idx }))
 
 export const UserProfilePage: React.FunctionComponent = () => {
   const [tokenDisplay, setTokenDisplay] = useState<string | void>(undefined)
   const [tokens, setTokens] = useState<RemoteData<AccessTokenView[]>>({
     type: "Not Asked",
   })
-  const [user, setUser] = useState<RemoteData<UserView>>({
-    type: "Not Asked",
-  })
 
   useEffect(() => {
     if (tokens.type === "Not Asked") {
       setTokens({ type: "Started" })
-      async function load() {
-        let tokens = await list_tokens()
-        setTokens({ type: "Done", data: tokens })
-      }
-      load()
+      loadTokens()
     }
-    if (user.type === "Not Asked") {
-      setUser({ type: "Started" })
-      async function load() {
-        // TODO: redirect on error
-        let user = await show_user_self()
-        setUser({ type: "Done", data: user })
-      }
-      load()
+  })
+
+  const loadTokens = async () => {
+    let tokens = await list_tokens()
+    setTokens({ type: "Done", data: tokens })
+  }
+
+  const onCreateToken = async () => {
+    let token = await create_token()
+    setTokenDisplay(token.token)
+    loadTokens()
+  }
+
+  const onDeleteToken = async (token_id: number) => {
+    if (confirm("Are you sure you want to delete this token?")) {
+      await remove_token(token_id)
+      setTokenDisplay(undefined)
+      loadTokens()
     }
-  }, [])
+  }
 
   return (
     <UserConsumer>
@@ -58,14 +54,17 @@ export const UserProfilePage: React.FunctionComponent = () => {
             <div className={style["profile-section"]}>
               <h2>Profile</h2>
               <div className={style["profile-section__content"]}>
-                <UserProfile user={user} />
+                <UserProfile user={userContext.user} />
               </div>
             </div>
             <div className={style["token-section"]}>
               <div className={style["token-section__title"]}>
                 <h2>Access Tokens</h2>
-                <button className="button is-purple">Create Token</button>
+                <button className="button is-purple" onClick={onCreateToken}>
+                  Create Token
+                </button>
               </div>
+              <TokenList tokens={tokens} onDeleteToken={onDeleteToken} />
               {tokenDisplay !== undefined ? (
                 <div className={style["token-display"]}>
                   <TokenDisplay token={tokenDisplay} />
@@ -73,7 +72,6 @@ export const UserProfilePage: React.FunctionComponent = () => {
               ) : (
                 <div />
               )}
-              <TokenList tokens={tokens} />
             </div>
             <div className={style["logout"]}>
               <button

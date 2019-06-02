@@ -3,7 +3,7 @@ import { Link } from "react-router-dom"
 import { UserConsumer } from "~/utils/user-context.tsx"
 import history from "~/history"
 import style from "./styles.scss"
-import { login_by_access_token } from "~/models/api"
+import { login_by_access_token } from "~/api"
 
 export const Navbar: React.FunctionComponent = () => (
   <nav className={style["navbar"]}>
@@ -75,7 +75,7 @@ function onSearch(ev: React.FormEvent<HTMLFormElement>) {
 }
 
 async function onLogin(fetchUser: () => void) {
-  let access_token = prompt("access token?") || ""
+  let access_token = prompt("Github access token?") || ""
   await login_by_access_token(access_token)
   fetchUser()
 }

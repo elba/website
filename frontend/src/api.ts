@@ -9,7 +9,7 @@ export type AccessTokenView = {
   id: number
   token?: string
   token_partial: string
-  created_at: Date
+  created_at: string
 }
 
 export type PackageVersionReq = {
@@ -23,8 +23,8 @@ export type PackageView = {
   package: string
   latest_version: PackageVersionReq
   owners: UserView[]
-  updated_at: Date
-  created_at: Date
+  updated_at: string
+  created_at: string
 }
 
 export type VersionView = {
@@ -38,11 +38,12 @@ export type VersionView = {
   license?: string
   keywords: string[]
   owners: UserView[]
-  created_at: Date
+  created_at: string
 }
 
-// const URLROOT = "https://api.elba.pub/api/v1"
-const URLROOT = "http://localhost:17000/api/v1"
+const URLROOT = "https://api.elba.pub/api/v1"
+// const URLROOT = "http://localhost:17000/api/v1"
+// const URLROOT = "http://192.168.43.32:17000/api/v1"
 
 export async function login_by_oauth(): Promise<void> {
   const _ = await send_request(`${URLROOT}/users/login/oauth`, "GET")

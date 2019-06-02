@@ -3,11 +3,16 @@
 
 .token-table {
   width: 100%;
+  table-layout: fixed;
 
   thead {
     th {
       padding: 15px 0px;
       font-size: 1rem;
+    }
+
+    .th-title {
+      width: 40%;
     }
   }
 
@@ -60,6 +65,7 @@
   .token-display__bottom {
     padding: 15px;
     display: flex;
+    font-size: 0.95rem;
     justify-content: center;
     background-color: $grey-2;
   }
