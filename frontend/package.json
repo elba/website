@@ -1,6 +1,6 @@
 {
   "author": "Andrés Rodríguez",
-  "name": "elba-package-repo-web-frontend",
+  "name": "elba-website-frontend",
   "version": "1.0.0",
   "description": "Web Frontend for Elba's package repository",
   "scripts": {

@@ -33,7 +33,7 @@ pub struct AccessTokenView {
 impl AccessTokenView {
     pub fn new(id: i32, token: String) -> Self {
         let mut token_partial = token.clone();
-        token_partial.replace_range(4..token.len() - 4, "********");
+        token_partial.replace_range(4..token.len() - 4, "....");
 
         Self {
             id,

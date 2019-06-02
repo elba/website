@@ -12,12 +12,15 @@ export const Navbar: React.FunctionComponent = () => (
       <a className={style["navbar-menu-item"]} href="#">
         Get Started
       </a>
-      <a className={style["navbar-menu-item"]} href="https://elba.readthedocs.io/">
+      <a
+        className={style["navbar-menu-item"]}
+        href="https://elba.readthedocs.io/"
+      >
         Docs
       </a>
-      <a className={style["navbar-menu-item"]} href="#">
+      <Link className={style["navbar-menu-item"]} to="/profile">
         Log in
-      </a>
+      </Link>
     </div>
     <div className={style["search-bar"]}>
       <form

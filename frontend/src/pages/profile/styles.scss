@@ -1,0 +1,6 @@
+@import "~/styles/variables.scss";
+@import "~/styles/layouts.scss";
+
+.page {
+  @include content-padding;
+}
