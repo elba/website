@@ -54,9 +54,8 @@ export const PackageDetailsPage: React.FunctionComponent = () => {
                 src={avatar}
                 alt="avatar"
               />
-              <span className={style["owner__name"]}>
-                ziman ziman@example.com
-              </span>
+              <span className={style["owner__name"]}>ziman</span>
+              <span className={style["owner__email"]}>ziman@example.com</span>
             </div>
           </div>
         </aside>

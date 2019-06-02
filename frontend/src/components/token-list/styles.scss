@@ -1,3 +1,39 @@
 @import "~/styles/variables.scss";
 @import "~/styles/layouts.scss";
 
+.token-table {
+  width: 100%;
+
+  thead {
+    th {
+      padding: 15px 5px;
+      font-size: 1rem;
+    }
+  }
+
+  tbody {
+    tr {
+      &:not(:first-child) {
+        margin-top: 5px;
+      }
+    }
+
+    td {
+      padding: 7px 5px;
+      font-size: 0.9rem;
+    }
+  }
+
+  th,
+  td {
+    border-bottom: 1px solid $grey-1;
+  }
+
+  button {
+    margin-left: auto;
+    max-width: 70px;
+    width: 100%;
+    height: 45px;
+    font-size: 1rem;
+  }
+}

@@ -10,11 +10,13 @@ export type TokenProps = {
 
 const TokenRow: React.FunctionComponent<TokenProps> = props => {
   return (
-    <div>
-      <div>{props.token_partial}</div>
-      <div>{timeago(props.created_at) + " ago"}</div>
-      <button>Delete</button>
-    </div>
+    <tr>
+      <td>{props.token_partial}</td>
+      <td>{timeago(props.created_at) + " ago"}</td>
+      <td>
+        <button className="button is-black">Delete</button>
+      </td>
+    </tr>
   )
 }
 
@@ -24,12 +26,26 @@ export type TokenListProps = {
 
 export const TokenList: React.FunctionComponent<TokenListProps> = props => {
   return (
-    <div>
-      <p>Token</p>
-      <p>Created</p>
-      {props.tokens.map((token, idx) => (
-        <TokenRow key={idx} {...token} />
-      ))}
-    </div>
+    <table className={style["token-table"]}>
+      <thead>
+        <tr>
+          <th>Token</th>
+          <th>Created</th>
+          <th />
+        </tr>
+      </thead>
+      <tbody>
+        {props.tokens.map((token, idx) => (
+          <TokenRow key={idx} {...token} />
+        ))}
+      </tbody>
+    </table>
+    // <td className={style.list}>
+    //   <p className={style["title-1"]}>Token</p>
+    //   <p className={style["title-2"]}>Created</p>
+    //   {props.tokens.map((token, idx) => (
+    //     <TokenRow key={idx} {...token} />
+    //   ))}
+    // </div>
   )
 }
