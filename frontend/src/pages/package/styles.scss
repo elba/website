@@ -90,7 +90,7 @@
     pre {
       font-size: 0.9rem;
       background: $grey-2;
-      padding: 16px 12px;
+      padding: 14px 12px;
       overflow-x: auto;
       overflow-y: hidden;
     }
@@ -114,15 +114,16 @@
       border-radius: 2px;
     }
 
-    .owner__name {
+    .owner__text {
       margin-left: 10px;
-      font-size: 1rem;
-      font-weight: 500;
-    }
+      .owner__name {
+        font-size: 1rem;
+        font-weight: 500;
+      }
 
-    .owner__email {
-      margin-left: 7px;
-      font-size: 0.9rem;
+      .owner__email {
+        font-size: 0.9rem;
+      }
     }
   }
 }

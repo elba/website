@@ -4,11 +4,6 @@ import { PackageList } from "~/components/package-listing"
 import { PackageReq, list_groups, list_packages } from "~api"
 import { RemoteData } from "~utils/remote-data"
 
-const testResults = new Array(10).fill({
-  group: "lightyear",
-  package: "lightyear",
-})
-
 export const Homepage: React.FunctionComponent = () => {
   const [packages, setPackages] = useState<RemoteData<PackageReq[]>>({
     type: "Not Asked",

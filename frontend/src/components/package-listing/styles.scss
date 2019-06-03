@@ -135,6 +135,7 @@
   .downloads-counter-number {
     grid-area: downloads-counter-number;
     justify-self: right;
+    align-self: center;
     font-family: $family-secondary;
     font-size: 1.125rem;
     font-weight: bold;

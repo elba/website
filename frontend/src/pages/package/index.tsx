@@ -136,8 +136,10 @@ export const PackageDetailsPage: React.FunctionComponent<
                 ) : (
                   <div />
                 )}
-                <span className={style["owner__name"]}>{owner.name}</span>
-                <span className={style["owner__email"]}>{owner.email}</span>
+                <div className={style["owner__text"]}>
+                  <div className={style["owner__name"]}>{owner.name}</div>
+                  <div className={style["owner__email"]}>{owner.email}</div>
+                </div>
               </div>
             ))}
           </div>

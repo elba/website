@@ -54,63 +54,58 @@ export type DownloadStatsView = {
   season: number
 }
 
-// const URLROOT = "https://api.elba.pub/api/v1"
-const URLROOT = "http://localhost:17000/api/v1"
-// const URLROOT = "http://192.168.43.32:17000/api/v1"
-
-export async function login_by_oauth(): Promise<void> {
-  const _ = await send_request(`${URLROOT}/users/login/oauth`, "GET")
-  return undefined
-}
+export const APIROOT = "https://api.elba.pub/api/v1"
+// export const APIROOT = "http://localhost:17000/api/v1"
+// export const APIROOT = "http://192.168.43.32:17000/api/v1"
 
 export async function login_by_access_token(
   access_token: string
 ): Promise<void> {
   const _ = await send_request(
-    `${URLROOT}/users/login?gh_access_token=${access_token}`,
+    `${APIROOT}/users/login?gh_access_token=${access_token}`,
     "GET"
   )
   return undefined
 }
 
 export async function logout(): Promise<void> {
-  const _ = await send_request(`${URLROOT}/users/logout`, "GET")
+  const _ = await send_request(`${APIROOT}/users/logout`, "GET")
   return undefined
 }
 
 export async function show_user_self(): Promise<UserView> {
-  const json = await send_request(`${URLROOT}/users/metadata`, "GET")
+  const json = await send_request(`${APIROOT}/users/metadata`, "GET")
   return json.user
 }
 
 export async function create_token(): Promise<AccessTokenView> {
-  const json = await send_request(`${URLROOT}/users/tokens/create`, "PUT")
+  const json = await send_request(`${APIROOT}/users/tokens/create`, "PUT")
   return json.token
 }
 
 export async function list_tokens(): Promise<AccessTokenView[]> {
-  const json = await send_request(`${URLROOT}/users/tokens`, "GET")
+  const json = await send_request(`${APIROOT}/users/tokens`, "GET")
   return json.tokens
 }
 
 export async function remove_token(token_id: number): Promise<void> {
-  const _ = await send_request(`${URLROOT}/users/tokens/${token_id}`, "DELETE")
+  const _ = await send_request(`${APIROOT}/users/tokens/${token_id}`, "DELETE")
   return undefined
 }
 
 export async function search(q: string): Promise<PackageReq[]> {
-  const json = await send_request(`${URLROOT}/packages/search?q=${q}`, "GET")
+  const json = await send_request(`${APIROOT}/packages/search?q=${q}`, "GET")
   return json.packages
 }
 
 export async function list_groups(): Promise<GroupReq[]> {
-  const json = await send_request(`${URLROOT}/packages/groups`, "GET")
+  const json = await send_request(`${APIROOT}/packages/groups`, "GET")
   return json.groups
 }
 
 export async function list_packages(groupReq: GroupReq): Promise<PackageReq[]> {
   const json = await send_request(
-    `${URLROOT}/packages/${groupReq.group}/packages`,
+    `${APIROOT}/packages/${groupReq.group}/packages`,
     "GET"
   )
   return json.packages
@@ -120,7 +115,7 @@ export async function list_versions(
   packageReq: PackageReq
 ): Promise<VersionReq[]> {
   const json = await send_request(
-    `${URLROOT}/packages/${packageReq.group}/${packageReq.package}/versions`,
+    `${APIROOT}/packages/${packageReq.group}/${packageReq.package}/versions`,
     "GET"
   )
   return json.versions
@@ -130,7 +125,7 @@ export async function show_package(
   package_req: PackageReq
 ): Promise<PackageView> {
   const json = await send_request(
-    `${URLROOT}/packages/${package_req.group}/${package_req.package}/metadata`,
+    `${APIROOT}/packages/${package_req.group}/${package_req.package}/metadata`,
     "GET"
   )
   return json.package
@@ -140,7 +135,7 @@ export async function show_version(
   version_req: VersionReq
 ): Promise<VersionView> {
   const json = await send_request(
-    `${URLROOT}/packages/${version_req.group}/${version_req.package}/${
+    `${APIROOT}/packages/${version_req.group}/${version_req.package}/${
       version_req.version
     }/metadata`,
     "GET"
@@ -150,7 +145,7 @@ export async function show_version(
 
 export async function show_readme(version_req: VersionReq): Promise<string> {
   const readme = await fetch(
-    `${URLROOT}/packages/${version_req.group}/${version_req.package}/${
+    `${APIROOT}/packages/${version_req.group}/${version_req.package}/${
       version_req.version
     }/readme`,
     {
@@ -165,7 +160,7 @@ export async function download_stats(
   version_req: VersionReq
 ): Promise<DownloadStatsView> {
   const json = await send_request(
-    `${URLROOT}/packages/${version_req.group}/${version_req.package}/${
+    `${APIROOT}/packages/${version_req.group}/${version_req.package}/${
       version_req.version
     }/download_stats`,
     "GET"
