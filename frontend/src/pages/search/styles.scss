@@ -28,35 +28,16 @@
 
 .listing-top-bar {
   border-bottom: 1px solid $grey-2;
-  padding-bottom: 18px;
-  margin-bottom: 14px;
 
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
+  margin-bottom: 18px;
   align-items: center;
+
   .packages-found-label {
     font-size: 1.1em;
-  }
-  .listing-top-bar__pagination-button-container {
-    display: flex;
-    .pagination-button {
-      border-radius: 4px;
-      font-size: 1.1em;
-      line-height: 1.1em;
-      padding: 0.35em 0.55rem;
-      min-width: 1.6em;
-      text-align: center;
-      color: $grey-8;
-      background-color: $grey-1;
-      &:not(:first-child) {
-        margin-left: 4px;
-      }
-      &:hover {
-        filter: brightness(90%);
-      }
-      &:active {
-        background-color: $grey-2;
-      }
-    }
+    margin-bottom: 16px;
+    white-space: nowrap;
   }
 }

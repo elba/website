@@ -12,6 +12,11 @@ export type AccessTokenView = {
   created_at: string
 }
 
+export type PackageReq = {
+  group: string
+  package: string
+}
+
 export type PackageVersionReq = {
   group: string
   package: string
@@ -21,8 +26,7 @@ export type PackageVersionReq = {
 export type PackageView = {
   group: string
   package: string
-  latest_version: PackageVersionReq
-  owners: UserView[]
+  latest_version: VersionView
   updated_at: string
   created_at: string
 }
@@ -41,8 +45,13 @@ export type VersionView = {
   created_at: string
 }
 
-const URLROOT = "https://api.elba.pub/api/v1"
-// const URLROOT = "http://localhost:17000/api/v1"
+export type DownloadStatsView = {
+  total: number
+  season: number
+}
+
+// const URLROOT = "https://api.elba.pub/api/v1"
+const URLROOT = "http://localhost:17000/api/v1"
 // const URLROOT = "http://192.168.43.32:17000/api/v1"
 
 export async function login_by_oauth(): Promise<void> {
@@ -83,6 +92,33 @@ export async function list_tokens(): Promise<AccessTokenView[]> {
 export async function remove_token(token_id: number): Promise<void> {
   const _ = await send_request(`${URLROOT}/users/tokens/${token_id}`, "DELETE")
   return undefined
+}
+
+export async function search(q: string): Promise<PackageReq[]> {
+  const json = await send_request(`${URLROOT}/packages/search?q=${q}`, "GET")
+  return json.packages
+}
+
+export async function show_package(
+  package_req: PackageReq
+): Promise<PackageView> {
+  const json = await send_request(
+    `${URLROOT}/packages/${package_req.group}/${package_req.package}/metadata`,
+    "GET"
+  )
+  return json.package
+}
+
+export async function download_stats(
+  version_req: PackageVersionReq
+): Promise<DownloadStatsView> {
+  const json = await send_request(
+    `${URLROOT}/packages/${version_req.group}/${version_req.package}/${
+      version_req.version
+    }/download_stats`,
+    "GET"
+  )
+  return json.download_stats
 }
 
 async function send_request(url: string, method?: string): Promise<any> {

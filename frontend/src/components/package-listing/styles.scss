@@ -9,7 +9,6 @@
 .package-item {
   border-bottom: 1px solid $grey-2;
   padding-bottom: 18px;
-  cursor: pointer;
 
   &:not(:first-child) {
     padding-top: 14px;
@@ -19,14 +18,15 @@
   grid-template-columns: repeat(auto-fill, 1fr);
   grid-template-rows: repeat(4, auto-fill);
   grid-template-areas:
-    "title-row     downloads-counter"
-    "description   downloads-counter"
+    "title-row     downloads-counter-number"
+    "description   downloads-counter-title"
     "tag-container tag-container"
     "bottom-row    bottom-row";
   grid-gap: 8px;
 
   .title-row {
     grid-area: title-row;
+    cursor: pointer;
 
     display: flex;
     align-items: baseline;
@@ -132,26 +132,47 @@
     }
   }
 
-  .downloads-counter {
-    grid-area: downloads-counter;
+  .downloads-counter-number {
+    grid-area: downloads-counter-number;
     justify-self: right;
-    max-width: 130px;
-    text-align: right;
     font-family: $family-secondary;
+    font-size: 1.125rem;
+    font-weight: bold;
+    color: $grey-6;
+  }
 
-    display: flex;
-    flex-direction: column;
+  .downloads-counter-title {
+    grid-area: downloads-counter-title;
+    justify-self: right;
+    font-family: $family-secondary;
+    margin-top: 2px;
+    font-size: 0.9rem;
+    color: $grey-6;
+  }
+}
 
-    b {
-      font-size: 1.125rem;
-      font-weight: bold;
-      color: $grey-6;
+.placeholder {
+  grid-gap: 0px;
+
+  .placeholder__bars {
+    grid-area: description;
+    margin-top: 5px;
+
+    div {
+      border-radius: 3px;
+      background-color: $grey-1;
+      margin: 12px 0px;
+      height: 25px;
     }
 
-    p {
-      margin: 5px 0;
-      font-size: 0.9rem;
-      color: $grey-6;
+    div:nth-of-type(1) {
+      width: 70%;
+    }
+    div:nth-of-type(2) {
+      width: 60%;
+    }
+    div:nth-of-type(13) {
+      width: 80%;
     }
   }
 }

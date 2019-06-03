@@ -1,70 +1,79 @@
 import React, { useState, useEffect } from "react"
 import style from "./styles.scss"
-import { PackageList, PackageProps } from "~components/package-listing"
+import { PackageList } from "~components/package-listing"
 import { RemoteData } from "~/utils/remote-data"
-import avatar from "~/img/avatar.jpg"
+import queryString from "query-string"
+import { Redirect } from "react-router"
+import { PackageReq, search } from "~api"
 
-const testResults: PackageProps[] = new Array(5)
-  .fill({
-    group: "lightyear",
-    name: "lightyear",
-    version: "0.2.1",
-    description:
-      "Lightweight parser combinator library for Idris, inspired by Parsec.",
-    keywords: ["parser", "parser", "parser", "parser", "parser"],
-    downloads: 102,
-    avatar: avatar,
-    author: "ziman",
-    updatedAt: new Date(),
-  })
-  .map((item, idx) => ({ ...item, name: `${item.name}${idx}` }))
+type LocationProps = {
+  location: { search: string }
+}
 
-export const SearchResultsPage: React.FunctionComponent = () => {
-  const [result, setResult] = useState<RemoteData<PackageProps[]>>({
-    type: "Not Asked",
-  })
-  useEffect(() => {
-    if (result.type === "Not Asked") {
-      setResult({ type: "Started" })
-      setTimeout(() => {
-        setResult({ type: "Done", data: testResults })
-      }, 1000)
+type State = {
+  result: RemoteData<PackageReq[]>
+}
+
+export class SearchResultsPage extends React.Component<LocationProps, State> {
+  constructor(props: LocationProps) {
+    super(props)
+    this.state = {
+      result: {
+        type: "Not Asked",
+      },
     }
-  })
-  return (
-    <div className={style.page}>
-      <header className={style.header}>
-        <span className={style["search-result"]}>Search results</span>
-        <span className={style["search-for"]}>for</span>
-        <span className={style["search-term"]}>lightyear</span>
-      </header>
-      {result.type === "Done" ? (
+  }
+
+  async load() {
+    const query = queryString.parse(this.props.location.search)
+    let search_results = await search(query.q as string)
+    this.setState({
+      result: { type: "Done", data: search_results },
+    })
+  }
+
+  componentDidMount() {
+    if (this.state.result.type !== "Done") this.load()
+  }
+
+  componentDidUpdate(prevProps: LocationProps) {
+    if (
+      this.state.result.type !== "Done" ||
+      prevProps.location.search != this.props.location.search
+    )
+      this.load()
+  }
+
+  render() {
+    const query = queryString.parse(this.props.location.search)
+    if ((query.q || "") === "") {
+      return <Redirect to="/" />
+    }
+
+    return (
+      <div className={style.page}>
+        <header className={style.header}>
+          <span className={style["search-result"]}>Search results</span>
+          <span className={style["search-for"]}>for</span>
+          <span className={style["search-term"]}>{query.q}</span>
+        </header>
         <main>
           <div className={style["listing-top-bar"]}>
             <span className={style["packages-found-label"]}>
-              100 packages found
+              {this.state.result.type === "Done"
+                ? `${this.state.result.data.length} packages found`
+                : "Loading"}
             </span>
-            <div
-              className={style["listing-top-bar__pagination-button-container"]}
-            >
-              {[1, 2, 3, 4, 5, 200].map(pageNumber => (
-                <a className={style["pagination-button"]} key={pageNumber}>
-                  {pageNumber}
-                </a>
-              ))}
-            </div>
           </div>
-          <PackageList packages={result.data} />
+          {this.state.result.type === "Done" ? (
+            <PackageList packages={this.state.result.data} />
+          ) : (
+            <p />
+          )}
         </main>
-      ) : result.type === "Started" ? (
-        <p>Loading...</p>
-      ) : result.type === "Failed" ? (
-        <p>Error: {result.error}</p>
-      ) : (
-        <p />
-      )}
-    </div>
-  )
+      </div>
+    )
+  }
 }
 
 export default SearchResultsPage

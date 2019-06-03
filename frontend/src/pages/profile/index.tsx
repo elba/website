@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useCallback } from "react"
 import style from "./styles.scss"
 import { UserConsumer } from "~/utils/user-context.tsx"
 import { TokenList, TokenDisplay } from "~components/token-list"
@@ -21,12 +21,12 @@ export const UserProfilePage: React.FunctionComponent = () => {
 
   useEffect(() => {
     if (tokens.type === "Not Asked") {
-      setTokens({ type: "Started" })
       loadTokens()
     }
   })
 
   const loadTokens = async () => {
+    setTokens({ type: "Started" })
     let tokens = await list_tokens()
     setTokens({ type: "Done", data: tokens })
   }
@@ -77,7 +77,7 @@ export const UserProfilePage: React.FunctionComponent = () => {
                 className="button is-purple"
                 onClick={() => onLogout(userContext.fetchUser)}
               >
-                Log out
+                Log Out
               </button>
             </div>
           </div>

@@ -1,19 +1,11 @@
 import React from "react"
 import style from "./styles.scss"
-import { PackageList, PackageProps } from "~/components/package-listing"
+import { PackageList } from "~/components/package-listing"
 import avatar from "~/img/avatar.jpg"
 
-const testResults: PackageProps[] = new Array(10).fill({
+const testResults = new Array(10).fill({
   group: "lightyear",
-  name: "lightyear",
-  version: "0.2.1",
-  description:
-    "Lightweight parser combinator library for Idris, inspired by Parsec.",
-  keywords: ["parser", "parser", "parser", "parser", "parser"],
-  downloads: 102,
-  avatar: avatar,
-  author: "ziman",
-  updatedAt: new Date(),
+  package: "lightyear",
 })
 
 export const Homepage: React.FunctionComponent = () => (

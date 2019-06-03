@@ -42,7 +42,6 @@ export const Navbar: React.FunctionComponent = () => (
     <div className={style["search-bar"]}>
       <form
         className={style["search-form"]}
-        method="GET"
         action="/search"
         onSubmit={onSearch}
       >
