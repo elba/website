@@ -1,7 +1,8 @@
 export function timeago(date: Date): string {
   let val = (date || new Date()).getTime()
   val = 0 | ((Date.now() - val) / 1000)
-  
+  val = val < 0 ? 0 : val
+
   let unit, result
   let length: { [key: string]: number } = {
     second: 60,

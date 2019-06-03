@@ -1,5 +1,5 @@
 import React, { createContext, useReducer } from "react"
-import { UserView, show_user_self } from "~/models/api"
+import { UserView, show_user_self } from "~/api"
 
 type UserContext = {
   user?: UserView

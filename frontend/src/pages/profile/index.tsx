@@ -4,7 +4,6 @@ import { UserConsumer } from "~/utils/user-context.tsx"
 import { TokenList, TokenDisplay } from "~components/token-list"
 import { UserProfile } from "~components/user-profile"
 import { RemoteData } from "~/utils/remote-data"
-import "~/models/api"
 import {
   AccessTokenView,
   list_tokens,
@@ -78,7 +77,7 @@ export const UserProfilePage: React.FunctionComponent = () => {
                 className="button is-purple"
                 onClick={() => onLogout(userContext.fetchUser)}
               >
-                Logout
+                Log out
               </button>
             </div>
           </div>
