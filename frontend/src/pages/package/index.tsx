@@ -1,66 +1,151 @@
-import React from "react"
+import React, { useState, useEffect } from "react"
 import style from "./styles.scss"
 import avatar from "~/img/avatar.jpg"
 import ReadmeViewer from "~/components/readme-viewer"
+import {
+  VersionReq,
+  VersionView,
+  show_version,
+  show_readme,
+  list_versions,
+} from "~api"
+import { RemoteData } from "~utils/remote-data"
+import { Link } from "react-router-dom"
 
-export const PackageDetailsPage: React.FunctionComponent = () => {
-  const group = "lightyear"
-  const name = "lightyear"
-  const version = "0.2.1"
-  const readme =
-    "# Lightyear \n\n [![Build Status](https://travis-ci.org/ziman/lightyear.svg?branch=master)](https://travis-ci.org/ziman/lightyear)"
-  return (
+type ParamProps = {
+  match: { params: { group: string; package: string; version: string } }
+}
+
+export const PackageDetailsPage: React.FunctionComponent<
+  ParamProps
+> = props => {
+  const [versionView, setVersionView] = useState<RemoteData<VersionView>>({
+    type: "Not Asked",
+  })
+  const [versions, setVersions] = useState<RemoteData<VersionReq[]>>({
+    type: "Not Asked",
+  })
+  const [readme, setReadme] = useState<RemoteData<string>>({
+    type: "Not Asked",
+  })
+
+  useEffect(() => {
+    load()
+  }, [props])
+
+  const load = async () => {
+    let version_req = {
+      group: props.match.params.group,
+      package: props.match.params.package,
+      version: props.match.params.version,
+    }
+
+    show_version(version_req).then(version_view =>
+      setVersionView({ type: "Done", data: version_view })
+    )
+
+    list_versions({
+      group: version_req.group,
+      package: version_req.package,
+    }).then(versions_list => setVersions({ type: "Done", data: versions_list }))
+
+    show_readme(version_req).then(readme_string =>
+      setReadme({ type: "Done", data: readme_string })
+    )
+  }
+
+  return versionView.type === "Done" ? (
     <div className={style.page}>
       <header className={style["title"]}>
         <span className={style["title__name"]}>
-          {group} / {name}
+          {versionView.data.group} / {versionView.data.package}
         </span>
-        <span className={style["title__version"]}>{version}</span>
+        <span className={style["title__version"]}>
+          {versionView.data.version}
+        </span>
       </header>
       <div className={style["package-top-bar"]}>
-        <a>Homepage</a>
-        <a>Documentation</a>
+        {versionView.data.homepage ? (
+          <a href={"//" + versionView.data.homepage} target="_blank">
+            Homepage
+          </a>
+        ) : (
+          <div />
+        )}
+        {versionView.data.repository ? (
+          <a href={"//" + versionView.data.repository} target="_blank">
+            Repository
+          </a>
+        ) : (
+          <div />
+        )}
       </div>
       <div className={style["main-layout"]}>
         <main>
-          <div className={style["main-layout__readme"]}>
-            <ReadmeViewer markdown={readme} />
-          </div>
+          {readme.type === "Done" ? (
+            <div className={style["main-layout__readme"]}>
+              <ReadmeViewer markdown={readme.data} />
+            </div>
+          ) : (
+            <div />
+          )}
         </main>
         <aside className={style["main-layout__info"]}>
           <div className={style["main-layout__info__item"]}>
             <p>Install</p>
             <pre>
-              "{group}/{name}" = {version}
+              "{versionView.data.group}/{versionView.data.package}" ={" "}
+              {versionView.data.version}
             </pre>
           </div>
-          <div className={style["main-layout__info__item"]}>
-            <p>License</p>
-            <a>MIT</a>
-          </div>
+          {versionView.data.license ? (
+            <div className={style["main-layout__info__item"]}>
+              <p>License</p>
+              <a className={style["item-link"]}>{versionView.data.license}</a>
+            </div>
+          ) : (
+            <div />
+          )}
           <div className={style["main-layout__info__item"]}>
             <p>Versions</p>
-            <a>0.2.1</a>
-            <a>0.2.0</a>
-            <a>0.1.9</a>
-            <a>0.1.8</a>
-            <a>...</a>
+            {versions.type === "Done" ? (
+              versions.data.map(version => (
+                <Link
+                  className={style["item-link"]}
+                  to={`/package/${version.group}/${version.package}/${
+                    version.version
+                  }`}
+                >
+                  {version.version}
+                </Link>
+              ))
+            ) : (
+              <div />
+            )}
           </div>
           <div className={style["main-layout__info__item"]}>
             <p>Owners</p>
-            <div className={style["main-layout__owner"]}>
-              <img
-                className={style["owner__avatar"]}
-                src={avatar}
-                alt="avatar"
-              />
-              <span className={style["owner__name"]}>ziman</span>
-              <span className={style["owner__email"]}>ziman@example.com</span>
-            </div>
+            {versionView.data.owners.map(owner => (
+              <div className={style["main-layout__owner"]} key={owner.email}>
+                {owner.avatar ? (
+                  <img
+                    className={style["owner__avatar"]}
+                    src={owner.avatar}
+                    alt="avatar"
+                  />
+                ) : (
+                  <div />
+                )}
+                <span className={style["owner__name"]}>{owner.name}</span>
+                <span className={style["owner__email"]}>{owner.email}</span>
+              </div>
+            ))}
           </div>
         </aside>
       </div>
     </div>
+  ) : (
+    <div />
   )
 }
 

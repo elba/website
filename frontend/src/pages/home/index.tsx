@@ -25,7 +25,7 @@ export const Homepage: React.FunctionComponent = () => {
     let groups = await list_groups()
     let packages: PackageReq[] = []
     for (var group of groups) {
-      packages = packages.concat(await list_packages(group.group))
+      packages = packages.concat(await list_packages(group))
     }
     setPackages({ type: "Done", data: packages })
   }

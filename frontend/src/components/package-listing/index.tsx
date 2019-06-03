@@ -6,9 +6,8 @@ import {
   PackageReq,
   show_package,
   download_stats,
-  PackageVersionReq,
+  VersionReq,
 } from "~api"
-import { timeago } from "~utils/timeago"
 import { RemoteData } from "~utils/remote-data"
 import { Link } from "react-router-dom"
 
@@ -31,7 +30,7 @@ export const Package: React.FunctionComponent<PackageReq> = props => {
     let packageView = await show_package(props)
     setPackageView({ type: "Done", data: packageView })
 
-    let version_req: PackageVersionReq = {
+    let version_req: VersionReq = {
       group: packageView.latest_version.group,
       package: packageView.latest_version.package,
       version: packageView.latest_version.version,
@@ -44,9 +43,9 @@ export const Package: React.FunctionComponent<PackageReq> = props => {
   const onPackageClick = () => {
     if (packageView.type === "Done") {
       history.push({
-        pathname: `/package/${packageView.data.group}/${
-          packageView.data.package
-        }`,
+        pathname: `/package/${packageView.data.latest_version.group}/${
+          packageView.data.latest_version.package
+        }/${packageView.data.latest_version.version}`,
       })
     }
   }

@@ -18,7 +18,10 @@ ReactDOM.render(
       <Navbar />
       <Route exact path="/" component={Homepage} />
       <Route exact path="/search" component={SearchResultsPage} />
-      <Route path="/package" component={PackageDetailsPage} />
+      <Route
+        path="/package/:group/:package/:version"
+        component={PackageDetailsPage}
+      />
       <Route path="/profile" component={UserProfilePage} />
       <Footer />
     </Router>

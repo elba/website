@@ -21,7 +21,7 @@ export type PackageReq = {
   package: string
 }
 
-export type PackageVersionReq = {
+export type VersionReq = {
   group: string
   package: string
   version: string
@@ -108,12 +108,22 @@ export async function list_groups(): Promise<GroupReq[]> {
   return json.groups
 }
 
-export async function list_packages(group: string): Promise<PackageReq[]> {
+export async function list_packages(groupReq: GroupReq): Promise<PackageReq[]> {
   const json = await send_request(
-    `${URLROOT}/packages/${group}/packages`,
+    `${URLROOT}/packages/${groupReq.group}/packages`,
     "GET"
   )
   return json.packages
+}
+
+export async function list_versions(
+  packageReq: PackageReq
+): Promise<VersionReq[]> {
+  const json = await send_request(
+    `${URLROOT}/packages/${packageReq.group}/${packageReq.package}/versions`,
+    "GET"
+  )
+  return json.versions
 }
 
 export async function show_package(
@@ -126,8 +136,33 @@ export async function show_package(
   return json.package
 }
 
+export async function show_version(
+  version_req: VersionReq
+): Promise<VersionView> {
+  const json = await send_request(
+    `${URLROOT}/packages/${version_req.group}/${version_req.package}/${
+      version_req.version
+    }/metadata`,
+    "GET"
+  )
+  return json.version
+}
+
+export async function show_readme(version_req: VersionReq): Promise<string> {
+  const readme = await fetch(
+    `${URLROOT}/packages/${version_req.group}/${version_req.package}/${
+      version_req.version
+    }/readme`,
+    {
+      mode: "no-cors",
+    }
+  )
+  const text = await readme.text()
+  return text
+}
+
 export async function download_stats(
-  version_req: PackageVersionReq
+  version_req: VersionReq
 ): Promise<DownloadStatsView> {
   const json = await send_request(
     `${URLROOT}/packages/${version_req.group}/${version_req.package}/${
