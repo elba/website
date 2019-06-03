@@ -68,8 +68,8 @@ pub struct DependencyReq {
 
 #[derive(Clone)]
 pub struct DownloadStats {
-    pub downloads_total: i64,
-    pub downloads_season: i64,
+    pub downloads_total: i32,
+    pub downloads_season: i32,
 }
 
 #[derive(Queryable, Clone)]

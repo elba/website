@@ -100,15 +100,34 @@ pub async fn show_package(
     versions.sort_by(|lhs, rhs| lhs.semver.cmp(&rhs.semver));
 
     let owners = await!(state.db.send(ListOwners(package_name.clone())))??;
-    let owners = owners.into_iter().map(UserView::from).collect();
+    let owners: Vec<UserView> = owners.into_iter().map(UserView::from).collect();
+
+    let latest_version: PackageVersion = versions
+        .pop()
+        .ok_or_else(|| format_err!("no version found for package {}", &package_name))?
+        .into();
+
+    let (package_version, latest_version) = await!(state.db.send(LookupVersion(latest_version)))??;
+
+    let keywords = await!(state.db.send(ListKeywords {
+        version_id: latest_version.id,
+    }))??;
+
+    let latest_version_meta = VersionView {
+        package_version: package_version.into(),
+        yanked: latest_version.yanked,
+        description: latest_version.description,
+        homepage: latest_version.homepage,
+        repository: latest_version.repository,
+        license: latest_version.license,
+        keywords,
+        owners,
+        created_at: latest_version.created_at,
+    };
 
     let package_meta = PackageView {
-        latest_version: versions
-            .pop()
-            .ok_or_else(|| format_err!("no version found for package {}", &package_name))?
-            .into(),
+        latest_version: latest_version_meta,
         package: package_name.into(),
-        owners,
         updated_at: package.updated_at,
         created_at: package.created_at,
     };

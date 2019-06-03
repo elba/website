@@ -700,20 +700,17 @@ pub fn lookup_download_stats(
     let (_, version) = lookup_version(LookupVersion(msg.0), conn)?;
 
     let query = version_downloads
+        .select(sum(downloads))
         .filter(version_id.eq(version.id))
+        .group_by(date)
         .order_by(date.desc());
 
-    let downloads_season = query
-        .limit(90)
-        .select(sum(downloads))
-        .get_result::<Option<i64>>(conn)?;
-    let downloads_total = query
-        .select(sum(downloads))
-        .get_result::<Option<i64>>(conn)?;
+    let downloads_season = query.limit(90).get_result::<Option<i64>>(conn).optional()?;
+    let downloads_total = query.get_result::<Option<i64>>(conn).optional()?;
 
     Ok(DownloadStats {
-        downloads_season: downloads_season.unwrap_or(0),
-        downloads_total: downloads_total.unwrap_or(0),
+        downloads_season: downloads_season.unwrap_or(None).unwrap_or(0) as i32,
+        downloads_total: downloads_total.unwrap_or(None).unwrap_or(0) as i32,
     })
 }
 
