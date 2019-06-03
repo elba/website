@@ -1,25 +1,48 @@
-import React from "react"
+import React, { useState, useEffect } from "react"
 import style from "./styles.scss"
 import { PackageList } from "~/components/package-listing"
-import avatar from "~/img/avatar.jpg"
+import { PackageReq, list_groups, list_packages } from "~api"
+import { RemoteData } from "~utils/remote-data"
 
 const testResults = new Array(10).fill({
   group: "lightyear",
   package: "lightyear",
 })
 
-export const Homepage: React.FunctionComponent = () => (
-  <div>
-    <Hero />
-    <Features />
-    <Stats />
-    <section className={style.section}>
-      <h2 className={style["section-title"]}>Popular packages</h2>
-      <PackageList packages={testResults} />
-    </section>
-    <Question />
-  </div>
-)
+export const Homepage: React.FunctionComponent = () => {
+  const [packages, setPackages] = useState<RemoteData<PackageReq[]>>({
+    type: "Not Asked",
+  })
+
+  useEffect(() => {
+    if (packages.type === "Not Asked") {
+      loadPackages()
+    }
+  })
+
+  const loadPackages = async () => {
+    setPackages({ type: "Started" })
+    let groups = await list_groups()
+    let packages: PackageReq[] = []
+    for (var group of groups) {
+      packages = packages.concat(await list_packages(group.group))
+    }
+    setPackages({ type: "Done", data: packages })
+  }
+
+  return (
+    <div>
+      <Hero />
+      <Features />
+      <Stats />
+      <section className={style.section}>
+        <h2 className={style["section-title"]}>Popular packages</h2>
+        <PackageList packages={packages.type === "Done" ? packages.data : []} />
+      </section>
+      <Question />
+    </div>
+  )
+}
 
 const Hero: React.FunctionComponent = () => (
   <div className={style.hero}>

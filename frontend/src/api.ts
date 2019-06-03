@@ -12,6 +12,10 @@ export type AccessTokenView = {
   created_at: string
 }
 
+export type GroupReq = {
+  group: string
+}
+
 export type PackageReq = {
   group: string
   package: string
@@ -96,6 +100,19 @@ export async function remove_token(token_id: number): Promise<void> {
 
 export async function search(q: string): Promise<PackageReq[]> {
   const json = await send_request(`${URLROOT}/packages/search?q=${q}`, "GET")
+  return json.packages
+}
+
+export async function list_groups(): Promise<GroupReq[]> {
+  const json = await send_request(`${URLROOT}/packages/groups`, "GET")
+  return json.groups
+}
+
+export async function list_packages(group: string): Promise<PackageReq[]> {
+  const json = await send_request(
+    `${URLROOT}/packages/${group}/packages`,
+    "GET"
+  )
   return json.packages
 }
 
