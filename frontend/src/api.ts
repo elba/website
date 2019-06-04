@@ -54,9 +54,9 @@ export type DownloadStatsView = {
   season: number
 }
 
-export const APIROOT = "https://api.elba.pub/api/v1"
+// export const APIROOT = "https://api.elba.pub/api/v1"
 // export const APIROOT = "http://localhost:17000/api/v1"
-// export const APIROOT = "http://192.168.43.32:17000/api/v1"
+export const APIROOT = "http://192.168.43.32:17000/api/v1"
 
 export async function login_by_access_token(
   access_token: string

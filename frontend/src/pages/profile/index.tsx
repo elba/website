@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react"
 import style from "./styles.scss"
-import { UserConsumer } from "~/utils/user-context.tsx"
+import { GlobalStateConsumer } from "~/utils/global-state.tsx"
 import { TokenList, TokenDisplay } from "~components/token-list"
 import { UserProfile } from "~components/user-profile"
 import { RemoteData } from "~/utils/remote-data"
@@ -46,14 +46,14 @@ export const UserProfilePage: React.FunctionComponent = () => {
   }
 
   return (
-    <UserConsumer>
-      {userContext =>
-        userContext.user !== undefined ? (
+    <GlobalStateConsumer>
+      {globalState =>
+        globalState.user !== undefined ? (
           <div className={style.page}>
             <div className={style["profile-section"]}>
               <h2>Profile</h2>
               <div className={style["profile-section__content"]}>
-                <UserProfile user={userContext.user} />
+                <UserProfile user={globalState.user} />
               </div>
             </div>
             <div className={style["token-section"]}>
@@ -75,7 +75,7 @@ export const UserProfilePage: React.FunctionComponent = () => {
             <div className={style["logout"]}>
               <button
                 className="button is-purple"
-                onClick={() => onLogout(userContext.fetchUser)}
+                onClick={() => onLogout(globalState.fetchUser)}
               >
                 Log Out
               </button>
@@ -85,7 +85,7 @@ export const UserProfilePage: React.FunctionComponent = () => {
           <Redirect to="/" />
         )
       }
-    </UserConsumer>
+    </GlobalStateConsumer>
   )
 }
 

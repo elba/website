@@ -2,7 +2,7 @@ import React from "react"
 import ReactDOM from "react-dom"
 import { Router, Route } from "react-router-dom"
 import history from "~/history"
-import { UserProvider } from "~/utils/user-context.tsx"
+import { GlobalStateProvider } from "~/utils/global-state.tsx"
 import Navbar from "~/components/navbar"
 import Footer from "~/components/footer"
 import Homepage from "~/pages/home"
@@ -13,7 +13,7 @@ import UserProfilePage from "~/pages/profile"
 import "~/styles/global_styles.scss"
 
 ReactDOM.render(
-  <UserProvider>
+  <GlobalStateProvider>
     <Router history={history}>
       <Navbar />
       <Route exact path="/" component={Homepage} />
@@ -25,6 +25,6 @@ ReactDOM.render(
       <Route path="/profile" component={UserProfilePage} />
       <Footer />
     </Router>
-  </UserProvider>,
+  </GlobalStateProvider>,
   document.getElementById("main-app")
 )

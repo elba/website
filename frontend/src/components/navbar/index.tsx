@@ -1,9 +1,9 @@
 import React from "react"
 import { Link } from "react-router-dom"
-import { UserConsumer } from "~/utils/user-context.tsx"
+import { GlobalStateConsumer } from "~/utils/global-state.tsx"
 import history from "~/history"
 import style from "./styles.scss"
-import { login_by_access_token,  APIROOT } from "~/api"
+import { login_by_access_token, APIROOT } from "~/api"
 
 export const Navbar: React.FunctionComponent = () => (
   <nav className={style["navbar"]}>
@@ -20,24 +20,24 @@ export const Navbar: React.FunctionComponent = () => (
       >
         Docs
       </a>
-      <UserConsumer>
-        {userContext =>
-          userContext.user === undefined ? (
+      <GlobalStateConsumer>
+        {globalState =>
+          globalState.user === undefined ? (
             <a
               className={style["navbar-menu-item"]}
               onClick={() => {
-                onLogin(userContext.fetchUser)
+                onLogin(globalState.fetchUser)
               }}
             >
               Log in
             </a>
           ) : (
             <Link className={style["navbar-menu-item"]} to="/profile">
-              {userContext.user.name}
+              {globalState.user.name}
             </Link>
           )
         }
-      </UserConsumer>
+      </GlobalStateConsumer>
     </div>
     <div className={style["search-bar"]}>
       <form
