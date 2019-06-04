@@ -100,10 +100,6 @@
         background-color: $grey-2;
         font-size: 1.1rem;
 
-        &:focus {
-          background-color: $grey-3;
-        }
-
         &::placeholder {
           color: $grey-4;
         }
@@ -126,10 +122,6 @@
         &:focus {
           color: $grey-7;
         }
-      }
-
-      .input-input:focus + .input-icon {
-        color: $grey-5;
       }
 
       .search-button {
@@ -157,9 +149,15 @@
       color: $grey-1;
     }
 
+    .search-bar {
+      background-color: transparent;
+    }
+
     .input-input {
-      &:focus {
-        background-color: $grey-1 !important;
+      background-color: $grey-1 !important;
+
+      &::placeholder {
+        color: $grey-5 !important;
       }
     }
   }

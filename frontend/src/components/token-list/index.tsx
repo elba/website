@@ -51,13 +51,15 @@ export const TokenList: React.FunctionComponent<TokenListProps> = props => {
               </td>
             </tr>
           ) : (
-            props.tokens.data.map((token, idx) => (
-              <TokenRow
-                key={idx}
-                token={token}
-                onDeleteToken={props.onDeleteToken}
-              />
-            ))
+            props.tokens.data
+              .sort((a, b) => a.id - b.id)
+              .map((token, idx) => (
+                <TokenRow
+                  key={idx}
+                  token={token}
+                  onDeleteToken={props.onDeleteToken}
+                />
+              ))
           )
         ) : props.tokens.type === "Started" ? (
           <tr>

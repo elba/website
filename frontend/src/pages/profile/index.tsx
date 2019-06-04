@@ -27,7 +27,6 @@ export const UserProfilePage: React.FunctionComponent = () => {
   })
 
   const loadTokens = async () => {
-    setTokens({ type: "Started" })
     let tokens = await list_tokens()
     setTokens({ type: "Done", data: tokens })
   }
@@ -66,7 +65,6 @@ export const UserProfilePage: React.FunctionComponent = () => {
                     Create Token
                   </button>
                 </div>
-                <TokenList tokens={tokens} onDeleteToken={onDeleteToken} />
                 {tokenDisplay !== undefined ? (
                   <div className={style["token-display"]}>
                     <TokenDisplay token={tokenDisplay} />
@@ -74,6 +72,7 @@ export const UserProfilePage: React.FunctionComponent = () => {
                 ) : (
                   undefined
                 )}
+                <TokenList tokens={tokens} onDeleteToken={onDeleteToken} />
               </div>
               <div className={style["logout"]}>
                 <button
