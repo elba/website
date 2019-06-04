@@ -1,0 +1,27 @@
+@font-face {
+  font-family: Fira Mono;
+  src: url("FiraMono-Regular.ttf");
+}
+
+@font-face {
+  font-family: Source Sans Pro;
+  src: url("SourceSansPro-Regular.ttf");
+}
+
+@font-face {
+  font-family: Poppins;
+  font-weight: 400;
+  src: url("Poppins-Regular.ttf");
+}
+
+@font-face {
+  font-family: Poppins;
+  font-weight: 500;
+  src: url("Poppins-Medium.ttf");
+}
+
+@font-face {
+  font-family: Poppins;
+  font-weight: 700;
+  src: url("Poppins-Bold.ttf");
+}
