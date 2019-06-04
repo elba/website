@@ -109,17 +109,28 @@ export const PackageDetailsPage: React.FunctionComponent<
           <div className={style["main-layout__info__item"]}>
             <p>Versions</p>
             {versions.type === "Done" ? (
-              versions.data.map(version => (
-                <Link
-                  key={version.version}
-                  className={style["item-link"]}
-                  to={`/package/${version.group}/${version.package}/${
-                    version.version
-                  }`}
-                >
-                  {version.version}
-                </Link>
-              ))
+              versions.data.map(version =>
+                version.version === versionView.data.version ? (
+                  <span
+                    key={version.version}
+                    className={[style["item-link"], style["disabled"]].join(
+                      " "
+                    )}
+                  >
+                    {version.version}
+                  </span>
+                ) : (
+                  <Link
+                    key={version.version}
+                    className={style["item-link"]}
+                    to={`/package/${version.group}/${version.package}/${
+                      version.version
+                    }`}
+                  >
+                    {version.version}
+                  </Link>
+                )
+              )
             ) : (
               <div />
             )}

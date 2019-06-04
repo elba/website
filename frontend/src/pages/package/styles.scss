@@ -109,6 +109,11 @@
       font-family: $family-secondary;
       font-weight: bold;
       color: $purple;
+
+      &.disabled {
+        cursor: default;
+        color: $grey-3;
+      }
     }
   }
 
