@@ -88,6 +88,11 @@ fn main() {
                     .secure(false),
             )).configure(|app| {
                 let mut cors = Cors::for_app(app);
+
+                if let Some(cors_origin) = &CONFIG.cors_origin {
+                    cors.allowed_origin(cors_origin);
+                }
+
                 cors.supports_credentials();
                 router::router(&mut cors);
                 cors.register()

@@ -18,6 +18,7 @@ pub struct Config {
     pub remote_index_pwd: Option<String>,
     pub index_bot_name: String,
     pub index_bot_email: String,
+    pub cors_origin: Option<String>,
     pub gh_oauth_config: Option<GhOAuthConfig>,
 }
 
@@ -69,6 +70,7 @@ impl Config {
             remote_index_pwd: env::var("REMOTE_INDEX_PWD").ok(),
             index_bot_name: read_env("INDEX_BOT_NAME"),
             index_bot_email: read_env("INDEX_BOT_EMAIL"),
+            cors_origin: env::var("CORS_ORIGIN").ok(),
         }
     }
 }
