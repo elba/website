@@ -3,6 +3,7 @@
 
 .section {
   padding: 32px 0;
+
   & > * {
     @include content-padding;
   }
@@ -15,20 +16,31 @@
 }
 
 .hero {
-  @include content-padding;
+  background: repeating-linear-gradient(
+    45deg,
+    $grey-7,
+    $grey-7 3px,
+    $grey-8 3px,
+    $grey-8 6px
+  );
 
-  margin: 2rem auto;
-  max-width: 720px !important;
+  .hero-content {
+    @include content-padding;
+
+    @include desktop {
+      max-width: 720px;
+    }
+  }
 
   .hero-text {
-    padding-top: 56px;
+    padding-top: 80px;
     padding-bottom: 80px;
 
     h1 {
       white-space: pre-line;
       font-weight: bold;
       line-height: 1.25em;
-      color: $grey-8;
+      color: $grey-1;
 
       @include mobile {
         font-size: 2rem;
@@ -41,8 +53,8 @@
         display: inline-block;
         white-space: normal;
         font-weight: inherit;
-        color: $magenta;
-        border-bottom: 3px dotted black;
+        color: #ff4e95;
+        border-bottom: 3px dotted $grey-2;
 
         &:active {
           color: white;
@@ -69,6 +81,7 @@
       font-size: 1rem;
       font-weight: bold;
       text-align: center;
+      box-shadow: 0.25rem 0.25rem 0 rgba(0, 0, 0, 0.3);
     }
   }
 }
@@ -168,5 +181,6 @@
     height: 3.5rem;
     margin: 3rem auto;
     font-size: 1.25rem;
+    box-shadow: 0.25rem 0.25rem 0 rgba(0, 0, 0, 0.2);
   }
 }

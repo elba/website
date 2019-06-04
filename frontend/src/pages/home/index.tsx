@@ -41,49 +41,41 @@ export const Homepage: React.FunctionComponent = () => {
 
 const Hero: React.FunctionComponent = () => (
   <div className={style.hero}>
-    <div className={style["hero-text"]}>
-      <h1>
-        A blazingly fast and modern{"\n"}
-        package manager{"\n"}
-        for{"\n"}
-        <a
-          className={style.highlight}
-          href="https://www.idris-lang.org"
-          target="_blank"
-        >
-          Idris
-        </a>
-      </h1>
-    </div>
-
-    <div className={style["hero-buttons"]}>
-      <div className={style["hero-button-container"]}>
-        <a
-          className={[
-            style["hero-button"],
-            "button",
-            "is-purple",
-            "has-shadow",
-          ].join(" ")}
-          href="https://elba.readthedocs.io/en/latest/usage/quick_start.html"
-          target="_blank"
-        >
-          Get Started
-        </a>
+    <div className={style["hero-content"]}>
+      <div className={style["hero-text"]}>
+        <h1>
+          A blazingly fast and modern{"\n"}
+          package manager{"\n"}
+          for{"\n"}
+          <a
+            className={style.highlight}
+            href="https://www.idris-lang.org"
+            target="_blank"
+          >
+            Idris
+          </a>
+        </h1>
       </div>
-      <div className={style["hero-button-container"]}>
-        <a
-          className={[
-            style["hero-button"],
-            "button",
-            "is-purple",
-            "has-shadow",
-          ].join(" ")}
-          href="https://github.com/elba/elba/releases"
-          target="_blank"
-        >
-          Download
-        </a>
+
+      <div className={style["hero-buttons"]}>
+        <div className={style["hero-button-container"]}>
+          <a
+            className={[style["hero-button"], "button", "is-purple"].join(" ")}
+            href="https://elba.readthedocs.io/en/latest/usage/quick_start.html"
+            target="_blank"
+          >
+            Get Started
+          </a>
+        </div>
+        <div className={style["hero-button-container"]}>
+          <a
+            className={[style["hero-button"], "button", "is-purple"].join(" ")}
+            href="https://github.com/elba/elba/releases"
+            target="_blank"
+          >
+            Download
+          </a>
+        </div>
       </div>
     </div>
   </div>
@@ -143,12 +135,7 @@ const Question: React.FunctionComponent = () => (
   <div className={[style.section, style.question].join(" ")}>
     <h2 className={[style["question-title"]].join(" ")}>Looks good?</h2>
     <a
-      className={[
-        style["question-button"],
-        "button",
-        "is-purple",
-        "has-shadow",
-      ].join(" ")}
+      className={[style["question-button"], "button", "is-purple"].join(" ")}
       href="#"
     >
       Start to explore elba
