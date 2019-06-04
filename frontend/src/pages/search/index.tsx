@@ -6,7 +6,6 @@ import queryString from "query-string"
 import { Redirect } from "react-router"
 import { PackageReq, search } from "~api"
 import { Navbar } from "~components/navbar"
-import { GlobalStateConsumer } from "~utils/global-state"
 
 type LocationProps = {
   location: { search: string }
@@ -19,30 +18,32 @@ export const SearchResultsPage: React.FunctionComponent<
     type: "Not Asked",
   })
 
-  useEffect(() => {
-    load()
-  }, [props])
-
   const query = queryString.parse(props.location.search)
   const q = (query.q as string) || ""
-
-  const load = async () => {
-    let search_results = await search(q)
-    setResult({ type: "Done", data: search_results })
-  }
 
   if (q === "") {
     return <Redirect to="/" />
   }
+
+  useEffect(() => {
+    const load = async () => {
+      let search_results = await search(q)
+      setResult({
+        type: "Done",
+        data: search_results,
+      })
+    }
+    load()
+  }, [props.location.search])
 
   return (
     <div>
       <Navbar />
       <div className={style.page}>
         <header className={style.header}>
-          <span className={style["search-result"]}>Search results</span>
-          <span className={style["search-for"]}>for</span>
-          <span className={style["search-term"]}>{query.q}</span>
+          <p className={style["search-result"]}>Search results</p>
+          <p className={style["search-for"]}>for</p>
+          <p className={style["search-term"]}>{query.q}</p>
         </header>
         <main>
           <div className={style["listing-top-bar"]}>
@@ -59,12 +60,6 @@ export const SearchResultsPage: React.FunctionComponent<
           )}
         </main>
       </div>
-      <GlobalStateConsumer>
-        {globalState => {
-          globalState.setSearchQuery(q)
-          return undefined
-        }}
-      </GlobalStateConsumer>
     </div>
   )
 }

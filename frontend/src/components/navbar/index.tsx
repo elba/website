@@ -5,8 +5,18 @@ import history from "~/history"
 import style from "./styles.scss"
 import { login_by_access_token, APIROOT } from "~/api"
 
-export const Navbar: React.FunctionComponent = () => (
-  <nav className={style["navbar"]}>
+type NavbarProps = {
+  darkTheme?: boolean
+}
+
+export const Navbar: React.FunctionComponent<NavbarProps> = props => (
+  <nav
+    className={
+      props.darkTheme
+        ? [style["navbar"], style["dark"]].join(" ")
+        : style["navbar"]
+    }
+  >
     <Link className={style["navbar-logo"]} to="/">
       elba
     </Link>

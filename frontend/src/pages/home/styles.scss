@@ -15,8 +15,7 @@
   }
 }
 
-.hero {
-  padding-bottom: 10px;
+.strips-backgroud {
   background: repeating-linear-gradient(
     45deg,
     $grey-7,
@@ -24,6 +23,11 @@
     $grey-8 3px,
     $grey-8 6px
   );
+}
+
+.hero {
+  padding-bottom: 10px;
+  background-color: transparent;
 
   @include mobile {
     margin-top: 5px;

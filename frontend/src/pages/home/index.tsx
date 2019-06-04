@@ -28,8 +28,10 @@ export const Homepage: React.FunctionComponent = () => {
 
   return (
     <div>
-      <Navbar />
-      <Hero />
+      <div className={style["strips-backgroud"]}>
+        <Navbar darkTheme />
+        <Hero />
+      </div>
       <Features />
       <Stats />
       <section className={style.section}>

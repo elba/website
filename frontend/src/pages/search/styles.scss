@@ -6,6 +6,8 @@
 }
 
 .header {
+  display: flex;
+
   margin-top: 30px;
   margin-bottom: 30px;
 
@@ -15,7 +17,7 @@
   }
 
   .search-for {
-    margin: 0.8em;
+    margin: 0px 0.8em;
     font-size: 1.3rem;
   }
 

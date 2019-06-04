@@ -6,6 +6,7 @@
 
   display: grid;
   grid-gap: 0;
+  background-color: transparent;
 
   @include mobile {
     grid-template-columns: auto minmax(0, 1fr);
@@ -64,7 +65,7 @@
 
     @include mobile {
       justify-self: stretch;
-      background-color: $grey-1;
+      background-color: rgba(0, 0, 0, 0.05);
     }
     @include desktop {
       justify-self: end;
@@ -146,6 +147,19 @@
         &:active {
           background-color: darken($yellow, 15%);
         }
+      }
+    }
+  }
+
+  &.dark {
+    .navbar-logo,
+    .navbar-menu-item {
+      color: $grey-1;
+    }
+
+    .input-input {
+      &:focus {
+        background-color: $grey-1 !important;
       }
     }
   }

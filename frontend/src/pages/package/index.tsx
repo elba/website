@@ -32,7 +32,7 @@ export const PackageDetailsPage: React.FunctionComponent<
 
   useEffect(() => {
     load()
-  }, [props])
+  }, [props.match.params])
 
   const load = async () => {
     let version_req = {
