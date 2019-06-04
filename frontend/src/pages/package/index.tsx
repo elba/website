@@ -111,6 +111,7 @@ export const PackageDetailsPage: React.FunctionComponent<
             {versions.type === "Done" ? (
               versions.data.map(version => (
                 <Link
+                  key={version.version}
                   className={style["item-link"]}
                   to={`/package/${version.group}/${version.package}/${
                     version.version

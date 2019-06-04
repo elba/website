@@ -1,0 +1,59 @@
+@import "~/styles/variables.scss";
+@import "~/styles/layouts.scss";
+
+.markdown {
+  font-family: $family-secondary;
+  word-wrap: break-word;
+
+  h1 {
+    font-size: 36px;
+    margin: 18px 0px;
+  }
+  h2 {
+    font-size: 30px;
+    margin: 18px 0px;
+  }
+  h3 {
+    font-size: 25px;
+    margin: 18px 0px;
+  }
+  h4 {
+    font-size: 22px;
+    margin: 16x 0px;
+  }
+  h5 {
+    font-size: 18px;
+    margin: 16px 0px;
+  }
+  h6 {
+    font-size: 13px;
+    margin: 16px 0px;
+  }
+
+  code {
+    border-radius: 2px;
+    font-family: $family-code;
+    background-color: $grey-1;
+    line-height: 18px;
+  }
+
+  pre {
+    margin: 18px 0px;
+    background-color: $grey-1;
+    overflow-x: auto;
+
+    code {
+      font-weight: 400;
+      background-color: transparent;
+    }
+  }
+
+  p {
+    margin: 10px 0px;
+    line-height: 30px;
+  }
+
+  li {
+    margin: 5px 0px;
+  }
+}

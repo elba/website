@@ -54,9 +54,9 @@ export type DownloadStatsView = {
   season: number
 }
 
-// export const APIROOT = "https://api.elba.pub/api/v1"
+export const APIROOT = "https://api.elba.pub/api/v1"
 // export const APIROOT = "http://localhost:17000/api/v1"
-export const APIROOT = "http://192.168.43.32:17000/api/v1"
+// export const APIROOT = "http://192.168.43.32:17000/api/v1"
 
 export async function login_by_access_token(
   access_token: string
@@ -147,10 +147,7 @@ export async function show_readme(version_req: VersionReq): Promise<string> {
   const readme = await fetch(
     `${APIROOT}/packages/${version_req.group}/${version_req.package}/${
       version_req.version
-    }/readme`,
-    {
-      mode: "no-cors",
-    }
+    }/readme`
   )
   const text = await readme.text()
   return text

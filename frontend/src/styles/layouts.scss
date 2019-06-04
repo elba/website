@@ -1,6 +1,7 @@
 @import "~/styles/variables.scss";
 
 $desktop: 800px;
+$desktop-wide: 1300px;
 
 @mixin mobile {
   @media screen and (max-width: $desktop - 1px) {
@@ -14,16 +15,20 @@ $desktop: 800px;
   }
 }
 
+@mixin desktop-wide {
+  @media screen and (min-width: $desktop-wide) {
+    @content;
+  }
+}
+
 @mixin content-center {
   margin: 0 auto;
 
-  @media screen and (min-width: 800px) and (max-width: 1300px) {
-    max-width: 760px;
-    // width: 760px;
+  @media screen and (min-width: $desktop) and (max-width: $desktop-wide) {
+    width: 760px;
   }
 
-  @media screen and (min-width: 1300px) {
-    max-width: 1100px;
+  @media screen and (min-width: $desktop-wide) {
     width: 1100px;
   }
 }

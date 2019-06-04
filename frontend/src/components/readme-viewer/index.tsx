@@ -1,4 +1,5 @@
 import React from "react"
+import style from "./styles.scss"
 import marked from "marked"
 
 export type ReadmeProps = {
@@ -8,6 +9,7 @@ export type ReadmeProps = {
 export const ReadmeViewer: React.FunctionComponent<ReadmeProps> = props => {
   return (
     <div
+      className={style["markdown"]}
       dangerouslySetInnerHTML={{
         __html: marked(props.markdown),
       }}
