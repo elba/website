@@ -4,6 +4,7 @@
 
 #[macro_use]
 mod util;
+mod config;
 mod controller;
 mod database;
 mod index;
@@ -31,13 +32,13 @@ use actix_web::middleware::cors::Cors;
 use actix_web::middleware::identity::{CookieIdentityPolicy, IdentityService};
 use actix_web::{middleware, server, App};
 
+use crate::config::Config;
 use crate::database::Database;
 use crate::index::Index;
 use crate::login::GhLogin;
 use crate::model::packages::PopulateSearch;
 use crate::search::Search;
 use crate::storage::Storage;
-use crate::util::Config;
 
 lazy_static! {
     pub static ref CONFIG: Config = Config::from_env();

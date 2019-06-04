@@ -66,17 +66,21 @@ impl Config {
                     .expect("REGISTRY_URL is not a valid url."),
             },
             remote_index_url: read_env("REMOTE_INDEX_URL"),
-            remote_index_user: env::var("REMOTE_INDEX_USER").ok(),
-            remote_index_pwd: env::var("REMOTE_INDEX_PWD").ok(),
+            remote_index_user: read_optional("REMOTE_INDEX_USER"),
+            remote_index_pwd: read_optional("REMOTE_INDEX_PWD"),
             index_bot_name: read_env("INDEX_BOT_NAME"),
             index_bot_email: read_env("INDEX_BOT_EMAIL"),
-            cors_origin: env::var("CORS_ORIGIN").ok(),
+            cors_origin: read_optional("CORS_ORIGIN"),
         }
     }
 }
 
 fn read_env(env_name: &str) -> String {
     env::var(env_name).expect(&format!("Environment variable `{}` not set.", env_name))
+}
+
+fn read_optional(env_name: &str) -> Option<String> {
+    env::var(env_name).ok().filter(|var| !var.is_empty())
 }
 
 fn read_env_path(env_name: &str) -> PathBuf {
