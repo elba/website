@@ -8,14 +8,14 @@
   grid-gap: 0;
 
   @include mobile {
-    grid-template-columns: auto 1fr;
+    grid-template-columns: auto minmax(0, 1fr);
     grid-template-rows: 50px 60px;
     grid-template-areas:
       "logo         menu"
       "search-bar   search-bar";
   }
   @include desktop {
-    grid-template-columns: auto auto 1fr;
+    grid-template-columns: auto auto minmax(0, 1fr);
     grid-template-rows: 50px;
     grid-template-areas: "logo    menu   search-bar";
   }
@@ -32,19 +32,23 @@
   }
 
   .navbar-menu {
-    padding-right: $content-padding-gap;
-
+    margin-right: $content-padding-gap;
+    overflow-x: overlay;
+    display: flex;
+    align-items: center;
     grid-area: menu;
+
     @include mobile {
-      justify-self: end;
+      margin-left: 10px;
+
+      :first-child {
+        margin-left: auto;
+      }
     }
     @include desktop {
       justify-self: start;
-      margin-left: 30px;
+      margin-left: 20px;
     }
-
-    display: flex;
-    align-items: center;
 
     .navbar-menu-item {
       padding: 0.5rem;
