@@ -3,6 +3,7 @@ import style from "./styles.scss"
 import { PackageList } from "~/components/package-listing"
 import { PackageReq, list_groups, list_packages } from "~api"
 import { RemoteData } from "~utils/remote-data"
+import Navbar from "~components/navbar"
 
 export const Homepage: React.FunctionComponent = () => {
   const [packages, setPackages] = useState<RemoteData<PackageReq[]>>({
@@ -27,6 +28,7 @@ export const Homepage: React.FunctionComponent = () => {
 
   return (
     <div>
+      <Navbar />
       <Hero />
       <Features />
       <Stats />

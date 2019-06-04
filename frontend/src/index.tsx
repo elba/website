@@ -16,7 +16,6 @@ ReactDOM.render(
   <GlobalStateProvider>
     <Router history={history}>
       <ScrollToTop>
-        <Navbar />
         <Route exact path="/" component={Homepage} />
         <Route exact path="/search" component={SearchResultsPage} />
         <Route

@@ -45,18 +45,24 @@ export const Navbar: React.FunctionComponent = () => (
         action="/search"
         onSubmit={onSearch}
       >
-        <div className={style["input-container"]}>
-          <input
-            className={style["input-input"]}
-            type="search"
-            name="q"
-            placeholder="search packages"
-            autoComplete="off"
-          />
-          <span className={style["input-icon"]}>
-            <i className="fas fa-search" />
-          </span>
-        </div>
+        <GlobalStateConsumer>
+          {globalState => (
+            <div className={style["input-container"]}>
+              <input
+                className={style["input-input"]}
+                type="search"
+                name="q"
+                placeholder="search packages"
+                autoComplete="off"
+                onChange={e => globalState.setSearchQuery(e.target.value)}
+                value={globalState.searchQuery}
+              />
+              <span className={style["input-icon"]}>
+                <i className="fas fa-search" />
+              </span>
+            </div>
+          )}
+        </GlobalStateConsumer>
         <button className={style["search-button"]} type="submit">
           Search
         </button>

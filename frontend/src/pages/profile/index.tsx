@@ -12,6 +12,7 @@ import {
   remove_token,
 } from "~/api"
 import { Redirect } from "react-router"
+import { Navbar } from "~components/navbar"
 
 export const UserProfilePage: React.FunctionComponent = () => {
   const [tokenDisplay, setTokenDisplay] = useState<string | void>(undefined)
@@ -46,46 +47,49 @@ export const UserProfilePage: React.FunctionComponent = () => {
   }
 
   return (
-    <GlobalStateConsumer>
-      {globalState =>
-        globalState.user !== undefined ? (
-          <div className={style.page}>
-            <div className={style["profile-section"]}>
-              <h2>Profile</h2>
-              <div className={style["profile-section__content"]}>
-                <UserProfile user={globalState.user} />
+    <div>
+      <Navbar />
+      <GlobalStateConsumer>
+        {globalState =>
+          globalState.user !== undefined ? (
+            <div className={style.page}>
+              <div className={style["profile-section"]}>
+                <h2>Profile</h2>
+                <div className={style["profile-section__content"]}>
+                  <UserProfile user={globalState.user} />
+                </div>
               </div>
-            </div>
-            <div className={style["token-section"]}>
-              <div className={style["token-section__title"]}>
-                <h2>Access Tokens</h2>
-                <button className="button is-purple" onClick={onCreateToken}>
-                  Create Token
+              <div className={style["token-section"]}>
+                <div className={style["token-section__title"]}>
+                  <h2>Access Tokens</h2>
+                  <button className="button is-purple" onClick={onCreateToken}>
+                    Create Token
+                  </button>
+                </div>
+                <TokenList tokens={tokens} onDeleteToken={onDeleteToken} />
+                {tokenDisplay !== undefined ? (
+                  <div className={style["token-display"]}>
+                    <TokenDisplay token={tokenDisplay} />
+                  </div>
+                ) : (
+                  undefined
+                )}
+              </div>
+              <div className={style["logout"]}>
+                <button
+                  className="button is-purple"
+                  onClick={() => onLogout(globalState.fetchUser)}
+                >
+                  Log Out
                 </button>
               </div>
-              <TokenList tokens={tokens} onDeleteToken={onDeleteToken} />
-              {tokenDisplay !== undefined ? (
-                <div className={style["token-display"]}>
-                  <TokenDisplay token={tokenDisplay} />
-                </div>
-              ) : (
-                <div />
-              )}
             </div>
-            <div className={style["logout"]}>
-              <button
-                className="button is-purple"
-                onClick={() => onLogout(globalState.fetchUser)}
-              >
-                Log Out
-              </button>
-            </div>
-          </div>
-        ) : (
-          <Redirect to="/" />
-        )
-      }
-    </GlobalStateConsumer>
+          ) : (
+            <Redirect to="/" />
+          )
+        }
+      </GlobalStateConsumer>
+    </div>
   )
 }
 
