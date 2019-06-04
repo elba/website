@@ -4,6 +4,9 @@ import { PackageList } from "~/components/package-listing"
 import { PackageReq, list_groups, list_packages } from "~api"
 import { RemoteData } from "~utils/remote-data"
 import Navbar from "~components/navbar"
+import iconBox from "~/img/box.svg"
+import iconTruck from "~/img/truck.svg"
+import iconRobot from "~/img/robot.svg"
 
 export const Homepage: React.FunctionComponent = props => {
   const [packages, setPackages] = useState<RemoteData<PackageReq[]>>({
@@ -87,7 +90,7 @@ const Features: React.FunctionComponent = () => (
     <h2 className={style["section-title"]}>Features</h2>
     <ul className={style["features-item-container"]}>
       <li className={style["features-item"]}>
-        <div />
+        <img src={iconTruck} />
         <h2>Packages</h2>
         <p>
           Many elba packages are already available online, meaning you can add
@@ -96,7 +99,7 @@ const Features: React.FunctionComponent = () => (
         </p>
       </li>
       <li className={style["features-item"]}>
-        <div />
+        <img src={iconRobot} />
         <h2>Modern build system</h2>
         <p>
           elba uses the state-of-the-art Pubgrub dependency resolution algorithm
@@ -104,7 +107,7 @@ const Features: React.FunctionComponent = () => (
         </p>
       </li>
       <li className={style["features-item"]}>
-        <div />
+        <img src={iconBox} />
         <h2>Out of the box</h2>
         <p>
           Adding elba to your project is as simple as adding an `elba.toml`
