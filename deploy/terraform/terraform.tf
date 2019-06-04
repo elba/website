@@ -11,6 +11,11 @@ provider "aws" {
   alias      = "use1"
 }
 
+resource "aws_key_pair" "key-pair" {
+  key_name   = "${var.key_pair_name}"
+  public_key = "${var.key_pair_public_key}"
+}
+
 resource "aws_instance" "elba-registry" {
   ami                    = "ami-06c43a7df16e8213c"
   instance_type          = "t2.micro"
@@ -60,16 +65,39 @@ resource "aws_security_group" "web-server" {
   }
 }
 
-resource "aws_key_pair" "key-pair" {
-  key_name   = "${var.key_pair_name}"
-  public_key = "${var.key_pair_public_key}"
-}
-
 resource "aws_s3_bucket" "elba-registry" {
-  bucket = "${var.s3_bucket_name}"
+  bucket = "${var.s3_bucket_registry_name}"
   region = "${var.region}"
   acl    = "private"
   policy = "${data.aws_iam_policy_document.s3-elba-registry-policy.json}"
+
+  cors_rule {
+    allowed_origins = ["*"]
+    allowed_methods = ["HEAD", "GET"]
+    max_age_seconds = 3000
+  }
+}
+
+resource "aws_s3_bucket" "elba-website" {
+  bucket = "${var.s3_bucket_website_name}"
+  region = "${var.region}"
+  acl    = "private"
+  policy = "${data.aws_iam_policy_document.s3-elba-website-policy.json}"
+
+  website {
+    index_document = "index.html"
+    error_document = "index.html"
+  }
+}
+
+resource "aws_s3_bucket" "elba-website-root" {
+  bucket = "${var.s3_bucket_website_root_name}"
+  region = "${var.region}"
+  acl    = "private"
+
+  website {
+    redirect_all_requests_to = "${var.domain_website}"
+  }
 }
 
 data "aws_iam_policy_document" "s3-elba-registry-policy" {
@@ -81,8 +109,8 @@ data "aws_iam_policy_document" "s3-elba-registry-policy" {
     ]
 
     resources = [
-      "arn:aws:s3:::${var.s3_bucket_name}/tarballs/*",
-      "arn:aws:s3:::${var.s3_bucket_name}/readmes/*",
+      "arn:aws:s3:::${var.s3_bucket_registry_name}/tarballs/*",
+      "arn:aws:s3:::${var.s3_bucket_registry_name}/readmes/*",
     ]
 
     principals {
@@ -93,18 +121,36 @@ data "aws_iam_policy_document" "s3-elba-registry-policy" {
 
   statement {
     actions = [
+      "s3:GetObject",
+    ]
+
+    resources = [
+      "arn:aws:s3:::${var.s3_bucket_registry_name}/tarballs/*",
+      "arn:aws:s3:::${var.s3_bucket_registry_name}/readmes/*",
+    ]
+
+    principals {
+      type        = "*"
+      identifiers = ["*"]
+    }
+  }
+}
+
+data "aws_iam_policy_document" "s3-elba-website-policy" {
+  statement {
+    actions = [
       "s3:DeleteObject",
       "s3:PutObject",
       "s3:PutObjectAcl",
     ]
 
     resources = [
-      "arn:aws:s3:::${var.s3_bucket_name}/public/*",
+      "arn:aws:s3:::${var.s3_bucket_website_name}/*",
     ]
 
     principals {
       type        = "AWS"
-      identifiers = ["${var.arn_user_registry_deployer}"]
+      identifiers = ["${var.arn_user_deployer}"]
     }
   }
 
@@ -114,9 +160,7 @@ data "aws_iam_policy_document" "s3-elba-registry-policy" {
     ]
 
     resources = [
-      "arn:aws:s3:::${var.s3_bucket_name}/tarballs/*",
-      "arn:aws:s3:::${var.s3_bucket_name}/readmes/*",
-      "arn:aws:s3:::${var.s3_bucket_name}/public/*",
+      "arn:aws:s3:::${var.s3_bucket_website_name}/*",
     ]
 
     principals {
@@ -131,27 +175,25 @@ resource "aws_ecr_repository" "elba-registry" {
 }
 
 locals {
-  cdn-public-origin-id  = "s3-elba-registry/public"
-  cdn-storage-origin-id = "s3-elba-registry"
+  cdn-website-origin-id  = "s3-elba-website"
+  cdn-registry-origin-id = "s3-elba-registry"
 }
 
-resource "aws_cloudfront_distribution" "cdn-public" {
+resource "aws_cloudfront_distribution" "cdn-website" {
   origin {
-    domain_name = "${aws_s3_bucket.elba-registry.bucket_regional_domain_name}"
-    origin_path = "/public"
-    origin_id   = "${local.cdn-public-origin-id}"
+    domain_name = "${aws_s3_bucket.elba-website.bucket_regional_domain_name}"
+    origin_id   = "${local.cdn-website-origin-id}"
   }
 
-  enabled             = true
-  is_ipv6_enabled     = true
-  default_root_object = "index.html"
+  enabled         = true
+  is_ipv6_enabled = true
 
-  aliases = ["${var.domain_public}"]
+  aliases = ["${var.domain_website}"]
 
   default_cache_behavior {
     allowed_methods  = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods   = ["GET", "HEAD"]
-    target_origin_id = "${local.cdn-public-origin-id}"
+    target_origin_id = "${local.cdn-website-origin-id}"
 
     forwarded_values {
       query_string = false
@@ -162,8 +204,8 @@ resource "aws_cloudfront_distribution" "cdn-public" {
     }
 
     min_ttl                = 0
-    default_ttl            = 3600
-    max_ttl                = 86400
+    default_ttl            = 300
+    max_ttl                = 3600
     compress               = true
     viewer_protocol_policy = "redirect-to-https"
   }
@@ -178,7 +220,49 @@ resource "aws_cloudfront_distribution" "cdn-public" {
 
   viewer_certificate {
     ssl_support_method  = "sni-only"
-    acm_certificate_arn = "${aws_acm_certificate_validation.cert-public.certificate_arn}"
+    acm_certificate_arn = "${aws_acm_certificate_validation.cert-website.certificate_arn}"
+  }
+}
+
+resource "aws_cloudfront_distribution" "cdn-registry" {
+  origin {
+    domain_name = "${aws_s3_bucket.elba-registry.bucket_regional_domain_name}"
+    origin_id   = "${local.cdn-registry-origin-id}"
+  }
+
+  enabled         = true
+  is_ipv6_enabled = true
+
+  default_cache_behavior {
+    allowed_methods  = ["HEAD", "GET", "OPTIONS"]
+    cached_methods   = ["GET", "HEAD"]
+    target_origin_id = "${local.cdn-registry-origin-id}"
+
+    forwarded_values {
+      query_string = false
+
+      cookies {
+        forward = "none"
+      }
+    }
+
+    min_ttl                = 0
+    default_ttl            = 300
+    max_ttl                = 3600
+    compress               = true
+    viewer_protocol_policy = "redirect-to-https"
+  }
+
+  restrictions {
+    geo_restriction {
+      restriction_type = "none"
+    }
+  }
+
+  price_class = "PriceClass_All"
+
+  viewer_certificate {
+    cloudfront_default_certificate = true
   }
 }
 
@@ -187,32 +271,32 @@ data "aws_route53_zone" "zone" {
   private_zone = false
 }
 
-resource "aws_acm_certificate" "cert-public" {
-  domain_name       = "${var.domain_public}"
+resource "aws_acm_certificate" "cert-website" {
+  domain_name       = "${var.domain_website}"
   validation_method = "DNS"
   provider          = "aws.use1"
 }
 
-resource "aws_acm_certificate_validation" "cert-public" {
-  certificate_arn         = "${aws_acm_certificate.cert-public.arn}"
-  validation_record_fqdns = ["${aws_route53_record.cert-validation-public.fqdn}"]
+resource "aws_acm_certificate_validation" "cert-website" {
+  certificate_arn         = "${aws_acm_certificate.cert-website.arn}"
+  validation_record_fqdns = ["${aws_route53_record.cert-validation-website.fqdn}"]
   provider                = "aws.use1"
 }
 
-resource "aws_route53_record" "cert-validation-public" {
-  name    = "${aws_acm_certificate.cert-public.domain_validation_options.0.resource_record_name}"
-  type    = "${aws_acm_certificate.cert-public.domain_validation_options.0.resource_record_type}"
+resource "aws_route53_record" "cert-validation-website" {
+  name    = "${aws_acm_certificate.cert-website.domain_validation_options.0.resource_record_name}"
+  type    = "${aws_acm_certificate.cert-website.domain_validation_options.0.resource_record_type}"
   zone_id = "${data.aws_route53_zone.zone.id}"
-  records = ["${aws_acm_certificate.cert-public.domain_validation_options.0.resource_record_value}"]
+  records = ["${aws_acm_certificate.cert-website.domain_validation_options.0.resource_record_value}"]
   ttl     = 60
 }
 
-resource "aws_route53_record" "public" {
+resource "aws_route53_record" "website" {
   zone_id = "${data.aws_route53_zone.zone.zone_id}"
-  name    = "${var.domain_public}"
+  name    = "${var.domain_website}"
   type    = "CNAME"
   ttl     = "300"
-  records = ["${aws_cloudfront_distribution.cdn-public.domain_name}"]
+  records = ["${aws_cloudfront_distribution.cdn-website.domain_name}"]
 }
 
 resource "aws_route53_record" "registry" {

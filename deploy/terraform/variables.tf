@@ -9,17 +9,24 @@ variable "key_pair_name" {}
 variable "key_pair_public_key" {}
 
 variable "arn_user_registry" {}
-variable "arn_user_registry_deployer" {}
+variable "arn_user_deployer" {}
 
-variable "s3_bucket_name" {
+variable "s3_bucket_registry_name" {
   default = "elba-registry"
+}
+
+variable "s3_bucket_website_name" {
+  default = "www.elba.pub"
+}
+variable "s3_bucket_website_root_name" {
+  default = "elba.pub"
 }
 
 variable "domain_zone" {
   default = "elba.pub"
 }
 
-variable "domain_public" {
+variable "domain_website" {
   default = "www.elba.pub"
 }
 

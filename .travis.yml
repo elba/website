@@ -12,11 +12,6 @@ addons:
     packages:
       - docker-ce
 
-env:
-  global:
-  - AWS_S3_BUCKET_NAME=elba-registry
-  - AWS_REGION=ap-northeast-1
-
 before_install:
   - docker --version
   - pip install awscli
@@ -41,7 +36,6 @@ deploy:
     bucket: "${AWS_S3_BUCKET_NAME}"
     region: "${AWS_REGION}"
     local_dir: ../public
-    upload-dir: public
     on:
       branch: master
 
