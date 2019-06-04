@@ -83,11 +83,11 @@ export const Navbar: React.FunctionComponent<NavbarProps> = props => (
 
 function onSearch(ev: React.FormEvent<HTMLFormElement>) {
   ev.preventDefault()
-  let q = (ev.target as any).q.value.trim()
+  let q = (ev.target as any).q.value.trim().replace("\\", "/")
   if (q !== "") {
     history.push({
       pathname: "/search",
-      search: `?q=${(ev.target as any).q.value}`,
+      search: `?q=${q}`,
     })
   }
 }
