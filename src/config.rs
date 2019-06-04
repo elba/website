@@ -46,6 +46,7 @@ impl Config {
                 bucket: read_env("STORAGE_S3_BUCKET"),
                 access_key: read_env("STORAGE_S3_ACCESS_KEY"),
                 secret_key: read_env("STORAGE_S3_SECRET_KEY"),
+                base_url: read_env("STORAGE_S3_BASE_URL"),
                 region: read_env("STORAGE_S3_REGION")
                     .parse()
                     .expect("STORAGE_S3_REGION is not a valid AWS region"),

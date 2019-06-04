@@ -27,6 +27,7 @@ pub enum StorageConfig {
         access_key: String,
         secret_key: String,
         region: Region,
+        base_url: String,
     },
 }
 
@@ -231,9 +232,7 @@ pub fn get_readme_location(package: &PackageVersion) -> String {
 fn get_base_url() -> String {
     match &CONFIG.storage_config {
         StorageConfig::Local { url, .. } => url.clone(),
-        StorageConfig::S3 { bucket, region, .. } => {
-            format!("https://s3-{}.amazonaws.com/{}", region.name(), bucket)
-        }
+        StorageConfig::S3 { base_url, .. } => base_url.clone(),
     }
 }
 
