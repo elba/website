@@ -5,26 +5,23 @@ import { PackageReq, list_groups, list_packages } from "~api"
 import { RemoteData } from "~utils/remote-data"
 import Navbar from "~components/navbar"
 
-export const Homepage: React.FunctionComponent = () => {
+export const Homepage: React.FunctionComponent = props => {
   const [packages, setPackages] = useState<RemoteData<PackageReq[]>>({
     type: "Not Asked",
   })
 
   useEffect(() => {
-    if (packages.type === "Not Asked") {
-      loadPackages()
+    const loadPackages = async () => {
+      setPackages({ type: "Started" })
+      let groups = await list_groups()
+      let packages: PackageReq[] = []
+      for (var group of groups) {
+        packages = packages.concat(await list_packages(group))
+      }
+      setPackages({ type: "Done", data: packages })
     }
-  })
-
-  const loadPackages = async () => {
-    setPackages({ type: "Started" })
-    let groups = await list_groups()
-    let packages: PackageReq[] = []
-    for (var group of groups) {
-      packages = packages.concat(await list_packages(group))
-    }
-    setPackages({ type: "Done", data: packages })
-  }
+    loadPackages()
+  }, [props])
 
   return (
     <div>
@@ -124,11 +121,11 @@ const Stats: React.FunctionComponent = () => (
     <h2 className={style["section-title"]}>Until now, we have</h2>
     <ul className={style["stats-item-container"]}>
       <li className={style["stats-item"]}>
-        <p className={style["stats-value"]}>1230</p>
+        <p className={style["stats-value"]}>--</p>
         <p className={style["stats-title"]}>packages</p>
       </li>
       <li className={style["stats-item"]}>
-        <p className={style["stats-value"]}>201649</p>
+        <p className={style["stats-value"]}>--</p>
         <p className={style["stats-title"]}>downloads</p>
       </li>
     </ul>

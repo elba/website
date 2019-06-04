@@ -3,7 +3,7 @@ import style from "./styles.scss"
 import { PackageList } from "~components/package-listing"
 import { RemoteData } from "~/utils/remote-data"
 import queryString from "query-string"
-import { Redirect } from "react-router"
+import history from "~/history"
 import { PackageReq, search } from "~api"
 import { Navbar } from "~components/navbar"
 
@@ -21,11 +21,14 @@ export const SearchResultsPage: React.FunctionComponent<
   const query = queryString.parse(props.location.search)
   const q = (query.q as string) || ""
 
-  if (q === "") {
-    return <Redirect to="/" />
-  }
-
   useEffect(() => {
+    if (q === "") {
+      history.push({
+        pathname: `/`,
+      })
+      return
+    }
+
     const load = async () => {
       let search_results = await search(q)
       setResult({
