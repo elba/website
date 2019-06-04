@@ -83,10 +83,13 @@ export const Navbar: React.FunctionComponent<NavbarProps> = props => (
 
 function onSearch(ev: React.FormEvent<HTMLFormElement>) {
   ev.preventDefault()
-  history.push({
-    pathname: "/search",
-    search: `?q=${(ev.target as any).q.value}`,
-  })
+  let q = (ev.target as any).q.value.trim()
+  if (q !== "") {
+    history.push({
+      pathname: "/search",
+      search: `?q=${(ev.target as any).q.value}`,
+    })
+  }
 }
 
 async function onLogin(fetchUser: () => void) {
