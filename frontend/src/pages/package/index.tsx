@@ -48,7 +48,9 @@ export const PackageDetailsPage: React.FunctionComponent<
     list_versions({
       group: version_req.group,
       package: version_req.package,
-    }).then(versions_list => setVersions({ type: "Ready", data: versions_list }))
+    }).then(versions_list =>
+      setVersions({ type: "Ready", data: versions_list })
+    )
 
     show_readme(version_req).then(readme_string =>
       setReadme({ type: "Ready", data: readme_string })
@@ -70,14 +72,20 @@ export const PackageDetailsPage: React.FunctionComponent<
           </header>
           <div className={style["package-top-bar"]}>
             {versionView.data.homepage ? (
-              <a href={"//" + versionView.data.homepage} target="_blank">
+              <a
+                href={forceUrlAbsolute(versionView.data.homepage)}
+                target="_blank"
+              >
                 Homepage
               </a>
             ) : (
               undefined
             )}
             {versionView.data.repository ? (
-              <a href={"//" + versionView.data.repository} target="_blank">
+              <a
+                href={forceUrlAbsolute(versionView.data.repository)}
+                target="_blank"
+              >
                 Repository
               </a>
             ) : (
@@ -171,6 +179,11 @@ export const PackageDetailsPage: React.FunctionComponent<
       )}
     </div>
   )
+}
+
+function forceUrlAbsolute(url: string): string {
+  if (url.indexOf("//") === -1) return "//" + url
+  else return url
 }
 
 export default PackageDetailsPage
