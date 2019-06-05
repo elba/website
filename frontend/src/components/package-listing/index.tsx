@@ -13,35 +13,33 @@ import { Link } from "react-router-dom"
 
 export const Package: React.FunctionComponent<PackageReq> = props => {
   const [packageView, setPackageView] = useState<RemoteData<PackageView>>({
-    type: "Not Asked",
+    type: "Not Ready",
   })
   const [downloads, setDownloads] = useState<RemoteData<number>>({
-    type: "Not Asked",
+    type: "Not Ready",
   })
 
   useEffect(() => {
-    if (packageView.type === "Not Asked") {
+    if (packageView.type === "Not Ready") {
       load()
     }
   })
 
   const load = async () => {
-    setPackageView({ type: "Started" })
     let packageView = await show_package(props)
-    setPackageView({ type: "Done", data: packageView })
+    setPackageView({ type: "Ready", data: packageView })
 
     let version_req: VersionReq = {
       group: packageView.latest_version.group,
       package: packageView.latest_version.package,
       version: packageView.latest_version.version,
     }
-    setDownloads({ type: "Started" })
     let stats = await download_stats(version_req)
-    setDownloads({ type: "Done", data: stats.total })
+    setDownloads({ type: "Ready", data: stats.total })
   }
 
   const onPackageClick = () => {
-    if (packageView.type === "Done") {
+    if (packageView.type === "Ready") {
       history.push({
         pathname: `/package/${packageView.data.latest_version.group}/${
           packageView.data.latest_version.package
@@ -51,14 +49,14 @@ export const Package: React.FunctionComponent<PackageReq> = props => {
   }
 
   const onTagClick = (tag: string) => {
-    if (packageView.type === "Done") {
+    if (packageView.type === "Ready") {
       history.push({
         pathname: `/search?q=${tag}`,
       })
     }
   }
 
-  if (packageView.type === "Done") {
+  if (packageView.type === "Ready") {
     return (
       <div className={style["package-item"]}>
         <div className={style["title-row"]} onClick={onPackageClick}>
@@ -98,7 +96,7 @@ export const Package: React.FunctionComponent<PackageReq> = props => {
           </span>
         </div>
         <b className={style["downloads-counter-number"]}>
-          {downloads.type === "Done" ? downloads.data : "-"}
+          {downloads.type === "Ready" ? downloads.data : "-"}
         </b>
         <p className={style["downloads-counter-title"]}>downloads</p>
       </div>

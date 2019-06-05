@@ -15,7 +15,7 @@ export const SearchResultsPage: React.FunctionComponent<
   LocationProps
 > = props => {
   const [result, setResult] = useState<RemoteData<PackageReq[]>>({
-    type: "Not Asked",
+    type: "Not Ready",
   })
 
   const query = queryString.parse(props.location.search)
@@ -32,7 +32,7 @@ export const SearchResultsPage: React.FunctionComponent<
     const load = async () => {
       let search_results = await search(q)
       setResult({
-        type: "Done",
+        type: "Ready",
         data: search_results,
       })
     }
@@ -51,12 +51,12 @@ export const SearchResultsPage: React.FunctionComponent<
         <main>
           <div className={style["listing-top-bar"]}>
             <span className={style["packages-found-label"]}>
-              {result.type === "Done"
+              {result.type === "Ready"
                 ? `${result.data.length} packages found`
                 : "Loading"}
             </span>
           </div>
-          {result.type === "Done" ? (
+          {result.type === "Ready" ? (
             <PackageList packages={result.data} />
           ) : (
             undefined

@@ -10,18 +10,17 @@ import iconRobot from "~/img/robot.svg"
 
 export const Homepage: React.FunctionComponent = props => {
   const [packages, setPackages] = useState<RemoteData<PackageReq[]>>({
-    type: "Not Asked",
+    type: "Not Ready",
   })
 
   useEffect(() => {
     const loadPackages = async () => {
-      setPackages({ type: "Started" })
       let groups = await list_groups()
       let packages: PackageReq[] = []
       for (var group of groups) {
         packages = packages.concat(await list_packages(group))
       }
-      setPackages({ type: "Done", data: packages })
+      setPackages({ type: "Ready", data: packages })
     }
     loadPackages()
   }, [props])
@@ -36,7 +35,7 @@ export const Homepage: React.FunctionComponent = props => {
       <Stats />
       <section className={style.section}>
         <h2 className={style["section-title"]}>Popular packages</h2>
-        <PackageList packages={packages.type === "Done" ? packages.data : []} />
+        <PackageList packages={packages.type === "Ready" ? packages.data : []} />
       </section>
       <Question />
     </div>

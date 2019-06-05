@@ -17,18 +17,18 @@ import { Navbar } from "~components/navbar"
 export const UserProfilePage: React.FunctionComponent = () => {
   const [tokenDisplay, setTokenDisplay] = useState<string | void>(undefined)
   const [tokens, setTokens] = useState<RemoteData<AccessTokenView[]>>({
-    type: "Not Asked",
+    type: "Not Ready",
   })
 
   useEffect(() => {
-    if (tokens.type === "Not Asked") {
+    if (tokens.type === "Not Ready") {
       loadTokens()
     }
   })
 
   const loadTokens = async () => {
     let tokens = await list_tokens()
-    setTokens({ type: "Done", data: tokens })
+    setTokens({ type: "Ready", data: tokens })
   }
 
   const onCreateToken = async () => {

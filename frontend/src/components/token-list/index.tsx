@@ -43,7 +43,7 @@ export const TokenList: React.FunctionComponent<TokenListProps> = props => {
         </tr>
       </thead>
       <tbody>
-        {props.tokens.type === "Done" ? (
+        {props.tokens.type === "Ready" ? (
           props.tokens.data.length === 0 ? (
             <tr>
               <td className={style["td-info"]} colSpan={3}>
@@ -61,16 +61,10 @@ export const TokenList: React.FunctionComponent<TokenListProps> = props => {
                 />
               ))
           )
-        ) : props.tokens.type === "Started" ? (
-          <tr>
-            <td className={style["td-info"]} colSpan={3}>
-              Loading
-            </td>
-          </tr>
         ) : (
           <tr>
             <td className={style["td-info"]} colSpan={3}>
-              Faild
+              Loading
             </td>
           </tr>
         )}

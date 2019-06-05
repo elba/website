@@ -21,13 +21,13 @@ export const PackageDetailsPage: React.FunctionComponent<
   ParamProps
 > = props => {
   const [versionView, setVersionView] = useState<RemoteData<VersionView>>({
-    type: "Not Asked",
+    type: "Not Ready",
   })
   const [versions, setVersions] = useState<RemoteData<VersionReq[]>>({
-    type: "Not Asked",
+    type: "Not Ready",
   })
   const [readme, setReadme] = useState<RemoteData<string>>({
-    type: "Not Asked",
+    type: "Not Ready",
   })
 
   useEffect(() => {
@@ -42,23 +42,23 @@ export const PackageDetailsPage: React.FunctionComponent<
     }
 
     show_version(version_req).then(version_view =>
-      setVersionView({ type: "Done", data: version_view })
+      setVersionView({ type: "Ready", data: version_view })
     )
 
     list_versions({
       group: version_req.group,
       package: version_req.package,
-    }).then(versions_list => setVersions({ type: "Done", data: versions_list }))
+    }).then(versions_list => setVersions({ type: "Ready", data: versions_list }))
 
     show_readme(version_req).then(readme_string =>
-      setReadme({ type: "Done", data: readme_string })
+      setReadme({ type: "Ready", data: readme_string })
     )
   }
 
   return (
     <div>
       <Navbar />
-      {versionView.type === "Done" ? (
+      {versionView.type === "Ready" ? (
         <div className={style.page}>
           <header className={style["title"]}>
             <span className={style["title__name"]}>
@@ -86,7 +86,7 @@ export const PackageDetailsPage: React.FunctionComponent<
           </div>
           <div className={style["main-layout"]}>
             <main>
-              {readme.type === "Done" ? (
+              {readme.type === "Ready" ? (
                 <div className={style["main-layout__readme"]}>
                   <ReadmeViewer markdown={readme.data} />
                 </div>
@@ -114,7 +114,7 @@ export const PackageDetailsPage: React.FunctionComponent<
               )}
               <div className={style["main-layout__info__item"]}>
                 <p>Versions</p>
-                {versions.type === "Done"
+                {versions.type === "Ready"
                   ? versions.data.map(version =>
                       version.version === versionView.data.version ? (
                         <span
