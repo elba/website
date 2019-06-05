@@ -17,8 +17,8 @@ cache: yarn
 
 before_install:
   - docker --version
-  - pip install awscli
-  - pip install ansible
+  - pip install --user awscli
+  - pip install --user ansible
   - yarn global add parcel-bundler
   - cd deploy
 
