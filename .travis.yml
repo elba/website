@@ -16,7 +16,9 @@ addons:
     packages:
       - docker-ce
 
-cache: yarn
+cache: 
+  - yarn
+  - pip
 
 before_install:
   - docker --version
@@ -27,18 +29,19 @@ before_install:
 
 script:
   - yarn --cwd ../frontend build
-  - bash ./docker-build-image.sh
+  # - bash ./docker-build-image.sh
 
 deploy:
   # Push elba/registry image to aws ecr
-  - provider: script
-    script: 
-      - bash ./docker-push-image.sh
-    on:
-      branch: master
+  # - provider: script
+  #   script: 
+  #     - bash ./docker-push-image.sh
+  #   on:
+  #     branch: master
 
   # Deploy frontend public to s3 bucket
   - provider: s3
+    skip_cleanup: true
     access_key_id: "${AWS_ACCESS_KEY}"
     secret_access_key: "${AWS_SECRET_KEY}"
     bucket: "${AWS_S3_BUCKET_NAME}"
