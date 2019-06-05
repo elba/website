@@ -91,6 +91,7 @@ impl Handler<UpdatePackage> for Index {
 
         // save entries
         let mut file = OpenOptions::new()
+            .create(true)
             .truncate(true)
             .write(true)
             .open(&meta_path)?;

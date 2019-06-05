@@ -431,7 +431,7 @@ pub fn publish_version(
             .wait()?
             .with_context(|_| "failed to update index")?;
 
-        storage_transaction.commit()?;
+        storage_transaction.commit();
 
         Ok(())
     })

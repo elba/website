@@ -30,7 +30,7 @@ pub fn report_error(error: Error) -> HttpResponse {
         ))
     } else {
         error!("Internal error: {:?}", error);
-        HttpResponse::InternalServerError().finish()
+        HttpResponse::InternalServerError().body("registry internal error")
     }
 }
 

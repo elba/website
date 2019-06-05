@@ -17,9 +17,9 @@ use crate::CONFIG;
 #[derive(Debug, Clone)]
 pub enum StorageConfig {
     Local {
-        // path to locally store packages
+        // path to store packages locally
         path: PathBuf,
-        // url to retrieve local pacakages in public network
+        // url to retrieve local pacakages from public network
         url: String,
     },
     S3 {
@@ -204,9 +204,8 @@ impl StorageTransaction {
         }
     }
 
-    pub fn commit(mut self) -> Result<(), Error> {
+    pub fn commit(mut self) {
         self.commited = true;
-        Ok(())
     }
 }
 
