@@ -28,7 +28,7 @@ services:
       - REGISTRY_URL=https://api.elba.pub
       - REMOTE_INDEX_URL=https://github.com/andylokandy/index.git
       - REMOTE_INDEX_USER=github_account@example.com
-      - REMOTE_INDEX_PWD=ABCDEFGHIJ
+      - REMOTE_INDEX_PWD=mypassword
       - STORAGE_STRATEGY=S3
       - STORAGE_S3_BUCKET=elba-registry
       - STORAGE_S3_ACCESS_KEY=ABCDEFGHIJKLMN
@@ -36,10 +36,10 @@ services:
       - STORAGE_S3_REGION=ap-northeast-1
       - STORAGE_S3_BASE_URL=https://s3-ap-northeast-1.amazonaws.com/elba-registry
       - GH_OAUTH_ENABLED=true
-      - GH_CLIENT_ID=2c06e9a2cfecef2
-      - GH_CLIENT_SECRET=4b843b41a078b032ae9e3ab4e9caa7
+      - GH_CLIENT_ID=2c06aaaaaaaacef2
+      - GH_CLIENT_SECRET=4b84aaaaaaaaaaaaaaaab4e9caa7
       - GH_OAUTH_SUCCESS_REDIRECT_URL=https://www.elba.pub
       - VIRTUAL_HOST=api.elba.pub
       - VIRTUAL_PORT=17000
       - LETSENCRYPT_HOST=api.elba.pub
-      - LETSENCRYPT_EMAIL=your_email@hotmail.com
+      - LETSENCRYPT_EMAIL=your_email@example.com
