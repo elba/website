@@ -18,6 +18,7 @@ variable "s3_bucket_registry_name" {
 variable "s3_bucket_website_name" {
   default = "www.elba.pub"
 }
+
 variable "s3_bucket_website_root_name" {
   default = "elba.pub"
 }
@@ -28,6 +29,10 @@ variable "domain_zone" {
 
 variable "domain_website" {
   default = "www.elba.pub"
+}
+
+variable "domain_website_root" {
+  default = "elba.pub"
 }
 
 variable "domain_registry" {

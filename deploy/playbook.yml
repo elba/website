@@ -18,12 +18,12 @@
       shell: test /usr/bin/docker || (curl -sSL https://get.docker.com | sh)
       register: output
       changed_when: output.stdout != ""
-    - name: Install docker-compose
-      apt: name=docker-compose state=present
     - name: Install pip
       apt: name=python-pip state=present
     - name: Install docker-py
       pip: name=docker-py state=present
+    - name: Install docker-compose
+      pip: name=docker-compose state=present
     - name: Install awscli
       pip: name=awscli state=present
     - name: Setup application directory (/app)

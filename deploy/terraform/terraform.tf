@@ -68,7 +68,7 @@ resource "aws_security_group" "web-server" {
 resource "aws_s3_bucket" "elba-registry" {
   bucket = "${var.s3_bucket_registry_name}"
   region = "${var.region}"
-  acl    = "private"
+  acl    = "public-read"
   policy = "${data.aws_iam_policy_document.s3-elba-registry-policy.json}"
 
   cors_rule {
@@ -81,7 +81,7 @@ resource "aws_s3_bucket" "elba-registry" {
 resource "aws_s3_bucket" "elba-website" {
   bucket = "${var.s3_bucket_website_name}"
   region = "${var.region}"
-  acl    = "private"
+  acl    = "public-read"
   policy = "${data.aws_iam_policy_document.s3-elba-website-policy.json}"
 
   website {
@@ -93,7 +93,7 @@ resource "aws_s3_bucket" "elba-website" {
 resource "aws_s3_bucket" "elba-website-root" {
   bucket = "${var.s3_bucket_website_root_name}"
   region = "${var.region}"
-  acl    = "private"
+  acl    = "public-read"
 
   website {
     redirect_all_requests_to = "${var.domain_website}"
@@ -179,10 +179,59 @@ locals {
   cdn-registry-origin-id = "s3-elba-registry"
 }
 
+resource "aws_cloudfront_distribution" "cdn-registry" {
+  origin {
+    domain_name = "${aws_s3_bucket.elba-registry.bucket_regional_domain_name}"
+    origin_id   = "${local.cdn-registry-origin-id}"
+  }
+
+  enabled         = true
+  is_ipv6_enabled = true
+
+  default_cache_behavior {
+    allowed_methods  = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+    cached_methods   = ["GET", "HEAD"]
+    target_origin_id = "${local.cdn-registry-origin-id}"
+
+    forwarded_values {
+      query_string = false
+
+      cookies {
+        forward = "none"
+      }
+    }
+
+    min_ttl                = 0
+    default_ttl            = 300
+    max_ttl                = 3600
+    compress               = true
+    viewer_protocol_policy = "redirect-to-https"
+  }
+
+  restrictions {
+    geo_restriction {
+      restriction_type = "none"
+    }
+  }
+
+  price_class = "PriceClass_All"
+
+  viewer_certificate {
+    cloudfront_default_certificate = true
+  }
+}
+
 resource "aws_cloudfront_distribution" "cdn-website" {
   origin {
-    domain_name = "${aws_s3_bucket.elba-website.bucket_regional_domain_name}"
+    domain_name = "${aws_s3_bucket.elba-website.website_endpoint}"
     origin_id   = "${local.cdn-website-origin-id}"
+
+    custom_origin_config {
+      http_port              = "80"
+      https_port             = "443"
+      origin_protocol_policy = "http-only"
+      origin_ssl_protocols   = ["TLSv1", "TLSv1.1", "TLSv1.2"]
+    }
   }
 
   enabled         = true
@@ -224,48 +273,6 @@ resource "aws_cloudfront_distribution" "cdn-website" {
   }
 }
 
-resource "aws_cloudfront_distribution" "cdn-registry" {
-  origin {
-    domain_name = "${aws_s3_bucket.elba-registry.bucket_regional_domain_name}"
-    origin_id   = "${local.cdn-registry-origin-id}"
-  }
-
-  enabled         = true
-  is_ipv6_enabled = true
-
-  default_cache_behavior {
-    allowed_methods  = ["HEAD", "GET", "OPTIONS"]
-    cached_methods   = ["GET", "HEAD"]
-    target_origin_id = "${local.cdn-registry-origin-id}"
-
-    forwarded_values {
-      query_string = false
-
-      cookies {
-        forward = "none"
-      }
-    }
-
-    min_ttl                = 0
-    default_ttl            = 300
-    max_ttl                = 3600
-    compress               = true
-    viewer_protocol_policy = "redirect-to-https"
-  }
-
-  restrictions {
-    geo_restriction {
-      restriction_type = "none"
-    }
-  }
-
-  price_class = "PriceClass_All"
-
-  viewer_certificate {
-    cloudfront_default_certificate = true
-  }
-}
-
 data "aws_route53_zone" "zone" {
   name         = "${var.domain_zone}"
   private_zone = false
@@ -297,6 +304,18 @@ resource "aws_route53_record" "website" {
   type    = "CNAME"
   ttl     = "300"
   records = ["${aws_cloudfront_distribution.cdn-website.domain_name}"]
+}
+
+resource "aws_route53_record" "website-root" {
+  zone_id = "${data.aws_route53_zone.zone.zone_id}"
+  name    = "${var.domain_website_root}"
+  type    = "A"
+
+  alias {
+    name                   = "${aws_s3_bucket.elba-website-root.website_endpoint}"
+    zone_id                = "${aws_s3_bucket.elba-website-root.hosted_zone_id}"
+    evaluate_target_health = true
+  }
 }
 
 resource "aws_route53_record" "registry" {
