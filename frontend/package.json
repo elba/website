@@ -19,7 +19,7 @@
     "autoprefixer": "^9.5.0",
     "modules": "^0.4.0",
     "parcel-bundler": "^1.12.2",
-    "parcel-plugin-prerender": "^1.1.0",
+    "parcel-plugin-prerender": "^1.4.1",
     "postcss-modules": "^1.4.1",
     "sass": "^1.17.3",
     "typescript": "^3.3.3333",
