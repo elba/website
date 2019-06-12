@@ -120,7 +120,7 @@ const Features: React.FunctionComponent = () => (
 
 const Stats: React.FunctionComponent = () => (
   <div className={[style.section, style.stats].join(" ")}>
-    <h2 className={style["section-title"]}>Until now, we have</h2>
+    <h2 className={style["section-title"]}>Currently, we have</h2>
     <ul className={style["stats-item-container"]}>
       <li className={style["stats-item"]}>
         <p className={style["stats-value"]}>--</p>
@@ -136,12 +136,12 @@ const Stats: React.FunctionComponent = () => (
 
 const Question: React.FunctionComponent = () => (
   <div className={[style.section, style.question].join(" ")}>
-    <h2 className={[style["question-title"]].join(" ")}>Looks good?</h2>
+    <h2 className={[style["question-title"]].join(" ")}>Ready to start?</h2>
     <a
       className={[style["question-button"], "button", "is-purple"].join(" ")}
       href="#"
     >
-      Start to explore elba
+      Start exploring elba
     </a>
   </div>
 )

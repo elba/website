@@ -21,7 +21,7 @@ export const Navbar: React.FunctionComponent<NavbarProps> = props => (
       elba
     </Link>
     <div className={style["navbar-menu"]}>
-      <a className={style["navbar-menu-item"]} href="#">
+      <a className={style["navbar-menu-item"]} href="https://elba.readthedocs.io/en/latest/usage/quick_start.html">
         Get Started
       </a>
       <a
