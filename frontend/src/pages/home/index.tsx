@@ -34,7 +34,7 @@ export const Homepage: React.FunctionComponent = props => {
       <Features />
       <Stats />
       <section className={style.section}>
-        <h2 className={style["section-title"]}>Popular packages</h2>
+        <h2 className={style["section-title"]}>All packages</h2>
         <PackageList packages={packages.type === "Ready" ? packages.data : []} />
       </section>
       <Question />
