@@ -29,6 +29,8 @@ services:
       - REMOTE_INDEX_URL=https://github.com/andylokandy/index.git
       - REMOTE_INDEX_USER=github_account@example.com
       - REMOTE_INDEX_PWD=mypassword
+      - INDEX_BOT_NAME=elba-bot
+      - INDEX_BOT_EMAIL=elba-bot@hotmail.com
       - STORAGE_STRATEGY=S3
       - STORAGE_S3_BUCKET=elba-registry
       - STORAGE_S3_ACCESS_KEY=ABCDEFGHIJKLMN
