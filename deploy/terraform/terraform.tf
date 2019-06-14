@@ -312,7 +312,7 @@ resource "aws_route53_record" "website-root" {
   type    = "A"
 
   alias {
-    name                   = "${aws_s3_bucket.elba-website-root.website_endpoint}"
+    name                   = "s3-website-${var.region}.amazonaws.com"
     zone_id                = "${aws_s3_bucket.elba-website-root.hosted_zone_id}"
     evaluate_target_health = true
   }

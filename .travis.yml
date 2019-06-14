@@ -29,15 +29,15 @@ before_install:
 
 script:
   - yarn --cwd ../frontend build
-  # - bash ./docker-build-image.sh
+  - bash ./docker-build-image.sh
 
 deploy:
   # Push elba/registry image to aws ecr
-  # - provider: script
-  #   script: 
-  #     - bash ./docker-push-image.sh
-  #   on:
-  #     branch: master
+  - provider: script
+    script: 
+      - bash ./docker-push-image.sh
+    on:
+      branch: master
 
   # Deploy frontend public to s3 bucket
   - provider: s3
