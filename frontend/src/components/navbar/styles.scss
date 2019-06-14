@@ -2,23 +2,28 @@
 @import "~/styles/layouts.scss";
 
 .navbar {
-  @include content-center;
+  background-color: #eee;
+  box-shadow: 0 5px 5px rgba(0, 0, 0, 0.1);
 
-  display: grid;
-  grid-gap: 0;
-  background-color: transparent;
+  .nav-grid {
+    @include content-center;
 
-  @include mobile {
-    grid-template-columns: auto minmax(0, 1fr);
-    grid-template-rows: 50px 60px;
-    grid-template-areas:
-      "logo         menu"
-      "search-bar   search-bar";
-  }
-  @include desktop {
-    grid-template-columns: auto auto minmax(0, 1fr);
-    grid-template-rows: 50px;
-    grid-template-areas: "logo    menu   search-bar";
+    display: grid;
+    grid-gap: 0;
+    background-color: transparent;
+
+    @include mobile {
+      grid-template-columns: auto minmax(0, 1fr);
+      grid-template-rows: 50px 60px;
+      grid-template-areas:
+        "logo         menu"
+        "search-bar   search-bar";
+    }
+    @include desktop {
+      grid-template-columns: auto auto minmax(0, 1fr);
+      grid-template-rows: 50px;
+      grid-template-areas: "logo    menu   search-bar";
+    }
   }
 
   .navbar-logo {
@@ -144,6 +149,9 @@
   }
 
   &.dark {
+    background-color: transparent;
+    box-shadow: none;
+
     .navbar-logo,
     .navbar-menu-item {
       color: $grey-1;

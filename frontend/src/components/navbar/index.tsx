@@ -17,66 +17,71 @@ export const Navbar: React.FunctionComponent<NavbarProps> = props => (
         : style["navbar"]
     }
   >
-    <Link className={style["navbar-logo"]} to="/">
-      elba
-    </Link>
-    <div className={style["navbar-menu"]}>
-      <a className={style["navbar-menu-item"]} href="https://elba.readthedocs.io/en/latest/usage/quick_start.html">
-        Get Started
-      </a>
-      <a
-        className={style["navbar-menu-item"]}
-        href="https://elba.readthedocs.io/"
-      >
-        Docs
-      </a>
-      <GlobalStateConsumer>
-        {globalState =>
-          globalState.user === undefined ? (
-            <a
-              className={style["navbar-menu-item"]}
-              onClick={() => {
-                onLogin(globalState.fetchUser)
-              }}
-            >
-              Log in
-            </a>
-          ) : (
-            <Link className={style["navbar-menu-item"]} to="/profile">
-              {globalState.user.name}
-            </Link>
-          )
-        }
-      </GlobalStateConsumer>
-    </div>
-    <div className={style["search-bar"]}>
-      <form
-        className={style["search-form"]}
-        action="/search"
-        onSubmit={onSearch}
-      >
+    <div className={style["nav-grid"]}>
+      <Link className={style["navbar-logo"]} to="/">
+        elba
+      </Link>
+      <div className={style["navbar-menu"]}>
+        <a
+          className={style["navbar-menu-item"]}
+          href="https://elba.readthedocs.io/en/latest/usage/quick_start.html"
+        >
+          Get Started
+        </a>
+        <a
+          className={style["navbar-menu-item"]}
+          href="https://elba.readthedocs.io/"
+        >
+          Docs
+        </a>
         <GlobalStateConsumer>
-          {globalState => (
-            <div className={style["input-container"]}>
-              <input
-                className={style["input-input"]}
-                type="search"
-                name="q"
-                placeholder="search packages"
-                autoComplete="off"
-                onChange={e => globalState.setSearchQuery(e.target.value)}
-                value={globalState.searchQuery}
-              />
-              <span className={style["input-icon"]}>
-                <i className="fas fa-search" />
-              </span>
-            </div>
-          )}
+          {globalState =>
+            globalState.user === undefined ? (
+              <a
+                className={style["navbar-menu-item"]}
+                onClick={() => {
+                  onLogin(globalState.fetchUser)
+                }}
+              >
+                Log in
+              </a>
+            ) : (
+              <Link className={style["navbar-menu-item"]} to="/profile">
+                {globalState.user.name}
+              </Link>
+            )
+          }
         </GlobalStateConsumer>
-        <button className={style["search-button"]} type="submit">
-          Search
-        </button>
-      </form>
+      </div>
+      <div className={style["search-bar"]}>
+        <form
+          className={style["search-form"]}
+          action="/search"
+          onSubmit={onSearch}
+        >
+          <GlobalStateConsumer>
+            {globalState => (
+              <div className={style["input-container"]}>
+                <input
+                  className={style["input-input"]}
+                  type="search"
+                  name="q"
+                  placeholder="search packages"
+                  autoComplete="off"
+                  onChange={e => globalState.setSearchQuery(e.target.value)}
+                  value={globalState.searchQuery}
+                />
+                <span className={style["input-icon"]}>
+                  <i className="fas fa-search" />
+                </span>
+              </div>
+            )}
+          </GlobalStateConsumer>
+          <button className={style["search-button"]} type="submit">
+            Search
+          </button>
+        </form>
+      </div>
     </div>
   </nav>
 )
