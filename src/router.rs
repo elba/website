@@ -30,6 +30,9 @@ pub fn router(cors: &mut CorsBuilder<AppState>) {
             .with(compat(controller::users::token::remove_token))
     }).resource("/api/v1/packages/search", |r| {
         r.get().with(compat(controller::packages::search))
+    }).resource("/api/v1/packages/global_stats", |r| {
+        r.get()
+            .with(compat(controller::packages::download::global_stats))
     }).resource("/api/v1/packages/groups", |r| {
         r.get()
             .with(compat(controller::packages::metadata::list_groups))

@@ -10,19 +10,6 @@ use crate::AppState;
 
 use super::*;
 
-#[derive(Serialize, Clone)]
-pub struct DownloadStatsView {
-    pub total: u32,
-    pub season: u32,
-}
-
-#[derive(Serialize, Clone)]
-pub struct DownloadGraphView {
-    #[serde(with = "crate::util::rfc3339")]
-    pub date: NaiveDateTime,
-    pub downloads: u32,
-}
-
 pub async fn download(
     (path, state): (Path<PackageVersionReq>, State<AppState>),
 ) -> Result<HttpResponse, Error> {
@@ -73,4 +60,15 @@ pub async fn download_graph(
     }
 
     Ok(HttpResponse::Ok().json(R { download_graph }))
+}
+
+pub async fn global_stats(state: State<AppState>) -> Result<HttpResponse, Error> {
+    let global_stats = await!(state.db.send(ShowGlobalStats))??.into();
+
+    #[derive(Serialize)]
+    struct R {
+        global_stats: GlobalStatsView,
+    }
+
+    Ok(HttpResponse::Ok().json(R { global_stats }))
 }

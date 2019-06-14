@@ -79,6 +79,25 @@ pub struct DependencyView {
     pub version_req: String,
 }
 
+#[derive(Serialize, Clone)]
+pub struct DownloadStatsView {
+    pub total: u32,
+    pub season: u32,
+}
+
+#[derive(Serialize, Clone)]
+pub struct DownloadGraphView {
+    #[serde(with = "crate::util::rfc3339")]
+    pub date: NaiveDateTime,
+    pub downloads: u32,
+}
+
+#[derive(Serialize, Clone)]
+pub struct GlobalStatsView {
+    pub package_count: u32,
+    pub download_count: u32,
+}
+
 impl TryFrom<GroupReq> for GroupName {
     type Error = Error;
 
@@ -146,6 +165,15 @@ impl From<DependencyReq> for DependencyView {
         DependencyView {
             package: dependency.name.into(),
             version_req: dependency.version_req.to_string(),
+        }
+    }
+}
+
+impl From<GlobalStats> for GlobalStatsView {
+    fn from(global_stats: GlobalStats) -> GlobalStatsView {
+        GlobalStatsView {
+            package_count: global_stats.packages as u32,
+            download_count: global_stats.downloads as u32,
         }
     }
 }

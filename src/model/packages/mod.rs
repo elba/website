@@ -15,6 +15,35 @@ pub struct GroupName {
     group: String,
     normalized: String,
 }
+#[derive(Clone)]
+pub struct PackageVersion {
+    pub name: PackageName,
+    pub semver: semver::Version,
+}
+
+#[derive(Clone)]
+pub struct DependencyReq {
+    pub name: PackageName,
+    pub version_req: Constraint,
+}
+
+#[derive(Clone)]
+pub struct DownloadStats {
+    pub downloads_total: i32,
+    pub downloads_season: i32,
+}
+
+#[derive(Queryable, Clone)]
+pub struct DownloadGraph {
+    pub date: NaiveDate,
+    pub downloads: i32,
+}
+
+#[derive(Queryable, Clone)]
+pub struct GlobalStats {
+    pub packages: i32,
+    pub downloads: i32,
+}
 
 // TODO: Move into `elba`?
 impl GroupName {
@@ -52,28 +81,4 @@ pub fn group_of_package(name: &PackageName) -> GroupName {
         group: name.group().into(),
         normalized: name.normalized_group().into(),
     }
-}
-
-#[derive(Clone)]
-pub struct PackageVersion {
-    pub name: PackageName,
-    pub semver: semver::Version,
-}
-
-#[derive(Clone)]
-pub struct DependencyReq {
-    pub name: PackageName,
-    pub version_req: Constraint,
-}
-
-#[derive(Clone)]
-pub struct DownloadStats {
-    pub downloads_total: i32,
-    pub downloads_season: i32,
-}
-
-#[derive(Queryable, Clone)]
-pub struct DownloadGraph {
-    pub date: NaiveDate,
-    pub downloads: i32,
 }

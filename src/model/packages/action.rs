@@ -50,6 +50,7 @@ pub struct LookupDownloadStats(pub PackageVersion);
 pub struct LookupDownloadGraph(pub PackageVersion);
 
 pub struct PopulateSearch;
+pub struct ShowGlobalStats;
 
 impl Message for PublishVersion {
     type Result = Result<(), Error>;
@@ -109,6 +110,10 @@ impl Message for LookupDownloadGraph {
 
 impl Message for PopulateSearch {
     type Result = Result<(), Error>;
+}
+
+impl Message for ShowGlobalStats {
+    type Result = Result<GlobalStats, Error>;
 }
 
 impl Handler<PublishVersion> for Database {
@@ -234,6 +239,14 @@ impl Handler<PopulateSearch> for Database {
 
     fn handle(&mut self, msg: PopulateSearch, _: &mut Self::Context) -> Self::Result {
         populate_search(msg, &self.search, &self.connection()?)
+    }
+}
+
+impl Handler<ShowGlobalStats> for Database {
+    type Result = Result<GlobalStats, Error>;
+
+    fn handle(&mut self, _: ShowGlobalStats, _: &mut Self::Context) -> Self::Result {
+        show_global_stats(&self.connection()?)
     }
 }
 
@@ -777,4 +790,25 @@ pub fn populate_search(
     }
 
     Ok(())
+}
+
+pub fn show_global_stats(conn: &Connection) -> Result<GlobalStats, Error> {
+    use crate::schema::packages::dsl::*;
+    use crate::schema::version_downloads::dsl::*;
+    use diesel::dsl::{count, sum};
+
+    let packages_count = packages
+        .select(count(package_name))
+        .get_result::<i64>(conn)
+        .optional()?;
+
+    let downloads_count = version_downloads
+        .select(sum(downloads))
+        .get_result::<Option<i64>>(conn)
+        .optional()?;
+
+    Ok(GlobalStats {
+        packages: packages_count.unwrap_or(0) as i32,
+        downloads: downloads_count.unwrap_or(None).unwrap_or(0) as i32,
+    })
 }
