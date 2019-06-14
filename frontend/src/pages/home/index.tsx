@@ -1,7 +1,13 @@
 import React, { useState, useEffect } from "react"
 import style from "./styles.scss"
 import { PackageList } from "~/components/package-listing"
-import { PackageReq, list_groups, list_packages } from "~api"
+import {
+  PackageReq,
+  list_groups,
+  list_packages,
+  GlobalStatsView,
+  show_global_stats,
+} from "~api"
 import { RemoteData } from "~utils/remote-data"
 import Navbar from "~components/navbar"
 import iconBox from "~/img/box.svg"
@@ -35,7 +41,9 @@ export const Homepage: React.FunctionComponent = props => {
       <Stats />
       <section className={style.section}>
         <h2 className={style["section-title"]}>All packages</h2>
-        <PackageList packages={packages.type === "Ready" ? packages.data : []} />
+        <PackageList
+          packages={packages.type === "Ready" ? packages.data : []}
+        />
       </section>
       <Question />
     </div>
@@ -118,21 +126,43 @@ const Features: React.FunctionComponent = () => (
   </div>
 )
 
-const Stats: React.FunctionComponent = () => (
-  <div className={[style.section, style.stats].join(" ")}>
-    <h2 className={style["section-title"]}>Currently, we have</h2>
-    <ul className={style["stats-item-container"]}>
-      <li className={style["stats-item"]}>
-        <p className={style["stats-value"]}>--</p>
-        <p className={style["stats-title"]}>packages</p>
-      </li>
-      <li className={style["stats-item"]}>
-        <p className={style["stats-value"]}>--</p>
-        <p className={style["stats-title"]}>downloads</p>
-      </li>
-    </ul>
-  </div>
-)
+const Stats: React.FunctionComponent = props => {
+  const [globalStats, setGlobalStats] = useState<RemoteData<GlobalStatsView>>({
+    type: "Not Ready",
+  })
+
+  useEffect(() => {
+    async function load() {
+      let global_stats = await show_global_stats()
+      setGlobalStats({ type: "Ready", data: global_stats })
+    }
+    load()
+  }, [props])
+
+  return (
+    <div className={[style.section, style.stats].join(" ")}>
+      <h2 className={style["section-title"]}>Currently, we have</h2>
+      <ul className={style["stats-item-container"]}>
+        <li className={style["stats-item"]}>
+          <p className={style["stats-value"]}>
+            {globalStats.type == "Ready"
+              ? globalStats.data.package_count
+              : "--"}
+          </p>
+          <p className={style["stats-title"]}>packages</p>
+        </li>
+        <li className={style["stats-item"]}>
+          <p className={style["stats-value"]}>
+            {globalStats.type == "Ready"
+              ? globalStats.data.download_count
+              : "--"}
+          </p>
+          <p className={style["stats-title"]}>downloads</p>
+        </li>
+      </ul>
+    </div>
+  )
+}
 
 const Question: React.FunctionComponent = () => (
   <div className={[style.section, style.question].join(" ")}>

@@ -54,6 +54,11 @@ export type DownloadStatsView = {
   season: number
 }
 
+export type GlobalStatsView = {
+  package_count: number
+  download_count: number
+}
+
 export const APIROOT = "https://api.elba.pub/api/v1"
 // export const APIROOT = "http://localhost:17000/api/v1"
 // export const APIROOT = "http://192.168.43.32:17000/api/v1"
@@ -163,6 +168,11 @@ export async function download_stats(
     "GET"
   )
   return json.download_stats
+}
+
+export async function show_global_stats(): Promise<GlobalStatsView> {
+  const json = await send_request(`${APIROOT}/packages/global_stats`, "GET")
+  return json.global_stats
 }
 
 async function send_request(url: string, method?: string): Promise<any> {
