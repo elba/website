@@ -56,7 +56,8 @@ impl Message for LoginByOAuth {
 #[derive(Deserialize)]
 struct GithubUserRes {
     id: i32,
-    name: String,
+    login: String,
+    name: Option<String>,
     email: Option<String>,
     avatar_url: Option<String>,
 }
@@ -86,7 +87,7 @@ impl Handler<LoginByAccessToken> for GhLogin {
                 if github_response.status() != StatusCode::OK {
                     return Err(human!(
                         Reason::UserNotFound,
-                        "Invalid access token to Github"
+                        "This access token to Github is invalid "
                     ));
                 }
 
@@ -97,7 +98,7 @@ impl Handler<LoginByAccessToken> for GhLogin {
                     None => {
                         return Err(human!(
                             Reason::InvalidRequest,
-                            "Github does not returns an email"
+                            "This github account should have a public email"
                         ))
                     }
                 };
@@ -105,7 +106,7 @@ impl Handler<LoginByAccessToken> for GhLogin {
                 let user = await!(db.send(CreateUserOrLogin {
                     email: email,
                     gh_id: response_json.id,
-                    gh_name: response_json.name,
+                    gh_name: response_json.name.unwrap_or(response_json.login),
                     gh_access_token: msg.gh_access_token,
                     gh_avatar: response_json.avatar_url,
                 }))??;
@@ -169,8 +170,7 @@ impl Handler<LoginByOAuth> for GhLogin {
 pub fn get_oauth_url() -> Result<String, Error> {
     match &CONFIG.gh_oauth_config {
         Some(GhOAuthConfig { client_id, .. }) => Ok(format!(
-            "https://github.com/login/oauth/authorize?scope=user:email\
-             &client_id={}",
+            "https://github.com/login/oauth/authorize?client_id={}",
             &client_id
         )),
         None => Err(human!(
