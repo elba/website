@@ -2,7 +2,9 @@
 
 [![Build Status](https://travis-ci.com/elba/website.svg?branch=master)](https://travis-ci.com/elba/website)
 
-elba's website and registry backend is growing here. It's now under heavy development.
+elba's website and registry backend.
+
+https://elba.pub
 
 ## Install (Development)
 
@@ -44,21 +46,3 @@ A simplest way to deploy the website would be:
 5. (Optional) setup a reverse proxy (e.g nginx) to enable `https` access as well as to serve static files in `/public`.
 6. Run `docker-compose up`.
 7. Setup a remote index repo. You can start with the example `deploy/index-bare-example.tar`, and remember to change the registry url to your real domain.
-
-## Usage
-
-Add remote index url into elba config file (`~/.elba/config.toml`). For example:
-
-```
-[indices]
-official = "index+git+https://github.com/andylokandy/index.git#master"
-```
-
-or use a local index for testing:
-
-```
-[indices]
-test = "index+git+/etc/elba-registry/index.git#master"
-```
-
-And then you are free to play!

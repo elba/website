@@ -51,6 +51,13 @@ resource "aws_security_group" "web-server" {
   }
 
   ingress {
+    protocol    = "tcp"
+    from_port   = 8080
+    to_port     = 8080
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
     protocol    = "icmp"
     from_port   = -1
     to_port     = -1
@@ -78,8 +85,8 @@ resource "aws_s3_bucket" "elba-registry" {
   }
 }
 
-resource "aws_s3_bucket" "elba-website" {
-  bucket = "${var.s3_bucket_website_name}"
+resource "aws_s3_bucket" "elba-website-root" {
+  bucket = "${var.s3_bucket_website_root_name}"
   region = "${var.region}"
   acl    = "public-read"
   policy = "${data.aws_iam_policy_document.s3-elba-website-policy.json}"
@@ -90,13 +97,13 @@ resource "aws_s3_bucket" "elba-website" {
   }
 }
 
-resource "aws_s3_bucket" "elba-website-root" {
-  bucket = "${var.s3_bucket_website_root_name}"
+resource "aws_s3_bucket" "elba-website-www" {
+  bucket = "${var.s3_bucket_website_www_name}"
   region = "${var.region}"
   acl    = "public-read"
 
   website {
-    redirect_all_requests_to = "${var.domain_website}"
+    redirect_all_requests_to = "${var.domain_website_root}"
   }
 }
 
@@ -145,7 +152,7 @@ data "aws_iam_policy_document" "s3-elba-website-policy" {
     ]
 
     resources = [
-      "arn:aws:s3:::${var.s3_bucket_website_name}/*",
+      "arn:aws:s3:::${var.s3_bucket_website_root_name}/*",
     ]
 
     principals {
@@ -160,7 +167,7 @@ data "aws_iam_policy_document" "s3-elba-website-policy" {
     ]
 
     resources = [
-      "arn:aws:s3:::${var.s3_bucket_website_name}/*",
+      "arn:aws:s3:::${var.s3_bucket_website_root_name}/*",
     ]
 
     principals {
@@ -175,8 +182,9 @@ resource "aws_ecr_repository" "elba-registry" {
 }
 
 locals {
-  cdn-website-origin-id  = "s3-elba-website"
-  cdn-registry-origin-id = "s3-elba-registry"
+  cdn-website-root-origin-id = "s3-elba-website-root"
+  cdn-website-www-origin-id  = "s3-elba-website-www"
+  cdn-registry-origin-id     = "s3-elba-registry"
 }
 
 resource "aws_cloudfront_distribution" "cdn-registry" {
@@ -221,10 +229,10 @@ resource "aws_cloudfront_distribution" "cdn-registry" {
   }
 }
 
-resource "aws_cloudfront_distribution" "cdn-website" {
+resource "aws_cloudfront_distribution" "cdn-website-root" {
   origin {
-    domain_name = "${aws_s3_bucket.elba-website.website_endpoint}"
-    origin_id   = "${local.cdn-website-origin-id}"
+    domain_name = "${aws_s3_bucket.elba-website-root.website_endpoint}"
+    origin_id   = "${local.cdn-website-root-origin-id}"
 
     custom_origin_config {
       http_port              = "80"
@@ -237,12 +245,64 @@ resource "aws_cloudfront_distribution" "cdn-website" {
   enabled         = true
   is_ipv6_enabled = true
 
-  aliases = ["${var.domain_website}"]
+  aliases = ["${var.domain_website_root}"]
 
   default_cache_behavior {
     allowed_methods  = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods   = ["GET", "HEAD"]
-    target_origin_id = "${local.cdn-website-origin-id}"
+    target_origin_id = "${local.cdn-website-root-origin-id}"
+
+    forwarded_values {
+      query_string = false
+
+      cookies {
+        forward = "none"
+      }
+    }
+
+    min_ttl                = 0
+    default_ttl            = 300
+    max_ttl                = 3600
+    compress               = true
+    viewer_protocol_policy = "redirect-to-https"
+  }
+
+  restrictions {
+    geo_restriction {
+      restriction_type = "none"
+    }
+  }
+
+  price_class = "PriceClass_All"
+
+  viewer_certificate {
+    ssl_support_method  = "sni-only"
+    acm_certificate_arn = "${aws_acm_certificate_validation.cert-website.certificate_arn}"
+  }
+}
+
+resource "aws_cloudfront_distribution" "cdn-website-www" {
+  origin {
+    domain_name = "${aws_s3_bucket.elba-website-www.website_endpoint}"
+    origin_id   = "${local.cdn-website-www-origin-id}"
+
+    custom_origin_config {
+      http_port              = "80"
+      https_port             = "443"
+      origin_protocol_policy = "http-only"
+      origin_ssl_protocols   = ["TLSv1", "TLSv1.1", "TLSv1.2"]
+    }
+  }
+
+  enabled         = true
+  is_ipv6_enabled = true
+
+  aliases = ["${var.domain_website_www}"]
+
+  default_cache_behavior {
+    allowed_methods  = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+    cached_methods   = ["GET", "HEAD"]
+    target_origin_id = "${local.cdn-website-www-origin-id}"
 
     forwarded_values {
       query_string = false
@@ -279,14 +339,15 @@ data "aws_route53_zone" "zone" {
 }
 
 resource "aws_acm_certificate" "cert-website" {
-  domain_name       = "${var.domain_website}"
-  validation_method = "DNS"
-  provider          = "aws.use1"
+  domain_name               = "${var.domain_website_root}"
+  subject_alternative_names = ["${var.domain_website_www}"]
+  validation_method         = "DNS"
+  provider                  = "aws.use1"
 }
 
 resource "aws_acm_certificate_validation" "cert-website" {
   certificate_arn         = "${aws_acm_certificate.cert-website.arn}"
-  validation_record_fqdns = ["${aws_route53_record.cert-validation-website.fqdn}"]
+  validation_record_fqdns = ["${aws_route53_record.cert-validation-website.fqdn}", "${aws_route53_record.cert-validation-website-alt1.fqdn}"]
   provider                = "aws.use1"
 }
 
@@ -298,12 +359,20 @@ resource "aws_route53_record" "cert-validation-website" {
   ttl     = 60
 }
 
-resource "aws_route53_record" "website" {
+resource "aws_route53_record" "cert-validation-website-alt1" {
+  name    = "${aws_acm_certificate.cert-website.domain_validation_options.1.resource_record_name}"
+  type    = "${aws_acm_certificate.cert-website.domain_validation_options.1.resource_record_type}"
+  zone_id = "${data.aws_route53_zone.zone.id}"
+  records = ["${aws_acm_certificate.cert-website.domain_validation_options.1.resource_record_value}"]
+  ttl     = 60
+}
+
+resource "aws_route53_record" "website-www" {
   zone_id = "${data.aws_route53_zone.zone.zone_id}"
-  name    = "${var.domain_website}"
+  name    = "${var.domain_website_www}"
   type    = "CNAME"
   ttl     = "300"
-  records = ["${aws_cloudfront_distribution.cdn-website.domain_name}"]
+  records = ["${aws_cloudfront_distribution.cdn-website-www.domain_name}"]
 }
 
 resource "aws_route53_record" "website-root" {
@@ -312,9 +381,9 @@ resource "aws_route53_record" "website-root" {
   type    = "A"
 
   alias {
-    name                   = "s3-website-${var.region}.amazonaws.com"
-    zone_id                = "${aws_s3_bucket.elba-website-root.hosted_zone_id}"
-    evaluate_target_health = true
+    name                   = "${aws_cloudfront_distribution.cdn-website-root.domain_name}"
+    zone_id                = "${aws_cloudfront_distribution.cdn-website-root.hosted_zone_id}"
+    evaluate_target_health = false
   }
 }
 
