@@ -96,7 +96,9 @@ export const PackageDetailsPage: React.FunctionComponent<
             <main>
               {readme.type === "Ready" ? (
                 <div className={style["main-layout__readme"]}>
-                  <ReadmeViewer markdown={readme.data} />
+                  {readme.data != null ? 
+                    <ReadmeViewer markdown={readme.data} /> : <></>
+                  }
                 </div>
               ) : (
                 undefined

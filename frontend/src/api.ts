@@ -140,31 +140,31 @@ export async function show_version(
   version_req: VersionReq
 ): Promise<VersionView> {
   const json = await send_request(
-    `${APIROOT}/packages/${version_req.group}/${version_req.package}/${
-      version_req.version
-    }/metadata`,
+    `${APIROOT}/packages/${version_req.group}/${version_req.package}/${version_req.version}/metadata`,
     "GET"
   )
   return json.version
 }
 
-export async function show_readme(version_req: VersionReq): Promise<string> {
+export async function show_readme(
+  version_req: VersionReq
+): Promise<string | null> {
   const readme = await fetch(
-    `${APIROOT}/packages/${version_req.group}/${version_req.package}/${
-      version_req.version
-    }/readme`
+    `${APIROOT}/packages/${version_req.group}/${version_req.package}/${version_req.version}/readme`
   )
-  const text = await readme.text()
-  return text
+  if (readme.status == 200) {
+    const text = await readme.text()
+    return text
+  } else {
+    return null
+  }
 }
 
 export async function download_stats(
   version_req: VersionReq
 ): Promise<DownloadStatsView> {
   const json = await send_request(
-    `${APIROOT}/packages/${version_req.group}/${version_req.package}/${
-      version_req.version
-    }/download_stats`,
+    `${APIROOT}/packages/${version_req.group}/${version_req.package}/${version_req.version}/download_stats`,
     "GET"
   )
   return json.download_stats
