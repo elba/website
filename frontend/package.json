@@ -26,7 +26,7 @@
     "typescript-plugin-css-modules": "^1.0.5"
   },
   "dependencies": {
-    "marked": "^0.6.2",
+    "marked": "^4.0.10",
     "query-string": "^6.5.0",
     "react": "^16.8.4",
     "react-dom": "^16.8.4",
